@@ -270,6 +270,7 @@ std::ostream& operator<<(std::ostream& os, mat3<T>& mat) {
 	return os;
 }
 
+// Name alias the common matrix types 
 using mat3i = mat3<int>;
 using mat3u = mat3<unsigned>;
 using mat3f = mat3<float>;

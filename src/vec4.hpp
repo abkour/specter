@@ -320,6 +320,7 @@ std::ostream& operator<<(std::ostream& os, const vec4<T>& vec) {
 	return os << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w;
 }
 
+// Name alias the common vector types
 using vec4i = vec4<int>;
 using vec4u = vec4<unsigned>;
 using vec4f = vec4<float>;

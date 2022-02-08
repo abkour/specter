@@ -273,6 +273,7 @@ std::ostream& operator<<(std::ostream& os, const mat4<T>& m) {
 	return os;
 }
 
+// Name alias the common matrix types 
 using mat4i = mat4<int>;
 using mat4u = mat4<unsigned>;
 using mat4f = mat4<float>;
