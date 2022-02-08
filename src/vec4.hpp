@@ -20,6 +20,16 @@ struct vec4 {
 	bool operator<(const vec4<T>&other) const;
 	bool operator>(const vec4<T>&other) const;
 
+	vec4<T> operator+(const vec4<T>& other);
+	vec4<T> operator-(const vec4<T>& other);
+	vec4<T> operator*(const vec4<T>& other);
+	vec4<T> operator/(const vec4<T>& other);
+
+	vec4<T>& operator+=(const vec4<T>& other);
+	vec4<T>& operator-=(const vec4<T>& other);
+	vec4<T>& operator*=(const vec4<T>& other);
+	vec4<T>& operator/=(const vec4<T>& other);
+
 	template<typename U>
 	vec4<T>& operator+=(const U s);
 	template<typename U>
@@ -103,6 +113,61 @@ bool vec4<T>::operator>(const vec4<T>& other) const {
 	return x > other.x && y > other.y && z > other.z && w > other.w;
 }
 
+template<typename T>
+vec4<T> vec4<T>::operator+(const vec4<T>& other) {
+	return vec4<T>(x + other.x, y + other.y, z + other.z, w + other.w);
+}
+
+template<typename T>
+vec4<T> vec4<T>::operator-(const vec4<T>& other) {
+	return vec4<T>(x - other.x, y - other.y, z - other.z, w - other.w);
+}
+
+template<typename T>
+vec4<T> vec4<T>::operator*(const vec4<T>& other) {
+	return vec4<T>(x * other.x, y * other.y, z * other.z, w * other.w);
+}
+
+template<typename T>
+vec4<T> vec4<T>::operator/(const vec4<T>& other) {
+	return vec4<T>(x / other.x, y / other.y, z / other.z, w / other.w);
+}
+
+template<typename T>
+vec4<T>& vec4<T>::operator+=(const vec4<T>& other) {
+	x += other.x;
+	y += other.y;
+	z += other.z;
+	w += other.w;
+	return *this;
+}
+
+template<typename T>
+vec4<T>& vec4<T>::operator-=(const vec4<T>& other) {
+	x -= other.x;
+	y -= other.y;
+	z -= other.z;
+	w -= other.w;
+	return *this;
+}
+
+template<typename T>
+vec4<T>& vec4<T>::operator*=(const vec4<T>& other) {
+	x *= other.x;
+	y *= other.y;
+	z *= other.z;
+	w *= other.w;
+	return *this;
+}
+
+template<typename T>
+vec4<T>& vec4<T>::operator/=(const vec4<T>& other) {
+	x /= other.x;
+	y /= other.y;
+	z /= other.z;
+	w /= other.w;
+	return *this;
+}
 
 template<typename T, typename U>
 vec4<T> operator+(const vec4<T>& v, const U s) {

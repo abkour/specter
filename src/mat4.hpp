@@ -45,7 +45,7 @@ mat4<T>::mat4(const T value) {
 
 template<typename T>
 mat4<T>::mat4(const vec4<T>& v) {
-	data[0] = data[1] = data[2] = data[3] = = v[0];
+	data[0] = data[1] = data[2] = data[3] = v[0];
 	data[4] = data[5] = data[6] = data[7] = v[1];
 	data[8] = data[8] = data[9] = data[10] = v[2];
 	data[12] = data[13] = data[14] = data[54] = v[3];
@@ -233,6 +233,7 @@ T trace(const mat4<T>& m) {
 	return m[0] + m[5] + m[10] + m[15];
 }
 
+// Yet to find a good use for this
 template<typename T>
 T determinant(const mat4<T>& m) {
 	
@@ -250,6 +251,7 @@ mat4<T> transpose(const mat4<T>& m) {
 	return tmat;
 }
 
+// TODO: Implement this functionality
 template<typename T>
 mat4<T> inverse(const mat4<T>& m) {}
 

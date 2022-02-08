@@ -20,6 +20,16 @@ struct vec3 {
 	bool operator<(const vec3<T>&other) const;
 	bool operator>(const vec3<T>&other) const;
 
+	vec3<T> operator+(const vec3<T>& other);
+	vec3<T> operator-(const vec3<T>& other);
+	vec3<T> operator*(const vec3<T>& other);
+	vec3<T> operator/(const vec3<T>& other);
+
+	vec3<T>& operator+=(const vec3<T>& other);
+	vec3<T>& operator-=(const vec3<T>& other);
+	vec3<T>& operator*=(const vec3<T>& other);
+	vec3<T>& operator/=(const vec3<T>& other);
+
 	template<typename U>
 	vec3<T>& operator+=(const U s);
 	template<typename U>
@@ -100,6 +110,57 @@ bool vec3<T>::operator>(const vec3<T>& other) const {
 	return x > other.x && y > other.y && z > other.z;
 }
 
+template<typename T>
+vec3<T> vec3<T>::operator+(const vec3<T>& other) {
+	return vec3<T>(x + other.x, y + other.y, z + other.z);
+}
+
+template<typename T>
+vec3<T> vec3<T>::operator-(const vec3<T>& other) {
+	return vec3<T>(x - other.x, y - other.y, z - other.z);
+}
+
+template<typename T>
+vec3<T> vec3<T>::operator*(const vec3<T>& other) {
+	return vec3<T>(x * other.x, y * other.y, z * other.z);
+}
+
+template<typename T>
+vec3<T> vec3<T>::operator/(const vec3<T>& other) {
+	return vec3<T>(x / other.x, y / other.y, z / other.z);
+}
+
+template<typename T>
+vec3<T>& vec3<T>::operator+=(const vec3<T>& other) {
+	x += other.x;
+	y += other.y;
+	z += other.z;
+	return *this;
+}
+
+template<typename T>
+vec3<T>& vec3<T>::operator-=(const vec3<T>& other) {
+	x -= other.x;
+	y -= other.y;
+	z -= other.z;
+	return *this;
+}
+
+template<typename T>
+vec3<T>& vec3<T>::operator*=(const vec3<T>& other) {
+	x *= other.x;
+	y *= other.y;
+	z *= other.z;
+	return *this;
+}
+
+template<typename T>
+vec3<T>& vec3<T>::operator/=(const vec3<T>& other) {
+	x /= other.x;
+	y /= other.y;
+	z /= other.z;
+	return *this;
+}
 
 template<typename T, typename U>
 vec3<T> operator+(const vec3<T>& v, const U s) {
@@ -262,6 +323,7 @@ std::ostream& operator<<(std::ostream& os, const vec3<T>& v) {
 	return os << v.x << ", " << v.y << ", " << v.z;
 }
 
+// Name alias the common vector types
 using vec3u = vec3<unsigned>;
 using vec3i = vec3<int>;
 using vec3f = vec3<float>;
