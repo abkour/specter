@@ -49,5 +49,8 @@
     <Text Include="..\src\implementation_notes.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="..\src\revisions.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

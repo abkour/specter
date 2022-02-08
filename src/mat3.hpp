@@ -30,11 +30,11 @@ struct mat3 {
 	mat3<T>& operator*=(const T s);
 	mat3<T>& operator/=(const T s);
 
-	T operator[](int index) const;
-	T& operator[](int index);
+	T operator[](const std::size_t index) const;
+	T& operator[](const std::size_t index);
 
-	vec3<T> col(int index) const;
-	vec3<T> row(int index) const;
+	vec3<T> col(const std::size_t index) const;
+	vec3<T> row(const std::size_t index) const;
 
 	T data[9];
 };
@@ -53,9 +53,9 @@ mat3<T>::mat3(const vec3<T>& v)  {
 
 template<typename T>
 mat3<T>::mat3(const vec3<T>& col0, const vec3<T>& col1, const vec3<T>& col2) {
-	data[0] = col0[0]; data[1] = col0[1]; data[2] = col0[2];
-	data[3] = col1[0]; data[4] = col1[1]; data[5] = col1[2];
-	data[6] = col2[0]; data[7] = col2[1]; data[8] = col2[2];
+	data[0] = col0[0]; data[3] = col0[1]; data[6] = col0[2];
+	data[1] = col1[0]; data[4] = col1[1]; data[5] = col1[2];
+	data[2] = col2[0]; data[7] = col2[1]; data[8] = col2[2];
 }
 
 template<typename T>
@@ -154,8 +154,8 @@ mat3<T>& mat3<T>::operator*=(const mat3<T>& other) {
 	result[7] = data[6] * other[1] + data[7] * other[4] + data[8] * other[7];
 	result[8] = data[6] * other[2] + data[7] * other[5] + data[8] * other[8];
 
-	data = result;
-	return result;
+	*this = result;
+	return *this;
 }
 
 template<typename T>
@@ -193,13 +193,23 @@ mat3<T>& mat3<T>::operator/=(const T s) {
 }
 
 template<typename T>
-T mat3<T>::operator[](int index) const {
+T mat3<T>::operator[](const std::size_t index) const {
 	return data[index];
 }
 
 template<typename T>
-T& mat3<T>::operator[](int index) {
+T& mat3<T>::operator[](const std::size_t index) {
 	return data[index];
+}
+
+template<typename T>
+vec3<T> mat3<T>::col(const std::size_t index) const {
+	return vec3<T>(data[index], data[index + 3], data[index + 6]);
+}
+
+template<typename T>
+vec3<T> mat3<T>::row(const std::size_t index) const {
+	return vec3<T>(data[index * 3], data[index * 3 + 1], data[index * 3 + 2]);
 }
 
 template<typename T>
