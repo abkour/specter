@@ -1,0 +1,5 @@
+specter implementation notes:
+
+Matrices:
+
+Matrices are stored as flat arrays in continous memory. 

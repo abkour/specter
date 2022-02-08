@@ -1,0 +1,38 @@
+﻿  main.cpp
+C:\Users\flora\source\repos\specter\src\main.cpp(12,15): warning C4305: '=': truncation from 'double' to 'T'
+          with
+          [
+              T=float
+          ]
+C:\Users\flora\source\repos\specter\src\mat3.hpp(247,42): warning C4805: '==': unsafe mix of type 'bool' and type 'T' in operation
+          with
+          [
+              T=float
+          ]
+C:\Users\flora\source\repos\specter\src\main.cpp(20): message : see reference to function template instantiation 'bool specter::isIdentity<float>(const specter::mat3<float> &)' being compiled
+C:\Users\flora\source\repos\specter\src\mat3.hpp(248,42): warning C4805: '==': unsafe mix of type 'bool' and type 'T' in operation
+          with
+          [
+              T=float
+          ]
+C:\Users\flora\source\repos\specter\src\mat3.hpp(248,50): warning C4805: '==': unsafe mix of type 'bool' and type 'T' in operation
+          with
+          [
+              T=float
+          ]
+C:\Users\flora\source\repos\specter\src\mat3.hpp(248,58): warning C4805: '==': unsafe mix of type 'bool' and type 'T' in operation
+          with
+          [
+              T=float
+          ]
+C:\Users\flora\source\repos\specter\src\mat3.hpp(248,66): warning C4805: '==': unsafe mix of type 'bool' and type 'T' in operation
+          with
+          [
+              T=float
+          ]
+  Generating code
+  1 of 21 functions ( 4.8%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    3 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  specter.vcxproj -> C:\Users\flora\source\repos\specter\x64\Release\specter.exe
