@@ -260,6 +260,17 @@ bool isIdentity(const mat4<T>& m) {
 	return isDiagonalOne && isOutsideNull;
 }
 
+template<typename T>
+std::ostream& operator<<(std::ostream& os, const mat4<T>& m) {
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			os << m[i * 4 + j] << '\t';
+		}
+		os << '\n';
+	}
+	return os;
+}
+
 using mat4i = mat4<int>;
 using mat4u = mat4<unsigned>;
 using mat4f = mat4<float>;

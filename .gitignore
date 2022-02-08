@@ -31,5 +31,8 @@
 *.out
 *.app
 
+*.vs
+specter.sln
+
 specter/
 x64/
