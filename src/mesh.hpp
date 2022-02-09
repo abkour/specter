@@ -1,5 +1,6 @@
 #pragma once
 #include "aabb.hpp"
+#include "ray.hpp"
 #include "vec2.hpp"
 #include "vec3.hpp"
 
@@ -11,6 +12,8 @@ namespace specter {
 struct Mesh {
 
 	virtual ~Mesh();
+
+	bool rayIntersection(Ray* ray, const std::size_t index, float& u, float &v, float& t) const;
 
 	vec3f* getVertices();
 	vec3f* getNormals();

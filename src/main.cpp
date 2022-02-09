@@ -7,4 +7,6 @@
 #include "mesh.hpp"
 #include "obj.hpp"
 
-int main(int argc, const char** argv) {}
+int main(int argc, const char** argv) {
+
+}
