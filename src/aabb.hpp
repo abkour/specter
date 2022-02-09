@@ -180,18 +180,3 @@ float AxisAlignedBoundingBox::volume() const {
 }
 
 }
-
-/*
-
-A overlaps B <-> B overlaps A:
-
-	1. Point of A in B
-	2. Point of B in A
-
-	1) Point of A in B
-	Approach a: Compute points of aabb and check for containment in B
-	Approach b: 
-
-	2) Same as 1. 
-
-*/
