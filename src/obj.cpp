@@ -81,16 +81,16 @@ ObjLoader::ObjLoader(const char* filename) {
 				faces.push_back(sIndices[2]);
 			}
 		}
-
-		vertices.resize(sVertices.size());
-		std::memcpy(vertices.data(), sVertices.data(), sizeof(vec3f) * sVertices.size());
-
-		normals.resize(sNormals.size());
-		std::memcpy(normals.data(), sNormals.data(), sizeof(vec3f) * sNormals.size());
-
-		textureCoordinates.resize(sTextureCoordinates.size());
-		std::memcpy(textureCoordinates.data(), sTextureCoordinates.data(), sizeof(vec2f) * sTextureCoordinates.size());
 	}
+
+	vertices.resize(sVertices.size());
+	std::memcpy(vertices.data(), sVertices.data(), sizeof(vec3f) * sVertices.size());
+
+	normals.resize(sNormals.size());
+	std::memcpy(normals.data(), sNormals.data(), sizeof(vec3f) * sNormals.size());
+
+	textureCoordinates.resize(sTextureCoordinates.size());
+	std::memcpy(textureCoordinates.data(), sTextureCoordinates.data(), sizeof(vec2f) * sTextureCoordinates.size());
 
 	std::cout << "Succesfully loaded file " << filename << " in " << timer.elapsedTime() << " seconds.\n";
 }
