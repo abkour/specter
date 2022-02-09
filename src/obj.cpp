@@ -5,8 +5,6 @@
 
 namespace specter {
 
-// Initializes the mesh through data in filename.obj. This method does NOT check for validity of the object file.
-// Invalid object files will lead to undefined program behavior.
 ObjLoader::ObjLoader(const char* filename) {
 	std::ifstream objfile(filename, std::ios::binary);
 	if (objfile.fail()) {
@@ -38,6 +36,8 @@ ObjLoader::ObjLoader(const char* filename) {
 			lineStream >> v.x; lineStream >> v.y;
 			sTextureCoordinates.push_back(v);
 		} else if (prefix == "vn") {
+			// Some object files don't contain vertex normals. In that case, face processing needs to be adjusted.
+			areNormalsPresent = true;
 			vec3f v;
 			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
 			sNormals.push_back(v);
@@ -45,19 +45,33 @@ ObjLoader::ObjLoader(const char* filename) {
 			// Holds the indices to the vertices/normals/uvCoords that make up one triangle.
 			std::vector<vec3u> sFaces;
 			sFaces.reserve(3);
-
+			std::cout << line << '\n';
 			// Working array to store temporary indices.
 			char tmp[16];
-			int i = 0; 
-			while (!lineStream.eof()) {
-				vec3u face;
-				lineStream.getline(tmp, 16, '//');
-				face.x = std::stoul(tmp);
-				lineStream.getline(tmp, 16, '//');
-				face.y = std::stoul(tmp);
-				lineStream.getline(tmp, 16, ' ');
-				face.z = std::stoul(tmp);
-				sFaces.push_back(face);
+			int i = 0;
+			if (areNormalsPresent) {
+				while (!lineStream.eof()) {
+					vec3u face;
+					lineStream.getline(tmp, 16, '//');
+					face.x = std::stoul(tmp);
+					lineStream.getline(tmp, 16, '//');
+					face.y = std::stoul(tmp);
+					lineStream.getline(tmp, 16, ' ');
+					face.z = std::stoul(tmp);
+					sFaces.push_back(face);
+				}
+			} else {
+				while (!lineStream.eof()) {
+					vec3u face;
+					lineStream.getline(tmp, 16, '//');
+					face.x = std::stoul(tmp);
+					lineStream.getline(tmp, 16, ' ');
+					face.y = std::stoul(tmp);
+					face.z = 0.f;
+
+					std::cout << face << '\n';
+					sFaces.push_back(face);
+				}
 			}
 
 			// Wavefront OBJ specifies faces as triangle fans, therefore the first index stays constant.
@@ -80,5 +94,38 @@ ObjLoader::ObjLoader(const char* filename) {
 
 	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\n";
 }
+
+void ObjLoader::sanitizeObjectFile(const char* filename) {
+	std::ifstream objfile(filename, std::ios::binary);
+	if (objfile.fail()) {
+		throw std::runtime_error("Couldn't load file");
+	}
+
+	std::stringstream filestream;
+	filestream << objfile.rdbuf();
+	objfile.close();
+
+	std::string sanitizedfile;
+	std::string line;
+	while (std::getline(filestream, line)) {
+		bool numberEncountered = false;
+		
+		line.erase(line.rend().base(), 
+			std::remove_if(line.rbegin(), line.rend(), [&](unsigned char c) {
+				if (std::isdigit(static_cast<unsigned char>(c))) numberEncountered = true;
+				return c == ' ' && !numberEncountered;
+			}).base());
+
+		std::for_each(line.begin(), line.end(), [&](unsigned char c) { sanitizedfile.push_back(c); });
+		sanitizedfile.push_back('\n');
+	}
+
+	std::ofstream newobjfile(filename, std::ios::binary);
+
+	std::stringstream sanitizedFileStream(sanitizedfile);
+	newobjfile << sanitizedFileStream.rdbuf();
+	newobjfile.close();
+}
+
 
 }

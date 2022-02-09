@@ -139,4 +139,9 @@ float AxisAlignedBoundingBox::volume() const {
 	return product(max - min);
 }
 
+std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb) {
+	return os << "bmin: (" << aabb.min << ")\tbmax: (" << aabb.max << ")\n";
+}
+
+
 }

@@ -43,4 +43,6 @@ struct AxisAlignedBoundingBox {
 	vec3f min, max;
 };
 
+std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb);
+
 }

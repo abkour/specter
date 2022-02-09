@@ -7,5 +7,5 @@ Algorithms:
 
 Ray-Triangle intersection: Fast, Minimum Storage Ray/Triangle Intersection by Thomas Möller, Ben Trumbore 
 
-Ray-AABB intersection:An efficient and robust ray-box intersection algorithm. Journal of Graphics GPU and Game Tools - January 2005,
+Ray-AABB intersection: An efficient and robust ray-box intersection algorithm. Journal of Graphics GPU and Game Tools - January 2005,
 by Amy Williams, Steve Barrus, R. Keith Mörley and Peter Shirley

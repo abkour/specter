@@ -55,7 +55,7 @@ vec3u* Mesh::getFaces() {
 }
 
 std::size_t Mesh::getTriangleCount() const {
-	return faces.size();
+	return faces.size() / 3;
 }
 
 std::size_t Mesh::getVertexCount() const {

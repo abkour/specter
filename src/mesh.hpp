@@ -36,6 +36,8 @@ protected:
 	std::vector<vec2f> textureCoordinates;
 
 	std::vector<vec3u> faces;
+
+	bool areNormalsPresent = false;
 };
 
 }
