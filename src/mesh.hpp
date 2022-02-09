@@ -28,9 +28,6 @@ protected:
 
 protected:
 
-	std::size_t nVertices;
-	std::size_t nFaces;
-
 	std::vector<vec3f> vertices;
 	std::vector<vec3f> normals;
 	std::vector<vec2f> textureCoordinates;

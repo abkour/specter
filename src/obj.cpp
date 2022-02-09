@@ -13,7 +13,7 @@ ObjLoader::ObjLoader(const char* filename) {
 		throw std::runtime_error("Couldn't load file");
 	}
 
-	std::cout << "Loading file...\n";
+	std::cout << "Loading file " << filename << " ...\n";
 
 	std::vector<vec3f> sVertices;
 	std::vector<vec3f> sNormals;
@@ -43,42 +43,28 @@ ObjLoader::ObjLoader(const char* filename) {
 			sNormals.push_back(v);
 		} else if (prefix == "f") {
 			// Holds the indices to the vertices/normals/uvCoords that make up one triangle.
-			// Wavefront OBJ specifies faces as triangle fans, therefore the first index stays constant.
-			vec3u sIndices[3];
+			std::vector<vec3u> sFaces;
+			sFaces.reserve(3);
 
 			// Working array to store temporary indices.
-			char tmp[256];
-			
-			lineStream.getline(tmp, 256, '//');
-			sIndices[0].x = std::stoul(tmp);
-			lineStream.getline(tmp, 256, '//');
-			sIndices[0].y = std::stoul(tmp);
-			lineStream.getline(tmp, 256, '//');
-			sIndices[0].z = std::stoul(tmp);
-
+			char tmp[16];
+			int i = 0; 
 			while (!lineStream.eof()) {
-				lineStream.getline(tmp, 256, '//');
-				sIndices[1].x = std::stoul(tmp);
-				lineStream.getline(tmp, 256, '//');
-				sIndices[1].y = std::stoul(tmp);
-				lineStream.getline(tmp, 256, '//');
-				sIndices[1].z = std::stoul(tmp);
+				vec3u face;
+				lineStream.getline(tmp, 16, '//');
+				face.x = std::stoul(tmp);
+				lineStream.getline(tmp, 16, '//');
+				face.y = std::stoul(tmp);
+				lineStream.getline(tmp, 16, ' ');
+				face.z = std::stoul(tmp);
+				sFaces.push_back(face);
+			}
 
-				lineStream.getline(tmp, 256, '//');
-				sIndices[2].x = std::stoul(tmp);
-				lineStream.getline(tmp, 256, '//');
-				sIndices[2].y = std::stoul(tmp);
-				lineStream.getline(tmp, 256, '//');
-				sIndices[2].z = std::stoul(tmp);
-
-				// Obj faces start at index 1, therefore subtract 1.
-				sIndices[0] -= 1;
-				sIndices[1] -= 1;
-				sIndices[2] -= 1;
-
-				faces.push_back(sIndices[0]);
-				faces.push_back(sIndices[1]);
-				faces.push_back(sIndices[2]);
+			// Wavefront OBJ specifies faces as triangle fans, therefore the first index stays constant.
+			for (int i = 1; i <= sFaces.size() - 2; ++i) {
+				faces.push_back(sFaces[0]);
+				faces.push_back(sFaces[i]);
+				faces.push_back(sFaces[i + 1]);
 			}
 		}
 	}
@@ -92,7 +78,7 @@ ObjLoader::ObjLoader(const char* filename) {
 	textureCoordinates.resize(sTextureCoordinates.size());
 	std::memcpy(textureCoordinates.data(), sTextureCoordinates.data(), sizeof(vec2f) * sTextureCoordinates.size());
 
-	std::cout << "Succesfully loaded file " << filename << " in " << timer.elapsedTime() << " seconds.\n";
+	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\n";
 }
 
 }

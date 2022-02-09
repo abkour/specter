@@ -2,42 +2,37 @@
 
 namespace specter {
 
-Mesh::~Mesh() {
-	delete vertices;
-	delete normals;
-	delete textureCoordinates;
-	delete faces;
-}
+Mesh::~Mesh() {}
 
 vec3f* Mesh::getVertices() {
-	return vertices;
+	return vertices.data();
 }
 
 vec3f* Mesh::getNormals() {
-	return normals;
+	return normals.data();
 }
 
 vec2f* Mesh::getTextureCoordinates() {
-	return textureCoordinates;
+	return textureCoordinates.data();
 }
 
 vec3u* Mesh::getFaces() {
-	return faces;
+	return faces.data();
 }
 
 std::size_t Mesh::getTriangleCount() const {
-	return nFaces;
+	return faces.size();
 }
 
 std::size_t Mesh::getVertexCount() const {
-	return nVertices;
+	return vertices.size();
 }
 
 AxisAlignedBoundingBox Mesh::computeBoundingBox() const {
 	vec3f bmin(std::numeric_limits<float>::max());
 	vec3f bmax(std::numeric_limits<float>::min());
 
-	for (int i = 0; i < nVertices; ++i) {
+	for (int i = 0; i < vertices.size(); ++i) {
 		bmin.x = vertices[i].x < bmin.x ? vertices[i].x : bmin.x;
 		bmin.y = vertices[i].y < bmin.y ? vertices[i].y : bmin.y;
 		bmin.z = vertices[i].z < bmin.z ? vertices[i].z : bmin.z;

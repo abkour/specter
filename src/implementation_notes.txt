@@ -3,3 +3,5 @@ specter implementation notes:
 Matrices:
 
 - Matrices are stored as flat arrays in continous memory. 
+- Matrices are stored in row-major order, which is probably a mistake.
+
