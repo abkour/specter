@@ -8,9 +8,9 @@ Mesh::~Mesh() {}
 // For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 bool Mesh::rayIntersection(Ray* ray, const std::size_t index, float& u, float& v, float& t) const {
 	const float epsilon = 0.0000001;
-	const vec3f v0 = vertices[faces[(index + 0) * 3].x];
-	const vec3f v1 = vertices[faces[(index + 1) * 3].x];
-	const vec3f v2 = vertices[faces[(index + 2) * 3].x];
+	const vec3f v0 = vertices[faces[index * 3 + 0].x];
+	const vec3f v1 = vertices[faces[index * 3 + 1].x];
+	const vec3f v2 = vertices[faces[index * 3 + 2].x];
 	const vec3f edge0 = v1 - v0;
 	const vec3f edge1 = v2 - v0;
 	
