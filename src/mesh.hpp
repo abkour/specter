@@ -13,6 +13,8 @@ struct Mesh {
 
 	virtual ~Mesh();
 
+	// Implements the möller&trumbore algorithm.
+	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 	bool rayIntersection(Ray* ray, const std::size_t index, float& u, float &v, float& t) const;
 
 	vec3f* getVertices();
