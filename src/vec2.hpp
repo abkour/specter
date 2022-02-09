@@ -8,6 +8,7 @@ template<typename T>
 struct vec2 {
 
 	vec2() = default;
+	vec2(T value);
 	vec2(T x, T y);
 	vec2(const vec2<T>& other);
 	vec2& operator=(const vec2<T>& other);
@@ -48,6 +49,12 @@ struct vec2 {
 		T v[2];
 	};
 };
+
+template<typename T>
+vec2<T>::vec2(T value)
+	: x(value)
+	, y(value)
+{}
 
 template<typename T>
 vec2<T>::vec2(T x, T y) 

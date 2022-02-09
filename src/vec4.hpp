@@ -8,6 +8,7 @@ template<typename T>
 struct vec4 {
 
 	vec4() = default;
+	vec4(T value);
 	vec4(T x, T y, T z, T w);
 	vec4(const vec4<T>&other);
 	vec4(vec4<T> && other);
@@ -49,6 +50,14 @@ struct vec4 {
 		T v[4];
 	};
 };
+
+template<typename T>
+vec4<T>::vec4(T value) 
+	: x(value)
+	, y(value)
+	, z(value)
+	, w(value)
+{}
 
 template<typename T>
 vec4<T>::vec4(T x, T y, T z, T w) 
