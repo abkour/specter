@@ -166,7 +166,7 @@ bool AxisAlignedBoundingBox::rayIntersectsOptimistic(const Ray& ray, float& near
 }
 
 vec3f AxisAlignedBoundingBox::center() const {
-	return vec3f(min + (max - min) / 2);
+	return vec3f((min + max) / 2);
 }
 
 float AxisAlignedBoundingBox::surfaceArea() const {
