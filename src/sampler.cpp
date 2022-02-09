@@ -1,11 +1,11 @@
+/*
+	Implementations credited to Physically Based Rendering: From Theory To Implementation 3rd ed,
+	13.6 2D Sampling with Multidemnsional Transformations
+*/
+
 #include "sampler.hpp"
 
 namespace specter {
-
-/*
-	Implementations credited to Physically Based Rendering: From Theory To Implementation 3rd ed, 
-	13.6 2D Sampling with Multidemnsional Transformations
-*/
 
 constexpr float PI = 3.14159265359;
 constexpr float PIHalf = PI / 2.f;
