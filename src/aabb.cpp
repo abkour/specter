@@ -46,7 +46,6 @@ bool AxisAlignedBoundingBox::overlapsEdgeInclusive(const AxisAlignedBoundingBox&
 	return min <= other.max && max >= other.min;
 }
 
-// Implements the improved slab method, credit to Tavian Barnes. Modified to the 3D case.
 bool AxisAlignedBoundingBox::rayIntersects(const Ray& ray) const {
 	double tx1 = (min.x - ray.o.x) * ray.invd.x;
 	double tx2 = (max.x - ray.o.x) * ray.invd.x;
@@ -69,9 +68,6 @@ bool AxisAlignedBoundingBox::rayIntersects(const Ray& ray) const {
 	return tmin <= tmax;
 }
 
-// Implements the improved slab method, credit to Tavian Barnes. Modified to the 3D case.
-// Near stores parameter t related to the entry intersection point.
-// Far stores the paramter t related to the exit intersection point.
 bool AxisAlignedBoundingBox::rayIntersects(const Ray& ray, float& near, float& far) const {
 	double tx1 = (min.x - ray.o.x) * ray.invd.x;
 	double tx2 = (max.x - ray.o.x) * ray.invd.x;
@@ -104,10 +100,6 @@ bool AxisAlignedBoundingBox::rayIntersects(const Ray& ray, float& near, float& f
 	return tmin <= tmax;
 }
 
-// Implements the improved slab method, credit to Tavian Barnes. Modified to the 3D case.
-// Near stores parameter t related to the entry intersection point.
-// Far stores the paramter t related to the exit intersection point.
-// Additionally, it is assumed that ray.o is outside the bounding box. The algorithm is ill behaving otherwise.
 bool AxisAlignedBoundingBox::rayIntersectsOptimistic(const Ray& ray, float& near, float& far) const {
 	double tx1 = (min.x - ray.o.x) * ray.invd.x;
 	double tx2 = (max.x - ray.o.x) * ray.invd.x;
