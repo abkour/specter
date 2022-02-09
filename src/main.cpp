@@ -4,4 +4,7 @@
 #include "mat3.hpp"
 #include "mat4.hpp"
 
+#include <sstream>
+#include <string>
+
 int main(int argc, const char** argv) {}
