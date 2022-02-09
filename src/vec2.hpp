@@ -39,7 +39,7 @@ struct vec2 {
 	vec2<T>& operator/=(const U s);
 
 	T operator[](const std::size_t index) const;
-	T& operator[](const std::size_t index)
+	T& operator[](const std::size_t index);
 
 	union {
 		struct {
