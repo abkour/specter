@@ -35,7 +35,8 @@ struct vec3 {
 	vec3<T>& operator*=(const T s);
 	vec3<T>& operator/=(const T s);
 
-	T operator[](int index) const;
+	T operator[](const std::size_t index) const;
+	T& operator[](const std::size_t index);
 
 	union {
 		struct {
@@ -231,10 +232,14 @@ vec3<T>& vec3<T>::operator/=(const T s) {
 }
 
 template<typename T>
-T vec3<T>::operator[](int index) const {
+T vec3<T>::operator[](const std::size_t index) const {
 	return v[index];
 }
 
+template<typename T>
+T& vec3<T>::operator[](const std::size_t index) {
+	return v[index];
+}
 
 template<typename T>
 vec3<T> minComponent(const vec3<T>& v0, const vec3<T>& v1) {
@@ -299,7 +304,7 @@ vec3<T> cross(const vec3<T>& v0, const vec3<T>& v1) {
 }
 
 template<typename T>
-vec3<T> inverse(const vec3<T>& v) {
+vec3<T> invert(const vec3<T>& v) {
 	return vec3<T>(-v.x, -v.y, -v.z);
 }
 

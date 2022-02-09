@@ -38,7 +38,8 @@ struct vec2 {
 	template<typename U>
 	vec2<T>& operator/=(const U s);
 
-	T operator[](int index) const;
+	T operator[](const std::size_t index) const;
+	T& operator[](const std::size_t index)
 
 	union {
 		struct {
@@ -218,10 +219,14 @@ vec2<T>& vec2<T>::operator/=(const U s) {
 }
 
 template<typename T>
-T vec2<T>::operator[](int index) const {
+T vec2<T>::operator[](const std::size_t index) const {
 	return v[index];
 }
 
+template<typename T>
+T& vec2<T>::operator[](const std::size_t index) {
+	return v[index];
+}
 
 template<typename T>
 vec2<T> minComponent(const vec2<T>& v0, const vec2<T>& v1) {
@@ -270,7 +275,7 @@ vec2<T> normalize(const vec2<T>& v) {
 }
 
 template<typename T>
-vec2<T> inverse(const vec2<T>& v) {
+vec2<T> invert(const vec2<T>& v) {
 	return vec2<T>(-v.x, -v.y);
 }
 
