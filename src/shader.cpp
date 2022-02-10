@@ -43,11 +43,12 @@ void Shader::create() {
 		try {
 			verifyShaderIntegrity(std::get<GLenum>(shader), shaderIds.back(), GL_COMPILE_STATUS);
 		} catch (std::runtime_error& e) {
+			std::cout << e.what();
 			std::for_each(shaderIds.begin(), shaderIds.end(), [](GLuint shaderId) { glDeleteShader(shaderId); });
 			throw std::runtime_error("Shader creation failed!");
 		} catch (...) {
 			std::for_each(shaderIds.begin(), shaderIds.end(), [](GLuint shaderId) { glDeleteShader(shaderId); });
-			throw std::runtime_error("Unexpected error during shader validation stage!");
+			throw std::runtime_error("Unexpected error during shader validation stage. Shader creation failed!");
 		}
 	}
 
@@ -64,7 +65,7 @@ void Shader::create() {
 		throw std::runtime_error("Shader creation failed!");
 	} catch (...) {
 		std::for_each(shaderIds.begin(), shaderIds.end(), [](GLuint shaderId) { glDeleteShader(shaderId); });
-		throw std::runtime_error("Unexpected error during shader validation stage!");
+		throw std::runtime_error("Unexpected error during shader validation stage. Shader creation failed!");
 	}
 
 	std::for_each(shaderIds.begin(), shaderIds.end(), [](GLuint shaderId) { glDeleteShader(shaderId); });
