@@ -44,7 +44,6 @@ struct vec3 {
 		};
 		T v[3];
 	};
-
 };
 
 template<typename T>

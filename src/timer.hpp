@@ -12,7 +12,6 @@ struct Timer {
 private:
 
 	std::chrono::high_resolution_clock::time_point start, end;
-
 };
 
 }

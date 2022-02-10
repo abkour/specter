@@ -9,23 +9,21 @@ namespace specter {
 struct Shader {
 
 	Shader(std::initializer_list<std::pair<GLenum, std::string>>&& shaders)
-		: m_shaders(shaders)
-		, m_programId(0)
+		: shaders(shaders)
+		, programId(0)
 	{}
 
 	~Shader();
 
-	void bind() const;
-	void create() const;
+	void create();
 
+	void bind() const;
 	GLuint id() const;
 
 protected:
 
-	std::vector<std::string> include_directories;
-	std::vector<std::pair<GLenum, std::string>> m_shaders;
-
-	GLuint m_programId;
+	std::vector<std::pair<GLenum, std::string>> shaders;
+	GLuint programId;
 };
 
 }
