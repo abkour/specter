@@ -9,14 +9,13 @@
 #include "common_math.hpp"
 #include "window.hpp"
 
-
 int main(int argc, const char** argv) {
 	try {
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
 		specter::ObjLoader objLoader(filename);
 		const specter::vec3f eyepos(0.f, 0.f, -2.f);
 		const specter::vec3f eyetarget(0.f);
-		const specter::vec2f screen_resolution(728, 728);
+		const specter::vec2u screen_resolution(728, 728);
 		const float fov = specter::radians(45.f);
 		specter::Camera camera(screen_resolution);
 		camera.initializeVariables(eyepos, eyetarget, fov);
@@ -49,7 +48,39 @@ int main(int argc, const char** argv) {
 			}
 		}
 
-		specter::Window window(specter::WindowMode::BORDERLESS, specter::vec2u(1000, 500), "sometitle");
+		specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "sometitle");
+
+		GLuint rtx_texture;
+		glGenTextures(1, &rtx_texture);
+		glBindTexture(GL_TEXTURE_2D, rtx_texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_resolution.x, screen_resolution.y, 0, GL_RGB, GL_FLOAT, frame.data());
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		static const float quad[] = {
+			// Vertices		// Texture Coordinates
+			-1.f, -1.f,		0.f, 0.f,
+			1.f, -1.f,		1.f, 0.f,
+			1.f, 1.f,		1.f, 1.f,
+
+			-1.f, -1.f,		0.f, 0.f,
+			1.f, 1.f,		1.f, 1.f,
+			-1.f, 1.f,		0.f, 1.f
+		};
+
+		GLuint quadvao, quadvbo;
+		glGenVertexArrays(1, &quadvao);
+		glGenBuffers(1, &quadvbo);
+		glBindVertexArray(quadvao);
+		glBindBuffer(GL_ARRAY_BUFFER, quadvbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+
+		glDeleteVertexArrays(1, &quadvao);
+		glDeleteBuffers(1, &quadvbo);
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();

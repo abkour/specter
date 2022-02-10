@@ -4,7 +4,7 @@
 
 namespace specter {
 
-Camera::Camera(const vec2f resolution) 
+Camera::Camera(const vec2u resolution) 
 	: resolution(resolution)
 	, eyepos(0)
 	, shiftx(0)
