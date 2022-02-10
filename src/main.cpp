@@ -8,13 +8,14 @@
 #include "camera.hpp"
 #include "common_math.hpp"
 #include "window.hpp"
+#include "shader.hpp"
 
 int main(int argc, const char** argv) {
 	try {
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
 		specter::ObjLoader objLoader(filename);
-		const specter::vec3f eyepos(0.f, 0.f, -2.f);
-		const specter::vec3f eyetarget(0.f);
+		const specter::vec3f eyepos(0.f, 0.f, -1.5f);
+		const specter::vec3f eyetarget(0.f, 0.f, 1.f);
 		const specter::vec2u screen_resolution(728, 728);
 		const float fov = specter::radians(45.f);
 		specter::Camera camera(screen_resolution);
@@ -75,12 +76,36 @@ int main(int argc, const char** argv) {
 		glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+
+
+		specter::Shader shader
+		{
+			{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.vs" },
+			{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.fs" }
+		};
+		shader.create();
+		shader.bind();
+
+		while (!glfwWindowShouldClose(window.getWindow())) {
+			glClearColor(0.f, 0.f, 0.f, 0.f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+				glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
+			}
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			glfwSwapBuffers(window.getWindow());
+			glfwPollEvents();
+		}
 
 		glDeleteVertexArrays(1, &quadvao);
 		glDeleteBuffers(1, &quadvbo);
+		glDeleteTextures(1, &rtx_texture);
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();
