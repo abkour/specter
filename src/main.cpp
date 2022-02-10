@@ -7,6 +7,8 @@
 #include "obj.hpp"
 #include "camera.hpp"
 #include "common_math.hpp"
+#include "window.hpp"
+
 
 int main(int argc, const char** argv) {
 	try {
@@ -47,6 +49,7 @@ int main(int argc, const char** argv) {
 			}
 		}
 
+		specter::Window window(specter::WindowMode::BORDERLESS, specter::vec2u(1000, 500), "sometitle");
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();
