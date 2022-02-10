@@ -45,7 +45,6 @@ ObjLoader::ObjLoader(const char* filename) {
 			// Holds the indices to the vertices/normals/uvCoords that make up one triangle.
 			std::vector<vec3u> sFaces;
 			sFaces.reserve(3);
-			std::cout << line << '\n';
 			// Working array to store temporary indices.
 			char tmp[16];
 			int i = 0;
@@ -68,8 +67,6 @@ ObjLoader::ObjLoader(const char* filename) {
 					lineStream.getline(tmp, 16, ' ');
 					face.y = std::stoul(tmp);
 					face.z = 0.f;
-
-					std::cout << face << '\n';
 					sFaces.push_back(face);
 				}
 			}
