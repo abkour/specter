@@ -97,6 +97,14 @@ vec3u* Mesh::getFaces() {
 	return faces.data();
 }
 
+std::size_t Mesh::getNormalCount() const {
+	return normals.size();
+}
+
+std::size_t Mesh::getTextureCoordinateCount() const {
+	return textureCoordinates.size();
+}
+
 std::size_t Mesh::getTriangleCount() const {
 	return faces.size() / 3;
 }

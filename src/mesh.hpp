@@ -26,6 +26,8 @@ struct Mesh {
 	vec2f* getTextureCoordinates();
 	vec3u* getFaces();
 
+	std::size_t getNormalCount() const;
+	std::size_t getTextureCoordinateCount() const;
 	std::size_t getTriangleCount() const;
 	std::size_t getVertexCount() const;
 

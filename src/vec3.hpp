@@ -269,6 +269,11 @@ T maxComponent(const vec3<T>& v) {
 }
 
 template<typename T>
+vec3<T> abs(const vec3<T>& v) {
+	return vec3<T>(std::abs(v.x), std::abs(v.y), std::abs(v.z));
+}
+
+template<typename T>
 T product(const vec3<T>& v) {
 	return v.x * v.y * v.z;
 }
