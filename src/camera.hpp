@@ -11,7 +11,7 @@ struct Camera {
 	Camera(const vec2u resolution);
 
 	// Needs to be called every time either of the three arguments change.
-	void initializeVariables(const vec3f& pos, const vec3f& dir, const float fov);
+	void initializeVariables(const vec3f& pos, const vec3f& dir, const float fov, const unsigned nSamples);
 
 	Ray getRay(const vec2u& pixelLocation);
 

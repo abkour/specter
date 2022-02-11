@@ -12,7 +12,7 @@ Camera::Camera(const vec2u resolution)
 	, topLeftPixel(0)
 {}
 
-void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float fov) {
+void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float fov, const unsigned nSamples) {
 	eyepos = pos;
 	const vec3f T(dir - pos);
 	const vec3f up(0.f, 1.f, 0.f);
@@ -23,8 +23,10 @@ void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float
 	const float gx = std::tan(radians(fov / 2.f));
 	const float gy = gx * ((resolution.y - 1) / (resolution.x - 1));
 	
-	shiftx = right_norm * ((2 * gx) / (resolution.x - 1));
-	shifty = up_norm * ((2 * gy) / (resolution.y - 1));
+	float samplesPerDirection = std::sqrt(nSamples);
+
+	shiftx = right_norm * ((2 * gx) / ((resolution.x - 1) * samplesPerDirection));
+	shifty = up_norm * ((2 * gy) / ((resolution.y - 1) * samplesPerDirection));
 	topLeftPixel = t_norm - (right_norm * gx) - (up_norm * gy);
 }
 

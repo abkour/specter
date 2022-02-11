@@ -21,32 +21,51 @@ int main(int argc, const char** argv) {
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(728, 728);
 		specter::Camera camera(screen_resolution);
-		camera.initializeVariables(eyepos, eyetarget, 90.f);
+		const unsigned nSamplesPerPixel = 4;
+		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
+		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
 		
 		std::vector<specter::vec3f> frame;
 		frame.resize(specter::product(screen_resolution));
 
 		for (int y = 0; y < screen_resolution.y; ++y) {
 			for (int x = 0; x < screen_resolution.x; ++x) {
-				const specter::Ray ray = camera.getRay(specter::vec2u(x + 1, y + 1));
-				float mint = std::numeric_limits<float>::max();
-				unsigned f = std::numeric_limits<unsigned>::max();
-				for (int i = 0; i < objLoader.getTriangleCount(); ++i) {
-					float u, v, t;
-					if (objLoader.rayIntersectionV2(ray, i, u, v, t)) {
-						if (t < mint && t > 0.f) {
-							mint = t;
-							f = i;
+				unsigned fs[nSamplesPerPixel];
+				std::fill_n(fs, nSamplesPerPixel, std::numeric_limits<unsigned>::max());
+				for (int px = 0; px < nSamplesPerDirection; px++) {
+					for (int py = 0; py < nSamplesPerDirection; py++) {
+						const unsigned spi = py * nSamplesPerDirection + px;
+						const unsigned spx = x * nSamplesPerDirection + 1;
+						const unsigned spy = y * nSamplesPerDirection + 1;
+						const specter::Ray ray = camera.getRay(specter::vec2u(spx + px, spy + py));
+						
+						float mint = std::numeric_limits<float>::max();
+						
+						for (int i = 0; i < objLoader.getTriangleCount(); ++i) {
+							float u, v, t;
+							if (objLoader.rayIntersectionV2(ray, i, u, v, t)) {
+								if (t < mint && t > 0.f) {
+									mint = t;
+									fs[spi] = i;
+								}
+							}
 						}
 					}
 				}
 
-				if (f != std::numeric_limits<unsigned>::max()) {
-					unsigned normalIndex = objLoader.getFace(f).z;
-					specter::vec3f normal = objLoader.getNormal(normalIndex);
-					const std::size_t index = y * screen_resolution.x + x;
-					frame[index] = abs(normal);
+				specter::vec3f cumulativeColor(0.f);
+
+				for (int i = 0; i < nSamplesPerPixel; ++i) {
+					if (fs[i] != std::numeric_limits<unsigned>::max()) {
+						unsigned normalIndex = objLoader.getFace(fs[i]).z;
+						specter::vec3f normal = objLoader.getNormal(normalIndex);
+						cumulativeColor += abs(normal);
+					} 
 				}
+
+				const std::size_t index = y * screen_resolution.x + x;
+				cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+				frame[index] = cumulativeColor;
 			}
 		}
 
@@ -94,7 +113,6 @@ int main(int argc, const char** argv) {
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
 		
-
 		while (!glfwWindowShouldClose(window.getWindow())) {
 			glClearColor(0.f, 0.f, 0.f, 0.f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
