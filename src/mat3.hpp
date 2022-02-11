@@ -30,8 +30,7 @@ struct mat3 {
 	mat3<T>& operator*=(const T s);
 	mat3<T>& operator/=(const T s);
 
-	T operator[](const std::size_t index) const;
-	T& operator[](const std::size_t index);
+	T* operator[](const std::size_t index);
 
 	vec3<T> col(const std::size_t index) const;
 	vec3<T> row(const std::size_t index) const;
@@ -41,21 +40,21 @@ struct mat3 {
 
 template<typename T>
 mat3<T>::mat3(const T value) {
-	data[0] = data[4] = data[8] = value;
+	data[0][0] = data[1][1] = data[2][2] = value;
 }
 
 template<typename T>
 mat3<T>::mat3(const vec3<T>& v)  {
-	data[0] = v[0]; data[1] = v[1]; data[2] = v[2];
-	data[3] = v[0]; data[4] = v[1]; data[5] = v[2];
-	data[6] = v[0]; data[7] = v[1]; data[8] = v[2];
+	data[0][0] = v[0]; data[0][1] = v[1]; data[0][2] = v[2];
+	data[1][0] = v[0]; data[1][1] = v[1]; data[1][2] = v[2];
+	data[2][0] = v[0]; data[2][1] = v[1]; data[2][2] = v[2];
 }
 
 template<typename T>
 mat3<T>::mat3(const vec3<T>& col0, const vec3<T>& col1, const vec3<T>& col2) {
-	data[0] = col0[0]; data[3] = col0[1]; data[6] = col0[2];
-	data[1] = col1[0]; data[4] = col1[1]; data[5] = col1[2];
-	data[2] = col2[0]; data[7] = col2[1]; data[8] = col2[2];
+	data[0][0] = col0[0]; data[1][0] = col0[1]; data[2][0] = col0[2];
+	data[0][1] = col1[0]; data[1][1] = col1[1]; data[1][2] = col1[2];
+	data[0][2] = col2[0]; data[2][1] = col2[1]; data[2][2] = col2[2];
 }
 
 template<typename T>
@@ -127,15 +126,15 @@ template<typename T>
 mat3<T> mat3<T>::operator*(const mat3<T>& other) {
 	mat3<T> result;
 
-	result[0] = data[0] * other[0] + data[1] * other[3] + data[2] * other[6];
-	result[1] = data[0] * other[1] + data[1] * other[4] + data[2] * other[7];
-	result[2] = data[0] * other[2] + data[1] * other[5] + data[2] * other[8];
-	result[3] = data[3] * other[0] + data[4] * other[3] + data[5] * other[6];
-	result[4] = data[3] * other[1] + data[4] * other[4] + data[5] * other[7];
-	result[5] = data[3] * other[2] + data[4] * other[5] + data[5] * other[8];
-	result[6] = data[6] * other[0] + data[7] * other[3] + data[8] * other[6];
-	result[7] = data[6] * other[1] + data[7] * other[4] + data[8] * other[7];
-	result[8] = data[6] * other[2] + data[7] * other[5] + data[8] * other[8];
+	result[0][0] = data[0][0] * other[0][0] + data[0][1] * other[1][0] + data[0][2] * other[2][0];
+	result[0][1] = data[0][0] * other[0][1] + data[0][1] * other[1][1] + data[0][2] * other[2][1];
+	result[0][2] = data[0][0] * other[0][2] + data[0][1] * other[1][2] + data[0][2] * other[2][2];
+	result[1][0] = data[1][0] * other[0][0] + data[1][1] * other[1][0] + data[1][2] * other[2][0];
+	result[1][1] = data[1][0] * other[0][1] + data[1][1] * other[1][1] + data[1][2] * other[2][1];
+	result[1][2] = data[1][0] * other[0][2] + data[1][1] * other[1][2] + data[1][2] * other[2][2];
+	result[2][0] = data[2][0] * other[0][0] + data[2][1] * other[1][0] + data[2][2] * other[2][0];
+	result[2][1] = data[2][0] * other[0][1] + data[2][1] * other[1][1] + data[2][2] * other[2][1];
+	result[2][2] = data[2][0] * other[0][2] + data[2][1] * other[1][2] + data[2][2] * other[2][2];
 
 	return result;
 }
@@ -144,15 +143,15 @@ template<typename T>
 mat3<T>& mat3<T>::operator*=(const mat3<T>& other) {
 	mat3<T> result;
 
-	result[0] = data[0] * other[0] + data[1] * other[3] + data[2] * other[6];
-	result[1] = data[0] * other[1] + data[1] * other[4] + data[2] * other[7];
-	result[2] = data[0] * other[2] + data[1] * other[5] + data[2] * other[8];
-	result[3] = data[3] * other[0] + data[4] * other[3] + data[5] * other[6];
-	result[4] = data[3] * other[1] + data[4] * other[4] + data[5] * other[7];
-	result[5] = data[3] * other[2] + data[4] * other[5] + data[5] * other[8];
-	result[6] = data[6] * other[0] + data[7] * other[3] + data[8] * other[6];
-	result[7] = data[6] * other[1] + data[7] * other[4] + data[8] * other[7];
-	result[8] = data[6] * other[2] + data[7] * other[5] + data[8] * other[8];
+	result[0][0] = data[0][0] * other[0][0] + data[0][1] * other[1][0] + data[0][2] * other[2][0];
+	result[0][1] = data[0][0] * other[0][1] + data[0][1] * other[1][1] + data[0][2] * other[2][1];
+	result[0][2] = data[0][0] * other[0][2] + data[0][1] * other[1][2] + data[0][2] * other[2][2];
+	result[1][0] = data[1][0] * other[0][0] + data[1][1] * other[1][0] + data[1][2] * other[2][0];
+	result[1][1] = data[1][0] * other[0][1] + data[1][1] * other[1][1] + data[1][2] * other[2][1];
+	result[1][2] = data[1][0] * other[0][2] + data[1][1] * other[1][2] + data[1][2] * other[2][2];
+	result[2][0] = data[2][0] * other[0][0] + data[2][1] * other[1][0] + data[2][2] * other[2][0];
+	result[2][1] = data[2][0] * other[0][1] + data[2][1] * other[1][1] + data[2][2] * other[2][1];
+	result[2][2] = data[2][0] * other[0][2] + data[2][1] * other[1][2] + data[2][2] * other[2][2];
 
 	*this = result;
 	return *this;
@@ -193,13 +192,8 @@ mat3<T>& mat3<T>::operator/=(const T s) {
 }
 
 template<typename T>
-T mat3<T>::operator[](const std::size_t index) const {
-	return data[index];
-}
-
-template<typename T>
-T& mat3<T>::operator[](const std::size_t index) {
-	return data[index];
+T* mat3<T>::operator[](const std::size_t index) {
+	return &data[index * 3];
 }
 
 template<typename T>
@@ -214,22 +208,22 @@ vec3<T> mat3<T>::row(const std::size_t index) const {
 
 template<typename T>
 T trace(const mat3<T>& m) {
-	return m[0] + m[4] + m[8];
+	return m[0][0] + m[1][1] + m[2][2];
 }
 
 template<typename T>
 T determinant(const mat3<T>& m) {
-	return	m[0] * m[4] * m[8] - m[0] * m[5] * m[7]
-		+	m[1] * m[5] * m[6] - m[1] * m[3] * m[8]
-		+	m[2] * m[3] * m[7] - m[2] * m[4] * m[6];
+	return	m[0][0] * m[1][1] * m[2][2] - m[0][0] * m[1][2] * m[2][1]
+		+	m[0][1] * m[1][2] * m[2][0] - m[0][1] * m[1][0] * m[2][2]
+		+	m[0][2] * m[1][0] * m[2][1] - m[0][2] * m[1][1] * m[2][0];
 }
 
 template<typename T>
 mat3<T> transpose(const mat3<T>& other) {
 	mat3<T> tmat3(other);
-	std::swap(tmat3[1], tmat3[3]);
-	std::swap(tmat3[2], tmat3[6]);
-	std::swap(tmat3[5], tmat3[7]);
+	std::swap(tmat3[0][1], tmat3[1][0]);
+	std::swap(tmat3[0][2], tmat3[2][0]);
+	std::swap(tmat3[1][2], tmat3[2][1]);
 	return tmat3;
 }
 
@@ -238,15 +232,15 @@ mat3<T> inverse(const mat3<T>& m) {
 	T det = determinant(m);
 
 	mat3<T> inverseMat;
-	inverseMat[0] = + m[4] * m[8] - m[5] * m[7];
-	inverseMat[1] = - m[1] * m[8] + m[2] * m[7];
-	inverseMat[2] = + m[1] * m[5] - m[2] * m[4];
-	inverseMat[3] = - m[3] * m[8] + m[5] * m[6];
-	inverseMat[4] = + m[0] * m[8] - m[2] * m[6];
-	inverseMat[5] = - m[0] * m[5] + m[2] * m[3];
-	inverseMat[6] = + m[3] * m[7] - m[4] * m[6];
-	inverseMat[7] = - m[0] * m[7] + m[1] * m[6];
-	inverseMat[8] = + m[0] * m[4] - m[1] * m[3];
+	inverseMat[0][0] = +m[1][1] * m[2][2] - m[1][2] * m[2][1];
+	inverseMat[0][1] = -m[0][1] * m[2][2] + m[0][2] * m[2][1];
+	inverseMat[0][2] = +m[0][1] * m[1][2] - m[0][2] * m[1][1];
+	inverseMat[1][0] = -m[1][0] * m[2][2] + m[1][2] * m[2][0];
+	inverseMat[1][1] = +m[0][0] * m[2][2] - m[0][2] * m[2][0];
+	inverseMat[1][2] = -m[0][0] * m[1][2] + m[0][2] * m[1][0];
+	inverseMat[2][0] = +m[1][0] * m[2][1] - m[1][1] * m[2][0];
+	inverseMat[2][1] = -m[0][0] * m[2][1] + m[0][1] * m[2][0];
+	inverseMat[2][2] = +m[0][0] * m[1][1] - m[0][1] * m[1][0];
 
 	inverseMat /= det;
 	return inverseMat;
@@ -254,8 +248,8 @@ mat3<T> inverse(const mat3<T>& m) {
 
 template<typename T>
 bool isIdentity(const mat3<T>& m) {
-	bool isDiagonalOne = m[0] == m[4] == m[8] == static_cast<T>(1);
-	bool isOutsideNull = m[1] == m[2] == m[3] == m[5] == m[6] == m[7] == static_cast<T>(0);
+	bool isDiagonalOne = m[0][0] == m[1][1] == m[2][2] == static_cast<T>(1);
+	bool isOutsideNull = m[0][1] == m[0][2] == m[1][0] == m[1][2] == m[2][0] == m[2][1] == static_cast<T>(0);
 	return isDiagonalOne && isOutsideNull;
 }
 
