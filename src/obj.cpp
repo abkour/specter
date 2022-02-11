@@ -52,21 +52,21 @@ ObjLoader::ObjLoader(const char* filename) {
 				while (!lineStream.eof()) {
 					vec3u face;
 					lineStream.getline(tmp, 16, '//');
-					face.x = std::stoul(tmp);
+					face.x = std::stoul(tmp) - 1;
 					lineStream.getline(tmp, 16, '//');
-					face.y = std::stoul(tmp);
+					face.y = std::stoul(tmp) - 1;
 					lineStream.getline(tmp, 16, ' ');
-					face.z = std::stoul(tmp);
+					face.z = std::stoul(tmp) - 1;
 					sFaces.push_back(face);
 				}
 			} else {
 				while (!lineStream.eof()) {
 					vec3u face;
 					lineStream.getline(tmp, 16, '//');
-					face.x = std::stoul(tmp);
+					face.x = std::stoul(tmp) - 1;
 					lineStream.getline(tmp, 16, ' ');
-					face.y = std::stoul(tmp);
-					face.z = 0.f;
+					face.y = std::stoul(tmp) - 1;
+					face.z = 0;
 					sFaces.push_back(face);
 				}
 			}

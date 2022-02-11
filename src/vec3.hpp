@@ -315,6 +315,11 @@ vec3<T> reflect(const vec3<T>& v, const vec3<T>& n) {
 }
 
 template<typename T>
+T angle(const vec3<T>& v0, const vec3<T>& v1) {
+	return std::acos(std::clamp(dot(v0, v1), T(-1), T(1)));
+}
+
+template<typename T>
 std::ostream& operator<<(std::ostream& os, const vec3<T>& v) {
 	return os << v.x << ", " << v.y << ", " << v.z;
 }

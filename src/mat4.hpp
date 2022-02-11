@@ -1,4 +1,5 @@
 #pragma once
+#include "vec3.hpp"
 #include "vec4.hpp"
 
 namespace specter {
@@ -260,6 +261,50 @@ bool isIdentity(const mat4<T>& m) {
 	bool isDiagonalOne = m[0] == m[5] == m[10] == m[15] == static_cast<T>(1);
 	bool isOutsideNull = m[1] == m[2] == m[3] == m[4] == m[6] == m[7] == m[8] == m[9] == m[11] == m[12] == m[13] == m[14] == static_cast<T>(0);
 	return isDiagonalOne && isOutsideNull;
+}
+
+inline mat4<float> lookAt(const vec3f& pos, const vec3f& dir, const vec3f& up) {
+	const vec3f t = normalize(dir - pos);
+	const vec3f s = normalize(cross(vec3f(0.f, 1.f, 0.f), t));
+	const vec3f u = cross(s, t);
+	mat4<float> result;
+	result[0] = s.x;
+	result[1] = u.x;
+	result[2] = t.x;
+	result[4] = s.y;
+	result[5] = u.y;
+	result[6] = t.y;
+	result[8] = s.z;
+	result[9] = u.z;
+	result[10] = t.z;
+	result[12] = dot(invert(pos), s);
+	result[13] = dot(invert(pos), u);
+	result[14] = dot(invert(pos), t);
+	result[15] = 1.f;
+	return result;
+}
+
+inline mat4<float> orthogonal(const float b, const float t, const float l, const float r, const float near, const float far) {
+	mat4<float> result;
+	result[0] = 2.f / (r - l);
+	result[5] = 2.f / (t - b);
+	result[10] = -2.f / (far - near);
+	result[15] = 1.f;
+	result[3] = -(r + l) / (r - l);
+	result[7] = -(t + b) / (t - b);
+	result[11] = -(far + near) / (far - near);
+	return result;
+}
+
+inline mat4<float> perspective(const float fov, const float aspectRatio, const float near, const float far) {
+	const float tanHalfFov = std::tan(fov / 2.f);
+	mat4<float> result(0.f);
+	result[0] = 1.f / (aspectRatio * tanHalfFov);
+	result[5] = 1.f / tanHalfFov;
+	result[10] = -(far + near) / (far - near);
+	result[11] = (-2.f * far * near) / (far - near);
+	result[14] = -1.f;
+	return result;
 }
 
 template<typename T>

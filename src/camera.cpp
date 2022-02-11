@@ -5,7 +5,7 @@
 namespace specter {
 
 Camera::Camera(const vec2u resolution) 
-	: resolution(resolution)
+	: resolution(vec2f(static_cast<float>(resolution.x), static_cast<float>(resolution.y)))
 	, eyepos(0)
 	, shiftx(0)
 	, shifty(0)
@@ -31,7 +31,7 @@ void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float
 Ray Camera::getRay(const vec2u& pixelLocation) {
 	vec3f origin = eyepos;
 	vec3f direction = topLeftPixel + (shiftx * (pixelLocation.x - 1)) + (shifty * (pixelLocation.y - 1));
-	return Ray(origin, direction);
+	return Ray(origin, normalize(direction));
 }
 
 }

@@ -4,11 +4,10 @@ namespace specter {
 
 // Implements the möller&trumbore algorithm.
 // For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
-bool Mesh::rayIntersection(Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
+bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
 	const float epsilon = 0.0000001;
-	const vec3f v0 = vertices[faces[index * 3 + 0].x];
-	const vec3f v1 = vertices[faces[index * 3 + 1].x];
-	const vec3f v2 = vertices[faces[index * 3 + 2].x];
+	const unsigned i0 = faces[index * 3 + 0].x, i1 = faces[index * 3 + 1].x, i2 = faces[index * 3 + 2].x;
+	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 	const vec3f edge0 = v1 - v0;
 	const vec3f edge1 = v2 - v0;
 	
@@ -38,12 +37,44 @@ bool Mesh::rayIntersection(Ray& ray, const std::size_t index, float& u, float& v
 	return false;
 }
 
+bool Mesh::rayIntersectionV2(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
+	const float epsilon = 0.0000001;
+	const unsigned i0 = faces[index * 3 + 0].x, i1 = faces[index * 3 + 1].x, i2 = faces[index * 3 + 2].x;
+	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
+
+	vec3f e0 = v1 - v0;
+	vec3f e1 = v2 - v0;
+
+	vec3f q = cross(ray.d, e1);
+	float a = dot(e0, q);
+
+	if (a > -epsilon && a < epsilon) return false;
+
+	float f = 1.f / a;
+	vec3f s = ray.o - v0;
+	u = f * dot(s, q);
+
+	if (u < 0.f) return false;
+
+	vec3f r = cross(s, e0);
+	v = f * dot(ray.d, r);
+
+	if (v < 0.f || u + v > 1.f) return false;
+
+	t = f * dot(e1, r);
+	return true;
+}
+
 vec3f Mesh::getVertex(const std::size_t i) const {
 	return vertices[i];
 }
 
 vec3f Mesh::getNormal(const std::size_t i) const {
 	return normals[i];
+}
+
+vec3u Mesh::getFace(const std::size_t i) const {
+	return faces[i];
 }
 
 vec2f Mesh::getTextureCoordinate(const std::size_t i) const {

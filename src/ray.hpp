@@ -16,4 +16,6 @@ struct Ray {
 	vec3f invd;	// Inverse direction is used for some intersection algorithms for performance
 };
 
+std::ostream& operator<<(std::ostream& os, const Ray& ray);
+
 }

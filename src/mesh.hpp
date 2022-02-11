@@ -13,11 +13,13 @@ struct Mesh {
 
 	// Implements the möller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
-	bool rayIntersection(Ray& ray, const std::size_t index, float& u, float &v, float& t) const;
+	bool rayIntersection(const Ray& ray, const std::size_t index, float& u, float &v, float& t) const;
+	bool rayIntersectionV2(const Ray& ray, const std::size_t index, float& u, float &v, float& t) const;
 
 	vec3f getVertex(const std::size_t i) const;
 	vec3f getNormal(const std::size_t i) const;
 	vec2f getTextureCoordinate(const std::size_t i) const;
+	vec3u getFace(const std::size_t i) const;
 
 	vec3f* getVertices();
 	vec3f* getNormals();
