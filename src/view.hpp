@@ -10,7 +10,7 @@
 namespace specter {
 
 enum class MovementDirection {
-	Forward = 0, Backward, Left, Right
+	Forward = 0, Backward, Left, Right, None
 };
 
 struct View {
@@ -21,6 +21,12 @@ struct View {
 	void move(MovementDirection& direction, float timeElapsedSinceLastMove);
 
 	void setMovementSpeed(const float newSpeed);
+
+	float* getAddress();
+
+	vec3f getPosition() const;
+	vec3f getDirection() const;
+
 
 protected:
 

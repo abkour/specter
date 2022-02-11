@@ -16,6 +16,13 @@ struct Window {
 	Window(const WindowMode windowMode, const vec2u& resolution, const char* title);
 	~Window();
 
+	void enableCursorCallback();
+
+	float getXoffset() const;
+	float getYoffset() const;
+
+	void resetCursorOffset() const;
+
 	GLFWwindow* getWindow() const;
 
 protected:

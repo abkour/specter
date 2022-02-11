@@ -9,14 +9,14 @@ View::View(const vec3f& pos, const vec3f& dir) {
 	yaw = -89.f;
 	pitch = 0.f;
 
-	movementSpeed = 0.14f;
+	movementSpeed = 5.f;
 
 	view = lookAt(pos, dir, vec3f(0.f, 1.f, 0.f));
 }
 
 void View::look(float xoff, float yoff) {
-	yaw += xoff * movementSpeed;
-	pitch += yoff * movementSpeed;
+	yaw += xoff * 0.14f;
+	pitch += yoff * 0.14f;
 
 	if (pitch > 89.f) {
 		pitch = 89.f;
@@ -36,27 +36,38 @@ void View::look(float xoff, float yoff) {
 void View::move(MovementDirection& direction, float timeElapsedSinceLastMove) {
 	switch (direction) {
 	case MovementDirection::Forward:
-		pos -= dir * timeElapsedSinceLastMove * movementSpeed;
-		break;
-	case MovementDirection::Backward:
 		pos += dir * timeElapsedSinceLastMove * movementSpeed;
 		break;
+	case MovementDirection::Backward:
+		pos -= dir * timeElapsedSinceLastMove * movementSpeed;
+		break;
 	case MovementDirection::Left:
-		pos += cross(dir, vec3f(0.f, 1.f, 0.f)) * timeElapsedSinceLastMove * movementSpeed;
+		pos -= cross(dir, vec3f(0.f, 1.f, 0.f)) * timeElapsedSinceLastMove * movementSpeed;
 		break;
 	case MovementDirection::Right:
-		pos -= cross(dir, vec3f(0.f, 1.f, 0.f)) * timeElapsedSinceLastMove * movementSpeed;
+		pos += cross(dir, vec3f(0.f, 1.f, 0.f)) * timeElapsedSinceLastMove * movementSpeed;
 		break;
 	default:
 		break;
 	}
 
-	view = lookAt(pos, pos + dir, vec3f(0.f, 1.f, 0.f));
+	view = lookAt(pos, pos + dir, vec3(0.f, 1.f, 0.f));
 }
 
 void View::setMovementSpeed(const float newSpeed) {
 	movementSpeed = newSpeed;
 }
 
+float* View::getAddress() {
+	return &view[0][0];
+}
+
+vec3f View::getPosition() const {
+	return pos;
+}
+
+vec3f View::getDirection() const {
+	return dir;
+}
 
 }
