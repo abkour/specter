@@ -89,7 +89,7 @@ ObjLoader::ObjLoader(const char* filename) {
 	textureCoordinates.resize(sTextureCoordinates.size());
 	std::memcpy(textureCoordinates.data(), sTextureCoordinates.data(), sizeof(vec2f) * sTextureCoordinates.size());
 
-	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\n";
+	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\t\t(Triangles: " << faces.size() << ", Vertices: " << vertices.size() << ")\n";
 }
 
 void ObjLoader::sanitizeObjectFile(const char* filename) {

@@ -2,6 +2,14 @@ specter implementation notes:
 
 Matrices:
 
-- Matrices are stored as flat arrays in continous memory. 
-- Matrices are stored in row-major order, which is probably a mistake.
+-	Matrices are stored as flat arrays in continous memory. 
+-	Matrices are stored in row-major order, which is probably a mistake.
 
+Rasterization:
+
+-	For debugging reasons support for rasterization is added. It is primarily used as a 
+	frame of reference. Secondary use cases are testing the integrity of the raytracing
+	implementation.
+-	Maaaaaaybe, in the future, this project will support a hybrid rendering approach.
+	For that reason, support for rasterization would be great to have. 
+	It's also not difficult to implement.

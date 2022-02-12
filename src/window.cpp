@@ -119,7 +119,7 @@ void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
 	uniqueCursor.ypos = ypos;
 }
 
-void Window::enableCursorCallback() {
+void Window::enableCursorCallback() const {
 	glfwSetCursorPosCallback(window, cursorPositionCallback);
 }
 

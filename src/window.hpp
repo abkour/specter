@@ -16,7 +16,7 @@ struct Window {
 	Window(const WindowMode windowMode, const vec2u& resolution, const char* title);
 	~Window();
 
-	void enableCursorCallback();
+	void enableCursorCallback() const;
 
 	float getXoffset() const;
 	float getYoffset() const;

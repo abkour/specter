@@ -10,14 +10,15 @@
 #include "window.hpp"
 #include "shader.hpp"
 #include "view.hpp"
+#include "octree.hpp"
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 int main(int argc, const char** argv) {
 	try {
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
-		specter::ObjLoader objLoader(filename);
-		const specter::vec3f eyepos(-3.f, 1.5f, -5.f);
+		specter::ObjLoader mesh(filename);
+		const specter::vec3f eyepos(2.f, 2.f, 3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(728, 728);
 		specter::Camera camera(screen_resolution);
@@ -27,6 +28,28 @@ int main(int argc, const char** argv) {
 		
 		std::vector<specter::vec3f> frame;
 		frame.resize(specter::product(screen_resolution));
+
+		std::cout << "Building octree of mesh...\n";
+		specter::Timer octreeTimer;
+		specter::Node* root = new specter::Node;
+		root->nIndices = mesh.getTriangleCount();
+		root->bbox = mesh.computeBoundingBox();
+		root->m_children = nullptr;
+		root->indices = nullptr;
+
+		std::vector<uint32_t> initialIndexList;
+		initialIndexList.resize(mesh.getTriangleCount() * 3);
+		for (int i = 0; i < initialIndexList.size(); ++i) {
+			initialIndexList[i] = i;
+		}
+
+		specter::buildOctree(root, mesh.getVertices(), mesh.getFaces(), initialIndexList.data());
+		std::cout << "Construction finished in: " << octreeTimer.elapsedTime() << " seconds.\n";
+
+		specter::freeOctree(root);
+
+		std::cout << "Rendering mesh...\n";
+		specter::Timer rtxtime;
 
 		for (int y = 0; y < screen_resolution.y; ++y) {
 			for (int x = 0; x < screen_resolution.x; ++x) {
@@ -41,9 +64,9 @@ int main(int argc, const char** argv) {
 						
 						float mint = std::numeric_limits<float>::max();
 						
-						for (int i = 0; i < objLoader.getTriangleCount(); ++i) {
+						for (int i = 0; i < mesh.getTriangleCount(); ++i) {
 							float u, v, t;
-							if (objLoader.rayIntersectionV2(ray, i, u, v, t)) {
+							if (mesh.rayIntersectionV2(ray, i, u, v, t)) {
 								if (t < mint && t > 0.f) {
 									mint = t;
 									fs[spi] = i;
@@ -57,8 +80,8 @@ int main(int argc, const char** argv) {
 
 				for (int i = 0; i < nSamplesPerPixel; ++i) {
 					if (fs[i] != std::numeric_limits<unsigned>::max()) {
-						unsigned normalIndex = objLoader.getFace(fs[i]).z;
-						specter::vec3f normal = objLoader.getNormal(normalIndex);
+						unsigned normalIndex = mesh.getFace(fs[i]).z;
+						specter::vec3f normal = mesh.getNormal(normalIndex);
 						cumulativeColor += abs(normal);
 					} 
 				}
@@ -68,6 +91,8 @@ int main(int argc, const char** argv) {
 				frame[index] = cumulativeColor;
 			}
 		}
+
+		std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
 
 		specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Raytracer");
 		glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -130,6 +155,8 @@ int main(int argc, const char** argv) {
 		glDeleteVertexArrays(1, &quadvao);
 		glDeleteBuffers(1, &quadvbo);
 		glDeleteTextures(1, &rtx_texture);
+
+		//delete root;
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();

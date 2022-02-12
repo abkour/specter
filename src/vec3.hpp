@@ -299,6 +299,11 @@ T dot(const vec3<T>& v0, const vec3<T>& v1) {
 }
 
 template<typename T>
+T absDot(const vec3<T>& v0, const vec3<T>& v1) {
+	return std::abs(dot(v0, v1));
+}
+
+template<typename T>
 vec3<T> cross(const vec3<T>& v0, const vec3<T>& v1) {
 	vec3<T> result;
 	result.x = v0.y * v1.z - v0.z * v1.y;
@@ -322,6 +327,11 @@ vec3<T> reflect(const vec3<T>& v, const vec3<T>& n) {
 template<typename T>
 T angle(const vec3<T>& v0, const vec3<T>& v1) {
 	return std::acos(std::clamp(dot(v0, v1), T(-1), T(1)));
+}
+
+template<typename T>
+vec3<T> orientNormal(const vec3<T>& normal, const vec3<T>& vector) {
+	return dot(normal, vector) < 0.f ? -normal : normal;
 }
 
 template<typename T>
