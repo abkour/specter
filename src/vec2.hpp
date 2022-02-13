@@ -11,7 +11,9 @@ struct vec2 {
 	vec2(T value);
 	vec2(T x, T y);
 	vec2(const vec2<T>& other);
+	vec2(vec2<T>&& other);
 	vec2& operator=(const vec2<T>& other);
+	vec2& operator=(vec2<T>&& other);
 
 	bool operator==(const vec2<T>& other) const;
 	bool operator!=(const vec2<T>& other) const;
@@ -69,11 +71,23 @@ vec2<T>::vec2(const vec2<T>&other)
 {}
 
 template<typename T>
+vec2<T>::vec2(vec2<T>&& other) {
+	std::swap(v, other.v);
+}
+
+template<typename T>
 vec2<T>& vec2<T>::operator=(const vec2<T>&other) {
 	x = other.x;
 	y = other.y;
 	return *this;
 }
+
+template<typename T>
+vec2<T>& vec2<T>::operator=(vec2<T>&& other) {
+	std::swap(v, other.v);
+	return *this;
+}
+
 
 template<typename T>
 bool vec2<T>::operator==(const vec2<T>&other) const {

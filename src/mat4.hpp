@@ -7,12 +7,14 @@ namespace specter {
 template<typename T>
 struct mat4 {
 
-	mat4() = default;
+	mat4();
 	mat4(const T value);
 	mat4(const vec4<T>& v);
 	mat4(const vec4<T>& col0, const vec4<T>& col1, const vec4<T>& col2, const vec4<T>& col3);
 	mat4(const mat4<T>& other);
+	mat4(mat4<T>&& other) noexcept;
 	mat4<T>& operator=(const mat4<T>& other);
+	mat4<T>& operator=(mat4<T>&& other);
 
 	bool operator==(const mat4<T>& other);
 	bool operator!=(const mat4<T>& other);
@@ -39,24 +41,40 @@ struct mat4 {
 };
 
 template<typename T>
+std::ostream& operator<<(std::ostream& os, const mat4<T>& m) {
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			os << m.data[i * 4 + j] << '\t';
+		}
+		os << '\n';
+	}
+	return os;
+}
+
+template<typename T>
+mat4<T>::mat4() {
+	std::memset(data, 0, sizeof(T) * 16);
+	data[0] = data[5] = data[10] = data[15] = T();
+}
+
+template<typename T>
 mat4<T>::mat4(const T value) {
+	std::memset(data, 0, sizeof(T) * 16);
 	data[0] = data[5] = data[10] = data[15] = value;
 }
 
 template<typename T>
 mat4<T>::mat4(const vec4<T>& v) {
-	data[0][0] = data[0][1] = data[0][2] = data[0][3] = v[0];
-	data[1][0] = data[1][1] = data[1][2] = data[1][3] = v[1];
-	data[2][0] = data[2][1] = data[2][2] = data[2][3] = v[2];
-	data[3][0] = data[3][1] = data[3][2] = data[3][3] = v[3];
+	for (int i = 0; i < 4; ++i) {
+		data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = data[i * 4 + 3] = v[i];
+	}
 }
 
 template<typename T>
 mat4<T>::mat4(const vec4<T>& col0, const vec4<T>& col1, const vec4<T>& col2, const vec4<T>& col3) {
-	data[0][0] = col0[0]; data[1][0] = col0[1]; data[2][0] = col0[2]; data[3][0] = col0[3];
-	data[0][1] = col1[0]; data[1][1] = col1[1]; data[2][1] = col1[2]; data[3][1] = col1[3];
-	data[0][2] = col2[0]; data[1][2] = col2[1]; data[2][2] = col2[2]; data[3][2] = col2[3];
-	data[0][3] = col3[0]; data[1][3] = col3[1]; data[2][3] = col3[2]; data[3][3] = col3[3];
+	for (int i = 0; i < 4; ++i) {
+		data[i * 4] = col0[i]; data[i * 4 + 1] = col1[i]; data[i * 4 + 2] = col2[i]; data[i * 4 + 3] = col3[i];
+	}
 }
 
 template<typename T>
@@ -65,8 +83,19 @@ mat4<T>::mat4(const mat4<T>& other) {
 }
 
 template<typename T>
+mat4<T>::mat4(mat4<T>&& other) noexcept {
+	std::swap(data, other.data);
+}
+
+template<typename T>
 mat4<T>& mat4<T>::operator=(const mat4<T>& other) {
 	std::memcpy(data, other.data, sizeof(T) * 16);
+	return *this;
+}
+
+template<typename T>
+mat4<T>& mat4<T>::operator=(mat4<T>&& other) {
+	std::swap(data, other.data);
 	return *this;
 }
 
@@ -224,12 +253,6 @@ T trace(const mat4<T>& m) {
 	return m[0][0] + m[1][1] + m[2][2] + m[3][3];
 }
 
-// Yet to find a good use for this
-template<typename T>
-T determinant(const mat4<T>& m) {
-	
-}
-
 template<typename T>
 mat4<T> transpose(const mat4<T>& m) {
 	mat4<T> tmat(m);
@@ -298,17 +321,6 @@ inline mat4<float> perspective(const float fov, const float aspectRatio, const f
 	result[3][2] = (-2.f * far * near) / (far - near);
 	result[2][3] = -1.f;
 	return result;
-}
-
-template<typename T>
-std::ostream& operator<<(std::ostream& os, const mat4<T>& m) {
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			os << m[i * 4 + j] << '\t';
-		}
-		os << '\n';
-	}
-	return os;
 }
 
 // Name alias the common matrix types 

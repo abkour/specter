@@ -26,7 +26,8 @@ struct View {
 
 	vec3f getPosition() const;
 	vec3f getDirection() const;
-
+	
+	mat4f view;
 
 protected:
 
@@ -35,7 +36,6 @@ protected:
 	float movementSpeed;
 
 	vec3f pos, dir;
-	mat4f view;
 };
 
 }

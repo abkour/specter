@@ -2,6 +2,12 @@
 
 namespace specter {
 
+static const unsigned nSubRegions = 8;
+
+static unsigned dbg_nLeafs = 0;
+static unsigned dbg_nInternals = 0;
+static unsigned dbg_nDepthConditions = 0;
+
 static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	vec3f minResult;
 	minResult[0] = std::min(std::min(p0[0], p1[0]), std::min(p0[0], p2[0]));
@@ -74,7 +80,7 @@ static void reserveChildren(Node* node, int nChildren) {
 	}
 }
 
-void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const faces, const uint32_t* indexPositions, int depth) {
+void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const faces, const uint32_t* trianglePositions, int depth) {
 	if (node == nullptr) {
 		throw std::runtime_error("Node is nullptr!");
 	}
@@ -83,50 +89,60 @@ void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const fac
 		return;
 	}
 
-	if (node->nIndices <= 10 || depth > 12) {
+	if (node->nIndices <= 10 || depth > 5) {
 		node->indices = new uint32_t[node->nIndices];
-		std::memcpy(node->indices, indexPositions, sizeof(uint32_t) * node->nIndices);
+		std::memcpy(node->indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
+		dbg_nLeafs++;
+		if (depth > 5) {
+			dbg_nDepthConditions++;
+		}
 		return;
 	}
 
 	std::vector<AxisAlignedBoundingBox> subRegions;
-	subRegions.reserve(8);
-	for (int i = 0; i < 8; ++i) {
+	subRegions.reserve(nSubRegions);
+	for (int i = 0; i < nSubRegions; ++i) {
 		subRegions.push_back(constructSubRegion(node->bbox, i));
 	}
 
-	std::vector<std::vector<uint32_t>> faceIndices;
+	std::vector<std::vector<uint32_t>> subRegionTriangleCounts;
 
-	faceIndices.resize(8);
+	subRegionTriangleCounts.resize(nSubRegions);
 	if (node->nIndices > 32) {
-		for (int i = 0; i < 8; ++i) {
-			faceIndices[i].reserve(32);
+		for (int i = 0; i < nSubRegions; ++i) {
+			subRegionTriangleCounts[i].reserve(32);
 		}
 	}
 
 	for (int i = 0; i < node->nIndices; i++) {
-		uint32_t i0 = faces[indexPositions[i * 3]].x;
-		uint32_t i1 = faces[indexPositions[i * 3] + 1].x;
-		uint32_t i2 = faces[indexPositions[i * 3] + 2].x;
-		vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
+		const uint32_t i0 = faces[trianglePositions[i] * 3].x;
+		const uint32_t i1 = faces[trianglePositions[i] * 3 + 1].x;
+		const uint32_t i2 = faces[trianglePositions[i] * 3 + 2].x;
+		const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 		const vec3f tmin = minComponents(v0, v1, v2);
 		const vec3f tmax = maxComponents(v0, v1, v2);
 
 		const AxisAlignedBoundingBox triangleAABB(tmin, tmax);
-		for (int k = 0; k < 8; ++k) {
+		for (int k = 0; k < nSubRegions; ++k) {
 			if (subRegions[k].overlaps(triangleAABB)) {
-				faceIndices[k].push_back(indexPositions[i]);
+				subRegionTriangleCounts[k].push_back(trianglePositions[i]);
 			}
 		}
 	}
 
-	reserveChildren(node, 8);
-	for (int i = 0; i < 8; ++i) {
-		if (faceIndices.size() != 0) {
+	for (int i = 0; i < nSubRegions; ++i) {
+		std::cout << "subRegion[" << i << "]: " << subRegionTriangleCounts[i].size() << '\n';
+	}
+	std::cout << "-------------------------------------------\n";
+
+	dbg_nInternals++;
+	reserveChildren(node, nSubRegions);
+	for (int i = 0; i < nSubRegions; ++i) {
+		if (subRegionTriangleCounts.size() != 0) {
 			node->m_children[i]->bbox.min = subRegions[i].min;
 			node->m_children[i]->bbox.max = subRegions[i].max;
-			node->m_children[i]->nIndices = faceIndices[i].size();
-			buildOctree(node->m_children[i], vertices, faces, faceIndices[i].data(), depth + 1);
+			node->m_children[i]->nIndices = subRegionTriangleCounts[i].size();
+			buildOctree(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
 		}
 	}
 }
@@ -136,14 +152,18 @@ struct IndexDistancePair {
 	float distance;
 
 	friend bool operator<(const IndexDistancePair& p0, const IndexDistancePair& p1) {
-		return p0.distance <= p1.distance;
+		return p0.distance < p1.distance;
 	}
 };
 
+bool compareDistance(const IndexDistancePair& p0, const IndexDistancePair& p1) {
+	return p0.distance <= p1.distance;
+}
 
 void rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& mint, uint32_t& index) {
-	// Compute t
-	if (node == nullptr) return;
+	if (node == nullptr) {
+		return;
+	}
 
 	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
@@ -160,7 +180,9 @@ void rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, float& u, float&
 	}
 
 	else {
-		if (node->m_children == nullptr) return;
+		if (node->m_children == nullptr) {
+			return;
+		}
 
 		IndexDistancePair sortedDistances[8];
 		for (int i = 0; i < 8; ++i) {
@@ -172,12 +194,12 @@ void rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, float& u, float&
 					if (mint > near) {
 						sortedDistances[i].distance = near;
 						sortedDistances[i].index = i;
-						//rayTraversal(mesh, node->m_children[i], ray, u, v, mint, index);
+						//rayTraversal(mesh, node->m_children[sortedDistances[i].index], ray, u, v, mint, index);
 					}
 				}
 			}
 		}
-
+		
 		std::sort(std::begin(sortedDistances), std::end(sortedDistances));
 		for (int i = 0; i < 8; ++i) {
 			if (sortedDistances[i].distance < std::numeric_limits<float>::max()) {
@@ -205,6 +227,12 @@ void freeOctree(Node* node) {
 	}
 	delete node->indices;
 	delete node;
+}
+
+void printOctreeNumbers() {
+	std::cout << "Number of internals: " << dbg_nInternals << '\n';
+	std::cout << "Number of leaves: " << dbg_nLeafs << '\n';
+	std::cout << "Number of depth conditions: " << dbg_nDepthConditions << '\n';
 }
 
 }

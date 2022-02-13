@@ -10,16 +10,17 @@ struct vec4 {
 	vec4() = default;
 	vec4(T value);
 	vec4(T x, T y, T z, T w);
-	vec4(const vec4<T>&other);
-	vec4(vec4<T> && other);
-	vec4& operator=(const vec4<T>&other);
+	vec4(const vec4<T>& other);
+	vec4(vec4<T>&& other);
+	vec4& operator=(const vec4<T>& other);
+	vec4& operator=(vec4<T>&& other);
 
-	bool operator==(const vec4<T>&other) const;
-	bool operator!=(const vec4<T>&other) const;
-	bool operator<=(const vec4<T>&other) const;
-	bool operator>=(const vec4<T>&other) const;
-	bool operator<(const vec4<T>&other) const;
-	bool operator>(const vec4<T>&other) const;
+	bool operator==(const vec4<T>& other) const;
+	bool operator!=(const vec4<T>& other) const;
+	bool operator<=(const vec4<T>& other) const;
+	bool operator>=(const vec4<T>& other) const;
+	bool operator<(const vec4<T>& other) const;
+	bool operator>(const vec4<T>& other) const;
 
 	vec4<T> operator+(const vec4<T>& other);
 	vec4<T> operator-(const vec4<T>& other);
@@ -76,12 +77,9 @@ vec4<T>::vec4(const vec4<T>& other)
 {}
 
 template<typename T>
-vec4<T>::vec4(vec4<T>&& other)
-	: x(std::move(other.x))
-	, y(std::move(other.y))
-	, z(std::move(other.z))
-	, w(std::move(other.w))
-{}
+vec4<T>::vec4(vec4<T>&& other) {
+	std::swap(v, other.v);
+}
 
 template<typename T>
 vec4<T>& vec4<T>::operator=(const vec4<T>& other) {
@@ -92,6 +90,11 @@ vec4<T>& vec4<T>::operator=(const vec4<T>& other) {
 	return *this;
 }
 
+template<typename T>
+vec4<T>& vec4<T>::operator=(vec4<T>&& other) {
+	std::swap(v, other.v);
+	return *this;
+}
 
 template<typename T>
 bool vec4<T>::operator==(const vec4<T>& other) const {

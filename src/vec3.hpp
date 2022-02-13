@@ -10,15 +10,17 @@ struct vec3 {
 	vec3() = default;
 	vec3(T value);
 	vec3(T x, T y, T z);
-	vec3(const vec3<T>&other);
-	vec3& operator=(const vec3<T>&other);
+	vec3(const vec3<T>& other);
+	vec3(vec3<T>&& other);
+	vec3& operator=(const vec3<T>& other);
+	vec3& operator=(vec3<T>&& other);
 
-	bool operator==(const vec3<T>&other) const;
-	bool operator!=(const vec3<T>&other) const;
-	bool operator<=(const vec3<T>&other) const;
-	bool operator>=(const vec3<T>&other) const;
-	bool operator<(const vec3<T>&other) const;
-	bool operator>(const vec3<T>&other) const;
+	bool operator==(const vec3<T>& other) const;
+	bool operator!=(const vec3<T>& other) const;
+	bool operator<=(const vec3<T>& other) const;
+	bool operator>=(const vec3<T>& other) const;
+	bool operator<(const vec3<T>& other) const;
+	bool operator>(const vec3<T>& other) const;
 
 	vec3<T> operator+(const vec3<T>& other) const;
 	vec3<T> operator-(const vec3<T>& other) const;
@@ -68,6 +70,11 @@ vec3<T>::vec3(const vec3<T>& other)
 {}
 
 template<typename T>
+vec3<T>::vec3(vec3<T>&& other) {
+	std::swap(v, other.v);
+}
+
+template<typename T>
 vec3<T>& vec3<T>::operator=(const vec3<T>& other) {
 	x = other.x;
 	y = other.y;
@@ -75,6 +82,11 @@ vec3<T>& vec3<T>::operator=(const vec3<T>& other) {
 	return *this;
 }
 
+template<typename T>
+vec3<T>& vec3<T>::operator=(vec3<T>&& other) {
+	std::swap(v, other.v);
+	return *this;
+}
 
 template<typename T>
 bool vec3<T>::operator==(const vec3<T>& other) const {

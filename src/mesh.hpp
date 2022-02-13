@@ -4,9 +4,19 @@
 #include "vec2.hpp"
 #include "vec3.hpp"
 
+#include <fstream>
 #include <vector>
 
 namespace specter {
+
+// Auxillary data structure for code readability
+struct FaceElement {
+	unsigned p;	// Position
+	unsigned n;	// Normal
+	unsigned t;	// Texture Coordinate
+};
+
+std::ostream& operator<<(std::ostream& os, const FaceElement& face);
 
 // This will be constructed by different file loaders. For now only the .obj loader is implemented.
 struct Mesh {
@@ -19,12 +29,12 @@ struct Mesh {
 	vec3f getVertex(const std::size_t i) const;
 	vec3f getNormal(const std::size_t i) const;
 	vec2f getTextureCoordinate(const std::size_t i) const;
-	vec3u getFace(const std::size_t i) const;
+	FaceElement getFace(const std::size_t i) const;
 
 	vec3f* getVertices();
 	vec3f* getNormals();
 	vec2f* getTextureCoordinates();
-	vec3u* getFaces();
+	FaceElement* getFaces();
 
 	std::size_t getNormalCount() const;
 	std::size_t getTextureCoordinateCount() const;
@@ -43,9 +53,7 @@ protected:
 	std::vector<vec3f> normals;
 	std::vector<vec2f> textureCoordinates;
 
-	std::vector<vec3u> faces;
-
-	bool areNormalsPresent = false;
+	std::vector<FaceElement> faces;
 };
 
 }

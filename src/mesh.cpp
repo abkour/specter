@@ -6,7 +6,7 @@ namespace specter {
 // For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
 	const float epsilon = 0.0000001;
-	const unsigned i0 = faces[index * 3 + 0].x, i1 = faces[index * 3 + 1].x, i2 = faces[index * 3 + 2].x;
+	const unsigned i0 = faces[index * 3 + 0].p, i1 = faces[index * 3 + 1].p, i2 = faces[index * 3 + 2].p;
 	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 	const vec3f edge0 = v1 - v0;
 	const vec3f edge1 = v2 - v0;
@@ -39,7 +39,7 @@ bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, fl
 
 bool Mesh::rayIntersectionV2(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
 	const float epsilon = 0.0000001;
-	const unsigned i0 = faces[index * 3 + 0].x, i1 = faces[index * 3 + 1].x, i2 = faces[index * 3 + 2].x;
+	const unsigned i0 = faces[index * 3 + 0].p, i1 = faces[index * 3 + 1].p, i2 = faces[index * 3 + 2].p;
 	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 
 	vec3f e0 = v1 - v0;
@@ -73,7 +73,7 @@ vec3f Mesh::getNormal(const std::size_t i) const {
 	return normals[i];
 }
 
-vec3u Mesh::getFace(const std::size_t i) const {
+FaceElement Mesh::getFace(const std::size_t i) const {
 	return faces[i];
 }
 
@@ -93,7 +93,7 @@ vec2f* Mesh::getTextureCoordinates() {
 	return textureCoordinates.data();
 }
 
-vec3u* Mesh::getFaces() {
+FaceElement* Mesh::getFaces() {
 	return faces.data();
 }
 
@@ -128,6 +128,10 @@ AxisAlignedBoundingBox Mesh::computeBoundingBox() const {
 	}
 
 	return AxisAlignedBoundingBox(bmin, bmax);
+}
+
+std::ostream& operator<<(std::ostream& os, const FaceElement& face) {
+	return os << "Pos: " << face.p << " Normal: " << face.n << " UV: " << face.t;
 }
 
 }

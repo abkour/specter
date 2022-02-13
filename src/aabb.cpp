@@ -39,7 +39,7 @@ bool AxisAlignedBoundingBox::containsEdgeInclusive(const vec3f& point) const {
 }
 
 bool AxisAlignedBoundingBox::overlaps(const AxisAlignedBoundingBox& other) const {
-	return min < other.max&& max > other.min;
+	return min < other.max && max > other.min;
 }
 
 bool AxisAlignedBoundingBox::overlapsEdgeInclusive(const AxisAlignedBoundingBox& other) const {

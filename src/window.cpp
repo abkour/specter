@@ -7,17 +7,21 @@ Window::Window() {
 	if (!glfwInit()) {
 		throw std::runtime_error("Error. GLFW could not be initialized!");
 	}
-	glfwWindowHint(GLFW_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_PROFILE);
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 
 	primaryMonitor = glfwGetPrimaryMonitor();
-	if (primaryMonitor == nullptr) {
+	if (!primaryMonitor) {
 		throw std::runtime_error("Error. GLFW could not detect any monitor!");
 	}
 
 	vidMode = const_cast<GLFWvidmode*>(glfwGetVideoMode(primaryMonitor));
+	if (!vidMode) {
+		throw std::runtime_error("Error. GLFW coudln't retrieve video mode of current monitor!");
+	}
 
 	screenResolution.x = vidMode->width;
 	screenResolution.y = vidMode->height;
@@ -25,8 +29,15 @@ Window::Window() {
 	windowMode = WindowMode::WINDOWED;
 
 	window = glfwCreateWindow(screenResolution.x, screenResolution.y, "Specter", NULL, NULL);
+	if (!window) {
+		throw std::runtime_error("Error. GLFW could not create window!");
+	}
 
 	glfwMakeContextCurrent(window);
+
+	if (glfwGetError(NULL)) {
+		throw std::runtime_error("Error. GLFW could not make context current!");
+	}
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		throw std::runtime_error("Error. GLAD could not be loaded!");
@@ -37,17 +48,20 @@ Window::Window(const WindowMode windowMode, const vec2u& resolution, const char*
 	if (!glfwInit()) {
 		throw std::runtime_error("Error. GLFW could not be initialized!");
 	}
-	glfwWindowHint(GLFW_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_VERSION_MINOR, 6);
-	glfwWindowHint(GLFW_OPENGL_CORE_PROFILE, GLFW_OPENGL_PROFILE);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 
 	primaryMonitor = glfwGetPrimaryMonitor();
-	if (primaryMonitor == nullptr) {
+	if (!primaryMonitor) {
 		throw std::runtime_error("Error. GLFW could not detect any monitor!");
 	}
 
 	vidMode = const_cast<GLFWvidmode*>(glfwGetVideoMode(primaryMonitor));
+	if (!vidMode) {
+		throw std::runtime_error("Error. GLFW coudln't retrieve video mode of current monitor!");
+	}
 
 	switch (windowMode) {
 	case WindowMode::WINDOWED:
@@ -68,10 +82,17 @@ Window::Window(const WindowMode windowMode, const vec2u& resolution, const char*
 		break;
 	}
 
+	if (!window) {
+		throw std::runtime_error("Error. GLFW could not create window!");
+	}
+
 	screenResolution = resolution;
 	this->windowMode = windowMode;
 
 	glfwMakeContextCurrent(window);
+	if (glfwGetError(NULL)) {
+		throw std::runtime_error("Error. GLFW could not make context current!");
+	}
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 		throw std::runtime_error("Error. GLAD could not be loaded!");

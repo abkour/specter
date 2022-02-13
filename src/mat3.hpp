@@ -7,12 +7,14 @@ namespace specter {
 template<typename T>
 struct mat3 {
 
-	mat3() = default;
+	mat3();
 	mat3(const T value);
 	mat3(const vec3<T>& v);
 	mat3(const vec3<T>& col0, const vec3<T>& col1, const vec3<T>& col2);
 	mat3(const mat3<T>& other);
+	mat3(mat3<T>&& other);
 	mat3<T>& operator=(const mat3<T>& other);
+	mat3<T>& operator=(mat3<T>&& other);
 
 	bool operator==(const mat3<T>& other);
 	bool operator!=(const mat3<T>& other);
@@ -39,8 +41,14 @@ struct mat3 {
 };
 
 template<typename T>
+mat3<T>::mat3() {
+	std::memset(data, 0, sizeof(T) * 9);
+}
+
+template<typename T>
 mat3<T>::mat3(const T value) {
-	data[0][0] = data[1][1] = data[2][2] = value;
+	std::memset(data, 0, sizeof(T) * 9);
+	data[0] = data[4] = data[8] = value;
 }
 
 template<typename T>
@@ -65,12 +73,24 @@ mat3<T>::mat3(const mat3<T>& other) {
 }
 
 template<typename T>
+mat3<T>::mat3(mat3<T>&& other) {
+	std::swap(data, other.data);
+}
+
+template<typename T>
 mat3<T>& mat3<T>::operator=(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
 		data[i] = other[i];
 	}
 	return *this;
 }
+
+template<typename T>
+mat3<T>& mat3<T>::operator=(mat3<T>&& other) {
+	std::swap(data, other.data);
+	return *this;
+}
+
 
 template<typename T>
 bool mat3<T>::operator==(const mat3<T>& other) {
