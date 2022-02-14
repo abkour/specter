@@ -65,24 +65,32 @@ static AxisAlignedBoundingBox constructSubRegion(const AxisAlignedBoundingBox& s
 	return subregion;
 }
 
-static void reserveChildren(Node* node, int nChildren) {
-	node->m_children = new Node*[nChildren];
-	node->nIndices = std::numeric_limits<unsigned int>::max();
-	for (int i = 0; i < nChildren; ++i) {
-		node->m_children[i] = new Node;
-		node->m_children[i]->nIndices = std::numeric_limits<unsigned int>::max();
-	}
+Octree::Octree() {
+	root = nullptr;
 }
 
-static const unsigned depthMax = static_cast<unsigned>(log8(600'000) + 0.5);
+Octree::~Octree() {
+	freeOctreeRec(root);
+}
 
-static int nInteriorNodes = 0;
-static int nleafNodes = 0;
-std::vector<int> totalIndicesAtDepths(depthMax);
+void Octree::build(Mesh* mesh) {
+	root = new Node;
+	root->nIndices = mesh->getTriangleCount();
+	root->bbox = mesh->computeBoundingBox();
+	root->m_children = nullptr;
+	root->indices = nullptr;
 
-static int totalIndices = 0;
+	std::vector<uint32_t> initialIndexList;
+	initialIndexList.resize(mesh->getTriangleCount());
+	for (int i = 0; i < initialIndexList.size(); ++i) {
+		initialIndexList[i] = i;
+	}
 
-void buildOctree(Node* node, const vec3f* const vertices, const FaceElement* const faces, const uint32_t* trianglePositions, int depth) {
+	maxDepth = log8(mesh->getTriangleCount());
+	buildRec(root, mesh->getVertices(), mesh->getFaces(), initialIndexList.data(), 0);
+}
+
+void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth) {
 	if (node == nullptr) {
 		throw std::runtime_error("Node is nullptr!");
 	}
@@ -91,16 +99,10 @@ void buildOctree(Node* node, const vec3f* const vertices, const FaceElement* con
 		return;
 	}
 
-	if (node->nIndices <= 10 || depth > depthMax) {
-		totalIndices += node->nIndices;
+	if (node->nIndices <= 10 || depth > maxDepth) {
 		node->indices = new uint32_t[node->nIndices];
 		std::memcpy(node->indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
-		nleafNodes++;
 		return;
-	}
-
-	if (depth < depthMax) {
-		totalIndicesAtDepths[depth] += node->nIndices;
 	}
 
 	std::vector<AxisAlignedBoundingBox> subRegions;
@@ -128,20 +130,24 @@ void buildOctree(Node* node, const vec3f* const vertices, const FaceElement* con
 		}
 	}
 
-	nInteriorNodes++;
-	node->m_children = new Node*[nSubRegions];
+	node->m_children = new Node * [nSubRegions];
 	for (int i = 0; i < nSubRegions; ++i) {
 		if (subRegionTriangleCounts[i].size() != 0) {
 			node->m_children[i] = new Node;
 			node->m_children[i]->bbox.min = subRegions[i].min;
 			node->m_children[i]->bbox.max = subRegions[i].max;
 			node->m_children[i]->nIndices = subRegionTriangleCounts[i].size();
-			buildOctree(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
-		} else {
+			buildRec(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
+		}
+		else {
 			node->m_children[i] = nullptr;
 			node->nIndices = std::numeric_limits<unsigned int>::max();
 		}
 	}
+}
+
+void Octree::traverse(const Mesh* mesh, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+	traverseRec(mesh, root, ray, u, v, t, index);
 }
 
 struct IndexDistancePair {
@@ -153,60 +159,23 @@ struct IndexDistancePair {
 	}
 };
 
-bool compareDistance(const IndexDistancePair& p0, const IndexDistancePair& p1) {
-	return p0.distance <= p1.distance;
-}
-
-void rayTraversal2(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
-	if (node == nullptr || t != std::numeric_limits<float>::max()) {
+void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+	if (node == nullptr) {
 		return;
 	}
 
-	if (node->indices == nullptr) {
-		if (node->m_children != nullptr) {
-			for (int i = 0; i < 8; ++i) {
-				if (node->m_children[i] != nullptr) {
-					if (node->m_children[i]->bbox.rayIntersects(ray)) {
-						rayTraversal2(mesh, node->m_children[i], ray, u, v, t, index);
-					}
-				}
-			}
-		}
+	if (t != std::numeric_limits<float>::max()) {
+		return;
 	}
 
-	else {
+	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
-			float uu, vv, tt = std::numeric_limits<float>::max();
-			if(mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+			float uu, vv, tt;
+			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
 				if (t > tt) {
 					t = tt;
 					index = node->indices[i];
-				}
-			}
-		}
-	}
-}
-
-static float closestIntersectionDistance = std::numeric_limits<float>::max();
-
-static unsigned totalTriangleTests = 0;
-static unsigned totalAABBTests = 0;
-
-float rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index) {
-	if (node == nullptr) {
-		return std::numeric_limits<float>::max();;
-	}
-
-	if (node->indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
-			float uu;
-			float vv;
-			float tt;
-			totalTriangleTests++;
-			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
-				if (closestIntersectionDistance > tt) {
-					closestIntersectionDistance = tt;
-					index = node->indices[i];
+					return;
 				}
 			}
 		}
@@ -214,55 +183,7 @@ float rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index
 
 	else {
 		if (node->m_children == nullptr) {
-			return std::numeric_limits<float>::max();;
-		}
-
-		for (int i = 0; i < 8; ++i) {
-			if (node->m_children[i] != nullptr) {
-				auto subRegion = node->m_children[i]->bbox;
-				float near, far;
-				totalAABBTests++;
-				if (subRegion.rayIntersects(ray, near, far)) {
-					if (closestIntersectionDistance > near) {
-						rayTraversal(mesh, node->m_children[i], ray, index);
-					}
-				}
-			}
-		}
-	}
-
-	return closestIntersectionDistance;
-}
-
-
-float rayTraversal_sorted(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index) {
-	if (node == nullptr) {
-		return std::numeric_limits<float>::max();;
-	}
-
-	if (closestIntersectionDistance != std::numeric_limits<float>::max()) {
-		return closestIntersectionDistance;
-	}
-
-	if (node->indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
-			float uu;
-			float vv;
-			float tt;
-			totalTriangleTests++;
-			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
-				if (closestIntersectionDistance > tt) {
-					closestIntersectionDistance = tt;
-					index = node->indices[i];
-					return closestIntersectionDistance;
-				}
-			}
-		}
-	}
-
-	else {
-		if (node->m_children == nullptr) {
-			return std::numeric_limits<float>::max();;
+			return;
 		}
 
 		IndexDistancePair distanceToBoxes[8];
@@ -271,7 +192,6 @@ float rayTraversal_sorted(const Mesh* mesh, Node* node, const Ray& ray, uint32_t
 			if (node->m_children[i] != nullptr) {
 				auto subRegion = node->m_children[i]->bbox;
 				float near, far;
-				totalAABBTests++;
 				if (subRegion.rayIntersect(ray, near, far)) {
 					distanceToBoxes[i].distance = near;
 					distanceToBoxes[i].index = i;
@@ -282,22 +202,17 @@ float rayTraversal_sorted(const Mesh* mesh, Node* node, const Ray& ray, uint32_t
 		std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
 		for (int i = 0; i < 8; i++) {
 			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
-				rayTraversal_sorted(mesh, node->m_children[distanceToBoxes[i].index], ray, index);
+				traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, u, v, t, index);
 			}
 			else {
 				break;
 			}
 		}
 	}
-
-	return closestIntersectionDistance;
 }
 
-void reinit() {
-	closestIntersectionDistance = std::numeric_limits<float>::max();
-}
 
-void freeOctree(Node* node) {
+void Octree::freeOctreeRec(Node* node) {
 	if (node == nullptr) {
 		std::cout << "This is null!\n";
 		return;
@@ -306,30 +221,13 @@ void freeOctree(Node* node) {
 	if (node->m_children != nullptr) {
 		for (int i = 0; i < 8; ++i) {
 			if (node->m_children[i] != nullptr) {
-				freeOctree(node->m_children[i]);
+				freeOctreeRec(node->m_children[i]);
 			}
 		}
 		delete node->m_children;
 	}
 	delete node->indices;
 	delete node;
-}
-
-void printStatistics() {
-	std::cout << "Number of interior nodes: " << nInteriorNodes << '\n';
-	std::cout << "Number of leaf nodes: " << nleafNodes << '\n';
-	for(int i = 0; i < depthMax; ++i) {
-		std::cout << "Indices at depth[" << i << "]: " << totalIndicesAtDepths[i] << '\n';
-	}
-	std::cout << "Total indices: " << totalIndices << '\n';
-	std::cout << "Avg indices per leaf: " << (float)totalIndices / (float)nleafNodes << '\n';
-}
-
-void printTraversal(vec2u screenResolution) {
-	std::cout << "Total Ray-Triangle intersections tested: " << totalTriangleTests << '\n';
-	std::cout << "Total Ray-AABB intersections tested: " << totalAABBTests << '\n';
-	std::cout << "Average ray-triangle intersections tested: " << totalTriangleTests / product(screenResolution) << '\n';
-	std::cout << "Average ray-AABB intersections tested: " << totalAABBTests / product(screenResolution) << '\n';
 }
 
 }

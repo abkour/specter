@@ -25,9 +25,9 @@ int main(int argc, const char** argv) {
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\torus\\torus.obj";
 		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\bunny\\bunny.obj";
 		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
-		specter::ObjLoader mesh(filename);
-		renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
-		/*
+		specter::ObjLoader* mesh = new specter::ObjLoader(filename);
+		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
+		
 		const specter::vec3f eyepos(1.f, 2.f, 3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(500);
@@ -41,21 +41,11 @@ int main(int argc, const char** argv) {
 
 		std::cout << "Building octree of mesh...\n";
 		specter::Timer octreeTimer;
-		specter::Node* root = new specter::Node;
-		root->nIndices = mesh.getTriangleCount();
-		root->bbox = mesh.computeBoundingBox();
-		root->m_children = nullptr;
-		root->indices = nullptr;
 
-		std::vector<uint32_t> initialIndexList;
-		initialIndexList.resize(mesh.getTriangleCount());
-		for (int i = 0; i < initialIndexList.size(); ++i) {
-			initialIndexList[i] = i;
-		}
+		specter::Octree octree;
+		octree.build(mesh);
 
-		specter::buildOctree(root, mesh.getVertices(), mesh.getFaces(), initialIndexList.data());
 		std::cout << "Construction finished in: " << octreeTimer.elapsedTime() << " seconds.\n";
-		specter::printStatistics();
 
 		std::cout << "Rendering mesh...\n";
 		specter::Timer rtxtime;
@@ -73,52 +63,41 @@ int main(int argc, const char** argv) {
 						const unsigned spy = y * nSamplesPerDirection + 1;
 						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 						
+						float u, v;
+						float t = std::numeric_limits<float>::max();
 						unsigned f = std::numeric_limits<unsigned>::max();
-						float t = specter::rayTraversal_sorted(&mesh, root, ray, f);
-						specter::reinit();
+						
+						// Traverse through the octree
+						octree.traverse(mesh, ray, u, v, t, f);
 						
 						if (f != std::numeric_limits<unsigned>::max()) {
 							fs[spi] = f;
 						}
-						*//*
-						float mint = std::numeric_limits<float>::max();
-
-						for (int i = 0; i < mesh.getTriangleCount(); ++i) {
-							float u, v, t;
-							if (mesh.rayIntersectionV2(ray, i, u, v, t)) {
-								if (t < mint && t > 0.f) {
-									mint = t;
-									fs[spi] = i;
-								}
-							}
-						}*//*
 					}
 				}
 
 				specter::vec3f cumulativeColor(0.f);
 
+				// Compute the average of the subpixels as the final pixel color
 				for (int i = 0; i < nSamplesPerPixel; ++i) {
 					if (fs[i] != std::numeric_limits<unsigned>::max()) {
-						unsigned normalIndex = mesh.getFace(fs[i]).n;
-						specter::vec3f normal = mesh.getNormal(normalIndex);
+						unsigned normalIndex = mesh->getFace(fs[i]).n;
+						specter::vec3f normal = mesh->getNormal(normalIndex);
 						cumulativeColor += abs(normal);
 						nHits++;
 					} 
 				}
 
 				const std::size_t index = y * screen_resolution.x + x;
-				//cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+				cumulativeColor /= static_cast<float>(nSamplesPerPixel);
 				frame[index].x = cumulativeColor.x;
 				frame[index].y = cumulativeColor.y;
 				frame[index].z = cumulativeColor.z;
-				//std::cout << "frame color: " << frame[index] << '\n';
 			}
 		}
 
 		std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
-		std::cout << "Number of rays hit: " << nHits << '\n';
-		specter::printTraversal(screen_resolution);
-
+		
 		specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(728), "Specter Raytracer");
 		glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -176,7 +155,9 @@ int main(int argc, const char** argv) {
 
 		glDeleteTextures(1, &image);
 		glDeleteBuffers(1, &vbo);
-		glDeleteVertexArrays(1, &vao);*/
+		glDeleteVertexArrays(1, &vao);
+
+		delete mesh;
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();

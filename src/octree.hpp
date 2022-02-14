@@ -16,16 +16,25 @@ struct Node {
 	uint32_t nIndices;
 };
 
-void buildOctree(Node* node, const vec3f* const vertices, const FaceElement* const faces, const uint32_t* trianglePositions, int depth = 0);
-void freeOctree(Node* node);
+struct Octree {
 
-float rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index);
-void reinit();
-void rayTraversal2(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index);
+	Octree();
+	~Octree();
 
-float rayTraversal_sorted(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index);
+	void build(Mesh* mesh);
+	void traverse(const Mesh* mesh, const Ray& ray, float& u, float &v, float& t, uint32_t& index);
 
-void printStatistics();
-void printTraversal(vec2u screenResolution);
+private:
+	
+	void buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth = 0);
+	void traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index);
+	void freeOctreeRec(Node* node);
+
+private:
+
+	Node* root;
+	std::size_t maxDepth;
+
+};
 
 }
