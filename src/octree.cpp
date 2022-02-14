@@ -187,7 +187,6 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 		}
 
 		IndexDistancePair distanceToBoxes[8];
-
 		for (int i = 0; i < 8; ++i) {
 			if (node->m_children[i] != nullptr) {
 				auto subRegion = node->m_children[i]->bbox;
@@ -203,8 +202,7 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 		for (int i = 0; i < 8; i++) {
 			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
 				traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, u, v, t, index);
-			}
-			else {
+			} else {
 				break;
 			}
 		}
