@@ -146,8 +146,10 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 	}
 }
 
-void Octree::traverse(const Mesh* mesh, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+bool Octree::traverse(const Mesh* mesh, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+	t = std::numeric_limits<float>::max();
 	traverseRec(mesh, root, ray, u, v, t, index);
+	return t != std::numeric_limits<float>::max();
 }
 
 struct IndexDistancePair {
@@ -161,7 +163,7 @@ struct IndexDistancePair {
 
 // On intersection t stores the distance to the closest triangle it collided with.
 // u and v store the barycentric coordinates of that intersection point
-// index refers to the triangle in the the indices array of the mesh class.
+// index refers to the triangle in the indices array of the mesh class.
 // The algorithm sorts the sub-regions according to their intersection distances with the ray.
 // The ray then recursively travels through the sub-regions in ascending order with respect to the intersection distance.
 // If any intersection with a triangle is found on leaf encounter, it is guaranteed to be the closest triangle,
@@ -171,6 +173,7 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 		return;
 	}
 
+	// Closest triangle found and further processing can stop.
 	if (t != std::numeric_limits<float>::max()) {
 		return;
 	}
@@ -180,6 +183,7 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 			float uu, vv, tt;
 			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
 				if (t > tt) {
+					// Success, closest triangle found. Any further processing can stop.
 					t = tt;
 					index = node->indices[i];
 					return;
@@ -204,7 +208,9 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 				}
 			}
 		}
-
+		
+		// Sort sub-regions according to the intersection distance, in order 
+		// to perform a sorted descend.
 		std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
 		for (int i = 0; i < 8; i++) {
 			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {

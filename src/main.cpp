@@ -63,14 +63,10 @@ int main(int argc, const char** argv) {
 						const unsigned spy = y * nSamplesPerDirection + 1;
 						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 						
-						float u, v;
-						float t = std::numeric_limits<float>::max();
-						unsigned f = std::numeric_limits<unsigned>::max();
-						
+						float u, v, t;
+						unsigned f;
 						// Traverse through the octree
-						octree.traverse(mesh, ray, u, v, t, f);
-						
-						if (f != std::numeric_limits<unsigned>::max()) {
+						if (octree.traverse(mesh, ray, u, v, t, f)) {
 							fs[spi] = f;
 						}
 					}

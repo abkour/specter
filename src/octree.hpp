@@ -22,7 +22,7 @@ struct Octree {
 	~Octree();
 
 	void build(Mesh* mesh);
-	void traverse(const Mesh* mesh, const Ray& ray, float& u, float &v, float& t, uint32_t& index);
+	bool traverse(const Mesh* mesh, const Ray& ray, float& u, float &v, float& t, uint32_t& index);
 
 private:
 	
