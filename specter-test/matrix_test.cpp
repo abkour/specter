@@ -284,6 +284,17 @@ TEST(access, mat3) {
 }
 
 TEST(miscellaneous, mat3) {
+	specter::mat3i id(1);
+	EXPECT_TRUE(id[0][0] == 1);
+	EXPECT_TRUE(id[1][1] == 1);
+	EXPECT_TRUE(id[2][2] == 1);
+	EXPECT_TRUE(id[0][1] == 0);
+	EXPECT_TRUE(id[0][2] == 0);
+	EXPECT_TRUE(id[1][0] == 0);
+	EXPECT_TRUE(id[1][2] == 0);
+	EXPECT_TRUE(id[2][0] == 0);
+	EXPECT_TRUE(id[2][1] == 0);
+
 	specter::vec3i col0(1, 1, 1);
 	specter::vec3i col1(2, 2, 2);
 	specter::vec3i col2(3, 3, 3);
@@ -304,6 +315,7 @@ TEST(miscellaneous, mat3) {
 	EXPECT_TRUE(m00[2][0] == m01[0][2]);
 	EXPECT_TRUE(m00[2][1] == m01[1][2]);
 	EXPECT_TRUE(m00[2][2] == m01[2][2]);
+
 
 	// Calculated by hand, easy case.
 	specter::vec3f col4(1, 0, 0);
