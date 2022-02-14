@@ -129,8 +129,22 @@ ObjLoader::ObjLoader(const char* filename) {
 		std::string prefix;
 
 		lineStream >> prefix;
-
-		if (prefix == "f") {
+		if (prefix == "v") {
+			vec3f v;
+			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			sVertices.push_back(v);
+		}
+		else if (prefix == "vt") {
+			vec2f v;
+			lineStream >> v.x; lineStream >> v.y;
+			sTextureCoordinates.push_back(v);
+		}
+		else if (prefix == "vn") {
+			vec3f v;
+			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			sNormals.push_back(v);
+		}
+		else if (prefix == "f") {
 			std::vector<std::string> lines;
 			// wavefront obj files are allowed to have faces defined as triangle fans. 
 			// Although not that common, we need to handle cases where more than 1 or 2 triangles are specified.
@@ -224,10 +238,6 @@ ObjLoader::ObjLoader(const char* filename) {
 				}
 			}
 		}
-		else {
-			throw std::runtime_error("Multimesh files are not supported!");
-		}
-
 	} while (std::getline(objfile, line));
 
 	objfile.close();
@@ -243,7 +253,7 @@ ObjLoader::ObjLoader(const char* filename) {
 
 	faces.shrink_to_fit();
 
-	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\t\t(Triangles: " << faces.size() << ", Vertices: " << vertices.size() << ")\n";
+	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\t\t(Triangles: " << faces.size() / 3 << ", Vertices: " << vertices.size() << ")\n";
 	switch (cList) {
 	case ComponentList::NORMALS_MISSING:
 		std::cout << "Note: Normals are missing!\n";

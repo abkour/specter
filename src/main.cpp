@@ -18,24 +18,24 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 
 int main(int argc, const char** argv) {
 	try {
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
+		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
+		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cylinder\\cylinder.obj";
 		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\monkey\\monkey.obj";
+		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cone\\cone.obj";
+		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\torus\\torus.obj";
 		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\bunny\\bunny.obj";
+		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
 		specter::ObjLoader mesh(filename);
-		
 		renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
-
-		return 0;
-
 		/*
-		const specter::vec3f eyepos(2.f, 2.f, 3.f);
+		const specter::vec3f eyepos(1.f, 2.f, 3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
-		const specter::vec2u screen_resolution(728, 728);
+		const specter::vec2u screen_resolution(500);
 		specter::Camera camera(screen_resolution);
 		const unsigned nSamplesPerPixel = 1;
 		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
-		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);*/
-		/*
+		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
+		
 		std::vector<specter::vec3f> frame;
 		frame.resize(specter::product(screen_resolution));
 
@@ -55,8 +55,7 @@ int main(int argc, const char** argv) {
 
 		specter::buildOctree(root, mesh.getVertices(), mesh.getFaces(), initialIndexList.data());
 		std::cout << "Construction finished in: " << octreeTimer.elapsedTime() << " seconds.\n";
-		
-		specter::printOctreeNumbers();
+		specter::printStatistics();
 
 		std::cout << "Rendering mesh...\n";
 		specter::Timer rtxtime;
@@ -72,18 +71,16 @@ int main(int argc, const char** argv) {
 						const unsigned spi = syoff * nSamplesPerDirection + sxoff;
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
-						const specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 						
-						/*
 						unsigned f = std::numeric_limits<unsigned>::max();
-						float u, v, t = std::numeric_limits<float>::max();
-						specter::rayTraversal(&mesh, root, ray, u, v, t, f);
-
+						float t = specter::rayTraversal_sorted(&mesh, root, ray, f);
+						specter::reinit();
+						
 						if (f != std::numeric_limits<unsigned>::max()) {
 							fs[spi] = f;
 						}
-						*/
-						/*
+						*//*
 						float mint = std::numeric_limits<float>::max();
 
 						for (int i = 0; i < mesh.getTriangleCount(); ++i) {
@@ -94,7 +91,7 @@ int main(int argc, const char** argv) {
 									fs[spi] = i;
 								}
 							}
-						}
+						}*//*
 					}
 				}
 
@@ -102,21 +99,84 @@ int main(int argc, const char** argv) {
 
 				for (int i = 0; i < nSamplesPerPixel; ++i) {
 					if (fs[i] != std::numeric_limits<unsigned>::max()) {
-						unsigned normalIndex = mesh.getFace(fs[i]).z;
+						unsigned normalIndex = mesh.getFace(fs[i]).n;
 						specter::vec3f normal = mesh.getNormal(normalIndex);
 						cumulativeColor += abs(normal);
+						nHits++;
 					} 
 				}
 
 				const std::size_t index = y * screen_resolution.x + x;
-				cumulativeColor /= static_cast<float>(nSamplesPerPixel);
-				frame[index] = cumulativeColor;
+				//cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+				frame[index].x = cumulativeColor.x;
+				frame[index].y = cumulativeColor.y;
+				frame[index].z = cumulativeColor.z;
+				//std::cout << "frame color: " << frame[index] << '\n';
 			}
 		}
 
 		std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
 		std::cout << "Number of rays hit: " << nHits << '\n';
-		*/
+		specter::printTraversal(screen_resolution);
+
+		specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(728), "Specter Raytracer");
+		glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		static float quad[] = 
+		{
+			// vertices		// uv
+			-1.f, -1.f,		0.f, 0.f,
+			1.f, -1.f,		1.f, 0.f,
+			1.f, 1.f,		1.f, 1.f,
+			-1.f, -1.f,		0.f, 0.f,
+			1.f, 1.f,		1.f, 1.f,
+			-1.f, 1.f,		0.f, 1.f
+		};
+
+		GLuint vao, vbo;
+		glGenVertexArrays(1, &vao);
+		glGenBuffers(1, &vbo);
+		glBindVertexArray(vao);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+
+		specter::Shader quadShader =
+		{
+			{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.vs" },
+			{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.fs" }
+		};
+		quadShader.create();
+		quadShader.bind();
+
+		GLuint image;
+		glGenTextures(1, &image);
+		glBindTexture(GL_TEXTURE_2D, image);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_resolution.x, screen_resolution.y, 0, GL_RGB, GL_FLOAT, frame.data());
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTextureUnit(0, image);
+
+		while (!glfwWindowShouldClose(window.getWindow())) {
+			glClearColor(0.f, 0.f, 0.f, 0.f);
+			glClear(GL_COLOR_BUFFER_BIT);
+
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+
+			glfwSwapBuffers(window.getWindow());
+			glfwPollEvents();
+
+			if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+				glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
+			}
+		}
+
+		glDeleteTextures(1, &image);
+		glDeleteBuffers(1, &vbo);
+		glDeleteVertexArrays(1, &vao);*/
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();

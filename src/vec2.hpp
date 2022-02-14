@@ -17,10 +17,6 @@ struct vec2 {
 
 	bool operator==(const vec2<T>& other) const;
 	bool operator!=(const vec2<T>& other) const;
-	bool operator<=(const vec2<T>& other) const;
-	bool operator>=(const vec2<T>& other) const;
-	bool operator<(const vec2<T>& other) const;
-	bool operator>(const vec2<T>& other) const;
 
 	vec2<T> operator+(const vec2<T>& other);
 	vec2<T> operator-(const vec2<T>& other);
@@ -97,26 +93,6 @@ bool vec2<T>::operator==(const vec2<T>&other) const {
 template<typename T>
 bool vec2<T>::operator!=(const vec2<T>&other) const {
 	return x != other.x || y != other.y;
-}
-
-template<typename T>
-bool vec2<T>::operator<=(const vec2<T>&other) const {
-	return x <= other.x && y <= other.y;
-}
-
-template<typename T>
-bool vec2<T>::operator>=(const vec2<T>&other) const {
-	return x >= other.x && y >= other.y;
-}
-
-template<typename T>
-bool vec2<T>::operator<(const vec2<T>&other) const {
-	return x < other.x && y < other.y;
-}
-
-template<typename T>
-bool vec2<T>::operator>(const vec2<T>&other) const {
-	return x > other.x && y > other.y;
 }
 
 template<typename T>

@@ -4,10 +4,6 @@ namespace specter {
 
 static const unsigned nSubRegions = 8;
 
-static unsigned dbg_nLeafs = 0;
-static unsigned dbg_nInternals = 0;
-static unsigned dbg_nDepthConditions = 0;
-
 static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	vec3f minResult;
 	minResult[0] = std::min(std::min(p0[0], p1[0]), std::min(p0[0], p2[0]));
@@ -71,16 +67,22 @@ static AxisAlignedBoundingBox constructSubRegion(const AxisAlignedBoundingBox& s
 
 static void reserveChildren(Node* node, int nChildren) {
 	node->m_children = new Node*[nChildren];
-	node->indices = nullptr;
 	node->nIndices = std::numeric_limits<unsigned int>::max();
 	for (int i = 0; i < nChildren; ++i) {
 		node->m_children[i] = new Node;
-		node->m_children[i]->indices = nullptr;
 		node->m_children[i]->nIndices = std::numeric_limits<unsigned int>::max();
 	}
 }
 
-void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const faces, const uint32_t* trianglePositions, int depth) {
+static const unsigned depthMax = static_cast<unsigned>(log8(600'000) + 0.5);
+
+static int nInteriorNodes = 0;
+static int nleafNodes = 0;
+std::vector<int> totalIndicesAtDepths(depthMax);
+
+static int totalIndices = 0;
+
+void buildOctree(Node* node, const vec3f* const vertices, const FaceElement* const faces, const uint32_t* trianglePositions, int depth) {
 	if (node == nullptr) {
 		throw std::runtime_error("Node is nullptr!");
 	}
@@ -89,14 +91,16 @@ void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const fac
 		return;
 	}
 
-	if (node->nIndices <= 10 || depth > 5) {
+	if (node->nIndices <= 10 || depth > depthMax) {
+		totalIndices += node->nIndices;
 		node->indices = new uint32_t[node->nIndices];
 		std::memcpy(node->indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
-		dbg_nLeafs++;
-		if (depth > 5) {
-			dbg_nDepthConditions++;
-		}
+		nleafNodes++;
 		return;
+	}
+
+	if (depth < depthMax) {
+		totalIndicesAtDepths[depth] += node->nIndices;
 	}
 
 	std::vector<AxisAlignedBoundingBox> subRegions;
@@ -106,50 +110,43 @@ void buildOctree(Node* node, const vec3f* const vertices, const vec3u* const fac
 	}
 
 	std::vector<std::vector<uint32_t>> subRegionTriangleCounts;
-
 	subRegionTriangleCounts.resize(nSubRegions);
-	if (node->nIndices > 32) {
-		for (int i = 0; i < nSubRegions; ++i) {
-			subRegionTriangleCounts[i].reserve(32);
-		}
-	}
 
 	for (int i = 0; i < node->nIndices; i++) {
-		const uint32_t i0 = faces[trianglePositions[i] * 3].x;
-		const uint32_t i1 = faces[trianglePositions[i] * 3 + 1].x;
-		const uint32_t i2 = faces[trianglePositions[i] * 3 + 2].x;
-		const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
+		uint32_t i0 = faces[trianglePositions[i] * 3].p;
+		uint32_t i1 = faces[trianglePositions[i] * 3 + 1].p;
+		uint32_t i2 = faces[trianglePositions[i] * 3 + 2].p;
+		vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 		const vec3f tmin = minComponents(v0, v1, v2);
 		const vec3f tmax = maxComponents(v0, v1, v2);
 
 		const AxisAlignedBoundingBox triangleAABB(tmin, tmax);
 		for (int k = 0; k < nSubRegions; ++k) {
-			if (subRegions[k].overlaps(triangleAABB)) {
+			if (subRegions[k].overlapsEdgeInclusive(triangleAABB)) {
 				subRegionTriangleCounts[k].push_back(trianglePositions[i]);
 			}
 		}
 	}
 
+	nInteriorNodes++;
+	node->m_children = new Node*[nSubRegions];
 	for (int i = 0; i < nSubRegions; ++i) {
-		std::cout << "subRegion[" << i << "]: " << subRegionTriangleCounts[i].size() << '\n';
-	}
-	std::cout << "-------------------------------------------\n";
-
-	dbg_nInternals++;
-	reserveChildren(node, nSubRegions);
-	for (int i = 0; i < nSubRegions; ++i) {
-		if (subRegionTriangleCounts.size() != 0) {
+		if (subRegionTriangleCounts[i].size() != 0) {
+			node->m_children[i] = new Node;
 			node->m_children[i]->bbox.min = subRegions[i].min;
 			node->m_children[i]->bbox.max = subRegions[i].max;
 			node->m_children[i]->nIndices = subRegionTriangleCounts[i].size();
 			buildOctree(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
+		} else {
+			node->m_children[i] = nullptr;
+			node->nIndices = std::numeric_limits<unsigned int>::max();
 		}
 	}
 }
 
 struct IndexDistancePair {
 	int index;
-	float distance;
+	float distance = std::numeric_limits<float>::max();
 
 	friend bool operator<(const IndexDistancePair& p0, const IndexDistancePair& p1) {
 		return p0.distance < p1.distance;
@@ -160,19 +157,55 @@ bool compareDistance(const IndexDistancePair& p0, const IndexDistancePair& p1) {
 	return p0.distance <= p1.distance;
 }
 
-void rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& mint, uint32_t& index) {
-	if (node == nullptr) {
+void rayTraversal2(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+	if (node == nullptr || t != std::numeric_limits<float>::max()) {
 		return;
+	}
+
+	if (node->indices == nullptr) {
+		if (node->m_children != nullptr) {
+			for (int i = 0; i < 8; ++i) {
+				if (node->m_children[i] != nullptr) {
+					if (node->m_children[i]->bbox.rayIntersects(ray)) {
+						rayTraversal2(mesh, node->m_children[i], ray, u, v, t, index);
+					}
+				}
+			}
+		}
+	}
+
+	else {
+		for (int i = 0; i < node->nIndices; ++i) {
+			float uu, vv, tt = std::numeric_limits<float>::max();
+			if(mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+				if (t > tt) {
+					t = tt;
+					index = node->indices[i];
+				}
+			}
+		}
+	}
+}
+
+static float closestIntersectionDistance = std::numeric_limits<float>::max();
+
+static unsigned totalTriangleTests = 0;
+static unsigned totalAABBTests = 0;
+
+float rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index) {
+	if (node == nullptr) {
+		return std::numeric_limits<float>::max();;
 	}
 
 	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
-			float uu, vv, tt;
+			float uu;
+			float vv;
+			float tt;
+			totalTriangleTests++;
 			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
-				if (mint > tt) {
-					mint = tt;
-					u = uu;
-					v = vv;
+				if (closestIntersectionDistance > tt) {
+					closestIntersectionDistance = tt;
 					index = node->indices[i];
 				}
 			}
@@ -181,34 +214,87 @@ void rayTraversal(const Mesh* mesh, Node* node, const Ray& ray, float& u, float&
 
 	else {
 		if (node->m_children == nullptr) {
-			return;
+			return std::numeric_limits<float>::max();;
 		}
 
-		IndexDistancePair sortedDistances[8];
 		for (int i = 0; i < 8; ++i) {
-			sortedDistances[i].distance = std::numeric_limits<float>::max();
 			if (node->m_children[i] != nullptr) {
 				auto subRegion = node->m_children[i]->bbox;
 				float near, far;
+				totalAABBTests++;
 				if (subRegion.rayIntersects(ray, near, far)) {
-					if (mint > near) {
-						sortedDistances[i].distance = near;
-						sortedDistances[i].index = i;
-						//rayTraversal(mesh, node->m_children[sortedDistances[i].index], ray, u, v, mint, index);
+					if (closestIntersectionDistance > near) {
+						rayTraversal(mesh, node->m_children[i], ray, index);
 					}
 				}
 			}
 		}
-		
-		std::sort(std::begin(sortedDistances), std::end(sortedDistances));
-		for (int i = 0; i < 8; ++i) {
-			if (sortedDistances[i].distance < std::numeric_limits<float>::max()) {
-				if (mint > sortedDistances[i].distance) {
-					rayTraversal(mesh, node->m_children[sortedDistances[i].index], ray, u, v, mint, index);
+	}
+
+	return closestIntersectionDistance;
+}
+
+
+float rayTraversal_sorted(const Mesh* mesh, Node* node, const Ray& ray, uint32_t& index) {
+	if (node == nullptr) {
+		return std::numeric_limits<float>::max();;
+	}
+
+	if (closestIntersectionDistance != std::numeric_limits<float>::max()) {
+		return closestIntersectionDistance;
+	}
+
+	if (node->indices != nullptr) {
+		for (int i = 0; i < node->nIndices; ++i) {
+			float uu;
+			float vv;
+			float tt;
+			totalTriangleTests++;
+			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+				if (closestIntersectionDistance > tt) {
+					closestIntersectionDistance = tt;
+					index = node->indices[i];
+					return closestIntersectionDistance;
 				}
 			}
 		}
 	}
+
+	else {
+		if (node->m_children == nullptr) {
+			return std::numeric_limits<float>::max();;
+		}
+
+		IndexDistancePair distanceToBoxes[8];
+
+		for (int i = 0; i < 8; ++i) {
+			if (node->m_children[i] != nullptr) {
+				auto subRegion = node->m_children[i]->bbox;
+				float near, far;
+				totalAABBTests++;
+				if (subRegion.rayIntersect(ray, near, far)) {
+					distanceToBoxes[i].distance = near;
+					distanceToBoxes[i].index = i;
+				}
+			}
+		}
+
+		std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
+		for (int i = 0; i < 8; i++) {
+			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
+				rayTraversal_sorted(mesh, node->m_children[distanceToBoxes[i].index], ray, index);
+			}
+			else {
+				break;
+			}
+		}
+	}
+
+	return closestIntersectionDistance;
+}
+
+void reinit() {
+	closestIntersectionDistance = std::numeric_limits<float>::max();
 }
 
 void freeOctree(Node* node) {
@@ -229,10 +315,21 @@ void freeOctree(Node* node) {
 	delete node;
 }
 
-void printOctreeNumbers() {
-	std::cout << "Number of internals: " << dbg_nInternals << '\n';
-	std::cout << "Number of leaves: " << dbg_nLeafs << '\n';
-	std::cout << "Number of depth conditions: " << dbg_nDepthConditions << '\n';
+void printStatistics() {
+	std::cout << "Number of interior nodes: " << nInteriorNodes << '\n';
+	std::cout << "Number of leaf nodes: " << nleafNodes << '\n';
+	for(int i = 0; i < depthMax; ++i) {
+		std::cout << "Indices at depth[" << i << "]: " << totalIndicesAtDepths[i] << '\n';
+	}
+	std::cout << "Total indices: " << totalIndices << '\n';
+	std::cout << "Avg indices per leaf: " << (float)totalIndices / (float)nleafNodes << '\n';
+}
+
+void printTraversal(vec2u screenResolution) {
+	std::cout << "Total Ray-Triangle intersections tested: " << totalTriangleTests << '\n';
+	std::cout << "Total Ray-AABB intersections tested: " << totalAABBTests << '\n';
+	std::cout << "Average ray-triangle intersections tested: " << totalTriangleTests / product(screenResolution) << '\n';
+	std::cout << "Average ray-AABB intersections tested: " << totalAABBTests / product(screenResolution) << '\n';
 }
 
 }

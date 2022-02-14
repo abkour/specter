@@ -33,6 +33,7 @@ struct mat3 {
 	mat3<T>& operator/=(const T s);
 
 	T* operator[](const std::size_t index);
+	const T* operator[](const std::size_t index) const;
 
 	vec3<T> col(const std::size_t index) const;
 	vec3<T> row(const std::size_t index) const;
@@ -53,22 +54,22 @@ mat3<T>::mat3(const T value) {
 
 template<typename T>
 mat3<T>::mat3(const vec3<T>& v)  {
-	data[0][0] = v[0]; data[0][1] = v[1]; data[0][2] = v[2];
-	data[1][0] = v[0]; data[1][1] = v[1]; data[1][2] = v[2];
-	data[2][0] = v[0]; data[2][1] = v[1]; data[2][2] = v[2];
+	data[0] = v[0]; data[1] = v[0]; data[2] = v[0];
+	data[3] = v[1]; data[4] = v[1]; data[5] = v[1];
+	data[6] = v[2]; data[7] = v[2]; data[8] = v[2];
 }
 
 template<typename T>
 mat3<T>::mat3(const vec3<T>& col0, const vec3<T>& col1, const vec3<T>& col2) {
-	data[0][0] = col0[0]; data[1][0] = col0[1]; data[2][0] = col0[2];
-	data[0][1] = col1[0]; data[1][1] = col1[1]; data[1][2] = col1[2];
-	data[0][2] = col2[0]; data[2][1] = col2[1]; data[2][2] = col2[2];
+	data[0] = col0[0]; data[1] = col1[0]; data[2] = col2[0]; 
+	data[3] = col0[1]; data[4] = col1[1]; data[5] = col2[1];
+	data[6] = col0[2]; data[7] = col1[2]; data[8] = col2[2];
 }
 
 template<typename T>
 mat3<T>::mat3(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		data[i] = other[i];
+		data[i] = other.data[i];
 	}
 }
 
@@ -80,7 +81,7 @@ mat3<T>::mat3(mat3<T>&& other) {
 template<typename T>
 mat3<T>& mat3<T>::operator=(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		data[i] = other[i];
+		data[i] = other.data[i];
 	}
 	return *this;
 }
@@ -95,7 +96,7 @@ mat3<T>& mat3<T>::operator=(mat3<T>&& other) {
 template<typename T>
 bool mat3<T>::operator==(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		if (data[i] != other[i]) return false;
+		if (data[i] != other.data[i]) return false;
 	}
 	return true;
 }
@@ -103,7 +104,7 @@ bool mat3<T>::operator==(const mat3<T>& other) {
 template<typename T>
 bool mat3<T>::operator!=(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		if (data[i] == other[i]) return false;
+		if (data[i] == other.data[i]) return false;
 	}
 	return true;
 }
@@ -112,7 +113,7 @@ template<typename T>
 mat3<T> mat3<T>::operator+(const mat3<T>& other) {
 	mat3<T> result;
 	for (int i = 0; i < 9; ++i) {
-		result[i] = data[i] + other[i];
+		result.data[i] = data[i] + other.data[i];
 	}
 	return result;
 }
@@ -120,7 +121,7 @@ mat3<T> mat3<T>::operator+(const mat3<T>& other) {
 template<typename T>
 mat3<T>& mat3<T>::operator+=(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		data[i] += other[i];
+		data[i] += other.data[i];
 	}
 	return *this;
 }
@@ -129,7 +130,7 @@ template<typename T>
 mat3<T> mat3<T>::operator-(const mat3<T>& other) {
 	mat3<T> result;
 	for (int i = 0; i < 9; ++i) {
-		result[i] = data[i] - other[i];
+		result.data[i] = data[i] - other.data[i];
 	}
 	return result;
 }
@@ -137,7 +138,7 @@ mat3<T> mat3<T>::operator-(const mat3<T>& other) {
 template<typename T>
 mat3<T>& mat3<T>::operator-=(const mat3<T>& other) {
 	for (int i = 0; i < 9; ++i) {
-		data[i] -= other[i];
+		data[i] -= other.data[i];
 	}
 	return *this;
 }
@@ -146,15 +147,15 @@ template<typename T>
 mat3<T> mat3<T>::operator*(const mat3<T>& other) {
 	mat3<T> result;
 
-	result[0][0] = data[0][0] * other[0][0] + data[0][1] * other[1][0] + data[0][2] * other[2][0];
-	result[0][1] = data[0][0] * other[0][1] + data[0][1] * other[1][1] + data[0][2] * other[2][1];
-	result[0][2] = data[0][0] * other[0][2] + data[0][1] * other[1][2] + data[0][2] * other[2][2];
-	result[1][0] = data[1][0] * other[0][0] + data[1][1] * other[1][0] + data[1][2] * other[2][0];
-	result[1][1] = data[1][0] * other[0][1] + data[1][1] * other[1][1] + data[1][2] * other[2][1];
-	result[1][2] = data[1][0] * other[0][2] + data[1][1] * other[1][2] + data[1][2] * other[2][2];
-	result[2][0] = data[2][0] * other[0][0] + data[2][1] * other[1][0] + data[2][2] * other[2][0];
-	result[2][1] = data[2][0] * other[0][1] + data[2][1] * other[1][1] + data[2][2] * other[2][1];
-	result[2][2] = data[2][0] * other[0][2] + data[2][1] * other[1][2] + data[2][2] * other[2][2];
+	result[0][0] = data[0] * other[0][0] + data[1] * other[1][0] + data[2] * other[2][0];
+	result[0][1] = data[0] * other[0][1] + data[1] * other[1][1] + data[2] * other[2][1];
+	result[0][2] = data[0] * other[0][2] + data[1] * other[1][2] + data[2] * other[2][2];
+	result[1][0] = data[3] * other[0][0] + data[4] * other[1][0] + data[5] * other[2][0];
+	result[1][1] = data[3] * other[0][1] + data[4] * other[1][1] + data[5] * other[2][1];
+	result[1][2] = data[3] * other[0][2] + data[4] * other[1][2] + data[5] * other[2][2];
+	result[2][0] = data[6] * other[0][0] + data[7] * other[1][0] + data[8] * other[2][0];
+	result[2][1] = data[6] * other[0][1] + data[7] * other[1][1] + data[8] * other[2][1];
+	result[2][2] = data[6] * other[0][2] + data[7] * other[1][2] + data[8] * other[2][2];
 
 	return result;
 }
@@ -163,15 +164,15 @@ template<typename T>
 mat3<T>& mat3<T>::operator*=(const mat3<T>& other) {
 	mat3<T> result;
 
-	result[0][0] = data[0][0] * other[0][0] + data[0][1] * other[1][0] + data[0][2] * other[2][0];
-	result[0][1] = data[0][0] * other[0][1] + data[0][1] * other[1][1] + data[0][2] * other[2][1];
-	result[0][2] = data[0][0] * other[0][2] + data[0][1] * other[1][2] + data[0][2] * other[2][2];
-	result[1][0] = data[1][0] * other[0][0] + data[1][1] * other[1][0] + data[1][2] * other[2][0];
-	result[1][1] = data[1][0] * other[0][1] + data[1][1] * other[1][1] + data[1][2] * other[2][1];
-	result[1][2] = data[1][0] * other[0][2] + data[1][1] * other[1][2] + data[1][2] * other[2][2];
-	result[2][0] = data[2][0] * other[0][0] + data[2][1] * other[1][0] + data[2][2] * other[2][0];
-	result[2][1] = data[2][0] * other[0][1] + data[2][1] * other[1][1] + data[2][2] * other[2][1];
-	result[2][2] = data[2][0] * other[0][2] + data[2][1] * other[1][2] + data[2][2] * other[2][2];
+	result[0][0] = data[0] * other[0][0] + data[1] * other[1][0] + data[2] * other[2][0];
+	result[0][1] = data[0] * other[0][1] + data[1] * other[1][1] + data[2] * other[2][1];
+	result[0][2] = data[0] * other[0][2] + data[1] * other[1][2] + data[2] * other[2][2];
+	result[1][0] = data[3] * other[0][0] + data[4] * other[1][0] + data[5] * other[2][0];
+	result[1][1] = data[3] * other[0][1] + data[4] * other[1][1] + data[5] * other[2][1];
+	result[1][2] = data[3] * other[0][2] + data[4] * other[1][2] + data[5] * other[2][2];
+	result[2][0] = data[6] * other[0][0] + data[7] * other[1][0] + data[8] * other[2][0];
+	result[2][1] = data[6] * other[0][1] + data[7] * other[1][1] + data[8] * other[2][1];
+	result[2][2] = data[6] * other[0][2] + data[7] * other[1][2] + data[8] * other[2][2];
 
 	*this = result;
 	return *this;
@@ -181,7 +182,7 @@ template<typename T>
 mat3<T> mat3<T>::operator*(const T s) {
 	mat3<T> result;
 	for (int i = 0; i < 9; ++i) {
-		result[i] = data[i] * s;
+		result.data[i] = data[i] * s;
 	}
 	return result;
 }
@@ -190,7 +191,7 @@ template<typename T>
 mat3<T> mat3<T>::operator/(const T s) {
 	mat3<T> result;
 	for (int i = 0; i < 9; ++i) {
-		result[i] = data[i] / s;
+		result.data[i] = data[i] / s;
 	}
 	return result;
 }
@@ -213,6 +214,11 @@ mat3<T>& mat3<T>::operator/=(const T s) {
 
 template<typename T>
 T* mat3<T>::operator[](const std::size_t index) {
+	return &data[index * 3];
+}
+
+template<typename T>
+const T* mat3<T>::operator[](const std::size_t index) const {
 	return &data[index * 3];
 }
 
@@ -273,11 +279,28 @@ bool isIdentity(const mat3<T>& m) {
 	return isDiagonalOne && isOutsideNull;
 }
 
+// Floating point error propagation results in errors of signifact margin.
+template<typename T>
+bool isIdentityCorrected(const mat3<T>& m) {
+	const T epsilon = 0.000001f;
+	if (m[0][0] > 1.f + epsilon || m[0][0] < 1.f - epsilon) return false;
+	if (m[1][1] > 1.f + epsilon || m[1][1] < 1.f - epsilon) return false;
+	if (m[2][2] > 1.f + epsilon || m[2][2] < 1.f - epsilon) return false;
+	if (m[0][1] > epsilon || m[0][1] < -epsilon) return false;
+	if (m[0][2] > epsilon || m[0][2] < -epsilon) return false;
+	if (m[1][0] > epsilon || m[1][0] < -epsilon) return false;
+	if (m[1][2] > epsilon || m[1][2] < -epsilon) return false;
+	if (m[2][0] > epsilon || m[2][0] < -epsilon) return false;
+	if (m[2][1] > epsilon || m[2][1] < -epsilon) return false;
+
+	return true;
+}
+
 template<typename T>
 std::ostream& operator<<(std::ostream& os, mat3<T>& mat) {
 	for (int i = 0; i < 3; ++i) {
 		for (int j = 0; j < 3; ++j) {
-			os << mat[i * 3 + j] << "\t";
+			os << mat[i][j] << "\t";
 		}
 		os << '\n';
 	}

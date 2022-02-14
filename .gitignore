@@ -32,7 +32,15 @@
 *.app
 
 *.vs
+*.vcxproj
+*.vcxproj.user
+
+specter-test/packages.config
+specter-test/pch.h
+specter-test/pch.cpp
+
 specter.sln
 
+packages/
 specter/
 x64/

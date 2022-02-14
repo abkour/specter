@@ -207,7 +207,7 @@ vec3<T> operator/(const vec3<T>& v, const T s) {
 
 template<typename T>
 vec3<T> operator/(const T s, const vec3<T>& v) {
-	return vec3<T>(v.x / s, v.y / s, v.z / s);
+	return vec3<T>(s / v.x, s / v.y, s / v.z);
 }
 
 template<typename T>

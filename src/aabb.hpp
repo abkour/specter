@@ -21,6 +21,8 @@ struct AxisAlignedBoundingBox {
 	bool overlaps(const AxisAlignedBoundingBox& other) const;
 	bool overlapsEdgeInclusive(const AxisAlignedBoundingBox& other) const;
 
+	bool rayIntersect(const Ray& ray, float& nearT, float& farT) const;
+
 	// Implements the slab method
 	bool rayIntersects(const Ray& ray) const;
 

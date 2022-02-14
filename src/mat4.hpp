@@ -33,6 +33,7 @@ struct mat4 {
 	mat4<T>& operator/=(const T s);
 
 	T* operator[](const std::size_t index);
+	const T* operator[](const std::size_t index) const;
 
 	vec4<T> col(const std::size_t index) const;
 	vec4<T> row(const std::size_t index) const;
@@ -118,7 +119,7 @@ template<typename T>
 mat4<T> mat4<T>::operator+(const mat4<T>& other) {
 	mat4<T> result;
 	for (int i = 0; i < 16; ++i) {
-		result[i] = data[i] + other.data[i];
+		result.data[i] = data[i] + other.data[i];
 	}
 	return result;
 }
@@ -127,7 +128,7 @@ template<typename T>
 mat4<T> mat4<T>::operator-(const mat4<T>& other) {
 	mat4<T> result;
 	for (int i = 0; i < 16; ++i) {
-		result[i] = data[i] - other.data[i];
+		result.data[i] = data[i] - other.data[i];
 	}
 	return result;
 }
@@ -135,25 +136,25 @@ mat4<T> mat4<T>::operator-(const mat4<T>& other) {
 template<typename T>
 mat4<T> mat4<T>::operator*(const mat4<T>& other) {
 	mat4<T> result;
-	result[0] = data[0] * other.data[0] + data[1] * other.data[4] + data[2] * other.data[8] + data[3] * other.data[12];
-	result[1] = data[0] * other.data[1] + data[1] * other.data[5] + data[2] * other.data[9] + data[3] * other.data[13];
-	result[2] = data[0] * other.data[2] + data[1] * other.data[6] + data[2] * other.data[10] + data[3] * other.data[14];
-	result[3] = data[0] * other.data[3] + data[1] * other.data[7] + data[2] * other.data[11] + data[3] * other.data[15];
+	result.data[0] = data[0] * other.data[0] + data[1] * other.data[4] + data[2] * other.data[8] + data[3] * other.data[12];
+	result.data[1] = data[0] * other.data[1] + data[1] * other.data[5] + data[2] * other.data[9] + data[3] * other.data[13];
+	result.data[2] = data[0] * other.data[2] + data[1] * other.data[6] + data[2] * other.data[10] + data[3] * other.data[14];
+	result.data[3] = data[0] * other.data[3] + data[1] * other.data[7] + data[2] * other.data[11] + data[3] * other.data[15];
 
-	result[4] = data[4] * other.data[0] + data[5] * other.data[4] + data[6] * other.data[8] + data[7] * other.data[12];
-	result[5] = data[4] * other.data[1] + data[5] * other.data[5] + data[6] * other.data[9] + data[7] * other.data[13];
-	result[6] = data[4] * other.data[2] + data[5] * other.data[6] + data[6] * other.data[10] + data[7] * other.data[14];
-	result[7] = data[4] * other.data[3] + data[5] * other.data[7] + data[6] * other.data[11] + data[7] * other.data[15];
+	result.data[4] = data[4] * other.data[0] + data[5] * other.data[4] + data[6] * other.data[8] + data[7] * other.data[12];
+	result.data[5] = data[4] * other.data[1] + data[5] * other.data[5] + data[6] * other.data[9] + data[7] * other.data[13];
+	result.data[6] = data[4] * other.data[2] + data[5] * other.data[6] + data[6] * other.data[10] + data[7] * other.data[14];
+	result.data[7] = data[4] * other.data[3] + data[5] * other.data[7] + data[6] * other.data[11] + data[7] * other.data[15];
 
-	result[8] = data[8] * other.data[0] + data[9] * other.data[4] + data[10] * other.data[8] + data[11] * other.data[12];
-	result[9] = data[8] * other.data[1] + data[9] * other.data[5] + data[10] * other.data[9] + data[11] * other.data[12];
-	result[10] = data[8] * other.data[2] + data[9] * other.data[6] + data[10] * other.data[10] + data[11] * other.data[12];
-	result[11] = data[8] * other.data[3] + data[9] * other.data[7] + data[10] * other.data[11] + data[11] * other.data[12];
+	result.data[8] = data[8] * other.data[0] + data[9] * other.data[4] + data[10] * other.data[8] + data[11] * other.data[12];
+	result.data[9] = data[8] * other.data[1] + data[9] * other.data[5] + data[10] * other.data[9] + data[11] * other.data[13];
+	result.data[10] = data[8] * other.data[2] + data[9] * other.data[6] + data[10] * other.data[10] + data[11] * other.data[14];
+	result.data[11] = data[8] * other.data[3] + data[9] * other.data[7] + data[10] * other.data[11] + data[11] * other.data[15];
 
-	result[12] = data[12] * other.data[0] + data[13] * other.data[4] + data[14] * other.data[8] + data[15] * other.data[12];
-	result[13] = data[12] * other.data[1] + data[13] * other.data[5] + data[14] * other.data[9] + data[15] * other.data[13];
-	result[14] = data[12] * other.data[2] + data[13] * other.data[6] + data[14] * other.data[10] + data[15] * other.data[14];
-	result[15] = data[12] * other.data[3] + data[13] * other.data[7] + data[14] * other.data[11] + data[15] * other.data[15];
+	result.data[12] = data[12] * other.data[0] + data[13] * other.data[4] + data[14] * other.data[8] + data[15] * other.data[12];
+	result.data[13] = data[12] * other.data[1] + data[13] * other.data[5] + data[14] * other.data[9] + data[15] * other.data[13];
+	result.data[14] = data[12] * other.data[2] + data[13] * other.data[6] + data[14] * other.data[10] + data[15] * other.data[14];
+	result.data[15] = data[12] * other.data[3] + data[13] * other.data[7] + data[14] * other.data[11] + data[15] * other.data[15];
 	return result;
 }
 
@@ -176,25 +177,25 @@ mat4<T>& mat4<T>::operator-=(const mat4<T>& other) {
 template<typename T>
 mat4<T>& mat4<T>::operator*=(const mat4<T>& other) {
 	mat4<T> result;
-	result[0] = data[0] * other.data[0] + data[1] * other.data[4] + data[2] * other.data[8] + data[3] * other.data[12];
-	result[1] = data[0] * other.data[1] + data[1] * other.data[5] + data[2] * other.data[9] + data[3] * other.data[13];
-	result[2] = data[0] * other.data[2] + data[1] * other.data[6] + data[2] * other.data[10] + data[3] * other.data[14];
-	result[3] = data[0] * other.data[3] + data[1] * other.data[7] + data[2] * other.data[11] + data[3] * other.data[15];
+	result.data[0] = data[0] * other.data[0] + data[1] * other.data[4] + data[2] * other.data[8] + data[3] * other.data[12];
+	result.data[1] = data[0] * other.data[1] + data[1] * other.data[5] + data[2] * other.data[9] + data[3] * other.data[13];
+	result.data[2] = data[0] * other.data[2] + data[1] * other.data[6] + data[2] * other.data[10] + data[3] * other.data[14];
+	result.data[3] = data[0] * other.data[3] + data[1] * other.data[7] + data[2] * other.data[11] + data[3] * other.data[15];
 
-	result[4] = data[4] * other.data[0] + data[5] * other.data[4] + data[6] * other.data[8] + data[7] * other.data[12];
-	result[5] = data[4] * other.data[1] + data[5] * other.data[5] + data[6] * other.data[9] + data[7] * other.data[13];
-	result[6] = data[4] * other.data[2] + data[5] * other.data[6] + data[6] * other.data[10] + data[7] * other.data[14];
-	result[7] = data[4] * other.data[3] + data[5] * other.data[7] + data[6] * other.data[11] + data[7] * other.data[15];
+	result.data[4] = data[4] * other.data[0] + data[5] * other.data[4] + data[6] * other.data[8] + data[7] * other.data[12];
+	result.data[5] = data[4] * other.data[1] + data[5] * other.data[5] + data[6] * other.data[9] + data[7] * other.data[13];
+	result.data[6] = data[4] * other.data[2] + data[5] * other.data[6] + data[6] * other.data[10] + data[7] * other.data[14];
+	result.data[7] = data[4] * other.data[3] + data[5] * other.data[7] + data[6] * other.data[11] + data[7] * other.data[15];
 
-	result[8] = data[8] * other.data[0] + data[9] * other.data[4] + data[10] * other.data[8] + data[11] * other.data[12];
-	result[9] = data[8] * other.data[1] + data[9] * other.data[5] + data[10] * other.data[9] + data[11] * other.data[12];
-	result[10] = data[8] * other.data[2] + data[9] * other.data[6] + data[10] * other.data[10] + data[11] * other.data[12];
-	result[11] = data[8] * other.data[3] + data[9] * other.data[7] + data[10] * other.data[11] + data[11] * other.data[12];
+	result.data[8] = data[8] * other.data[0] + data[9] * other.data[4] + data[10] * other.data[8] + data[11] * other.data[12];
+	result.data[9] = data[8] * other.data[1] + data[9] * other.data[5] + data[10] * other.data[9] + data[11] * other.data[13];
+	result.data[10] = data[8] * other.data[2] + data[9] * other.data[6] + data[10] * other.data[10] + data[11] * other.data[14];
+	result.data[11] = data[8] * other.data[3] + data[9] * other.data[7] + data[10] * other.data[11] + data[11] * other.data[15];
 
-	result[12] = data[12] * other.data[0] + data[13] * other.data[4] + data[14] * other.data[8] + data[15] * other.data[12];
-	result[13] = data[12] * other.data[1] + data[13] * other.data[5] + data[14] * other.data[9] + data[15] * other.data[13];
-	result[14] = data[12] * other.data[2] + data[13] * other.data[6] + data[14] * other.data[10] + data[15] * other.data[14];
-	result[15] = data[12] * other.data[3] + data[13] * other.data[7] + data[14] * other.data[11] + data[15] * other.data[15];
+	result.data[12] = data[12] * other.data[0] + data[13] * other.data[4] + data[14] * other.data[8] + data[15] * other.data[12];
+	result.data[13] = data[12] * other.data[1] + data[13] * other.data[5] + data[14] * other.data[9] + data[15] * other.data[13];
+	result.data[14] = data[12] * other.data[2] + data[13] * other.data[6] + data[14] * other.data[10] + data[15] * other.data[14];
+	result.data[15] = data[12] * other.data[3] + data[13] * other.data[7] + data[14] * other.data[11] + data[15] * other.data[15];
 	*this = result;
 	return *this;
 }
@@ -203,7 +204,7 @@ template<typename T>
 mat4<T> mat4<T>::operator*(const T s) {
 	mat4<T> result;
 	for (int i = 0; i < 16; ++i) {
-		result[i] *= s;
+		result.data[i] = data[i] * s;
 	}
 	return result;
 }
@@ -212,7 +213,7 @@ template<typename T>
 mat4<T> mat4<T>::operator/(const T s) {
 	mat4<T> result;
 	for (int i = 0; i < 16; ++i) {
-		result[i] /= s;
+		result.data[i] = data[i] / s;
 	}
 	return result;
 }
@@ -239,13 +240,18 @@ T* mat4<T>::operator[](const std::size_t index) {
 }
 
 template<typename T>
+const T* mat4<T>::operator[](const std::size_t index) const {
+	return &data[index * 4];
+}
+
+template<typename T>
 vec4<T> mat4<T>::col(const std::size_t index) const {
-	return vec4<T>(index, index + 4, index + 8, index + 12);
+	return vec4<T>(data[index], data[index + 4], data[index + 8], data[index + 12]);
 }
 
 template<typename T>
 vec4<T> mat4<T>::row(const std::size_t index) const {
-	return vec4<T>(index * 4, index * 4 + 1, index * 4 + 2, index * 4 + 3);
+	return vec4<T>(data[index * 4], data[index * 4 + 1], data[index * 4 + 2], data[index * 4 + 3]);
 }
 
 template<typename T>
@@ -265,18 +271,39 @@ mat4<T> transpose(const mat4<T>& m) {
 	return tmat;
 }
 
-// TODO: Implement this functionality
-template<typename T>
-mat4<T> inverse(const mat4<T>& m) {}
-
 template<typename T>
 bool isIdentity(const mat4<T>& m) {
 	bool isDiagonalOne = m[0][0] == m[1][1] == m[2][2] == m[3][3] == static_cast<T>(1);
-	bool isOutsideNull = m[0][1] == m[0][2] == m[0][3] == 
-						 m[1][0] == m[1][2] == m[1][3] == 
-						 m[2][0] == m[2][1] == m[2][3] == 
-					     m[3][0] == m[3][1] == m[3][2] == static_cast<T>(0);
-	return isDiagonalOne && isOutsideNull;
+	bool isOutsideNull0 = m[0][1] == m[0][2] == m[0][3] == static_cast<T>(0);
+	bool isOutsideNull1 = m[1][0] == m[1][2] == m[1][3] == static_cast<T>(0);
+	bool isOutsideNull2 = m[2][0] == m[2][1] == m[2][3] == static_cast<T>(0);
+	bool isOutsideNull3 = m[3][0] == m[3][1] == m[3][2] == static_cast<T>(0);
+
+	return isDiagonalOne && isOutsideNull0 && isOutsideNull1 && isOutsideNull2 && isOutsideNull3;
+}
+
+// Floating point error propagation results in errors of signifact margin.
+template<typename T>
+bool isIdentityCorrected(const mat4<T>& m) {
+	const T epsilon = 0.000001f;
+	if (m[0][0] > 1.f + epsilon || m[0][0] < 1.f - epsilon) return false;
+	if (m[1][1] > 1.f + epsilon || m[1][1] < 1.f - epsilon) return false;
+	if (m[2][2] > 1.f + epsilon || m[2][2] < 1.f - epsilon) return false;
+	if (m[3][3] > 1.f + epsilon || m[3][3] < 1.f - epsilon) return false;
+	if (m[0][1] > epsilon || m[0][1] < -epsilon) return false;
+	if (m[0][2] > epsilon || m[0][2] < -epsilon) return false;
+	if (m[0][3] > epsilon || m[0][3] < -epsilon) return false;
+	if (m[1][0] > epsilon || m[1][0] < -epsilon) return false;
+	if (m[1][2] > epsilon || m[1][2] < -epsilon) return false;
+	if (m[1][3] > epsilon || m[1][3] < -epsilon) return false;
+	if (m[2][0] > epsilon || m[2][0] < -epsilon) return false;
+	if (m[2][1] > epsilon || m[2][1] < -epsilon) return false;
+	if (m[2][3] > epsilon || m[2][3] < -epsilon) return false;
+	if (m[3][0] > epsilon || m[3][0] < -epsilon) return false;
+	if (m[3][1] > epsilon || m[3][1] < -epsilon) return false;
+	if (m[3][2] > epsilon || m[3][2] < -epsilon) return false;
+
+	return true;
 }
 
 inline mat4<float> lookAt(const vec3f& pos, const vec3f& dir, const vec3f& up) {

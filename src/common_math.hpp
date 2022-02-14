@@ -6,5 +6,6 @@
 namespace specter {
 
 float radians(const float angleInDegrees);
+float log8(const float x);
 
 }

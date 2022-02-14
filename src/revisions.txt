@@ -4,3 +4,4 @@ Design revisions go here
 Previously elements were access by directly getting a copy/reference of the element at some index.
 Now elements are accessed by performing a row-column lookup, e.g mat33[1][2] instead of mat33[6].
 Reason: Easy of development, reduction of avoidable, hard to trace index errors.
+
