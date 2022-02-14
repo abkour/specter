@@ -32,7 +32,7 @@ int main(int argc, const char** argv) {
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(500);
 		specter::Camera camera(screen_resolution);
-		const unsigned nSamplesPerPixel = 1;
+		const unsigned nSamplesPerPixel = 64;
 		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
 		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
 		

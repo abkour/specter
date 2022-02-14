@@ -88,6 +88,8 @@ ObjLoader::ObjLoader(const char* filename) {
 
 	Timer timer;
 
+	// Find potentially missing triangle attributes(e.g missing normals) that will change the way 
+	// faces have to be processed.
 	std::string line;
 	while (std::getline(objfile, line)) {
 
@@ -153,14 +155,13 @@ ObjLoader::ObjLoader(const char* filename) {
 				lineStream >> v;
 				if (!v.empty()) {
 					lines.push_back(v);
-				}
-				else {
+				} else {
 					break;
 				}
 			}
 
 			if (lines.size() < 3) {
-				throw std::runtime_error("Object file invalid. Face doesn't specify triangle (less than three indices specified)");
+				throw std::runtime_error("File: " + std::string(filename) + " invalid. Face doesn't specify triangle (less than three indices specified)");
 			}
 
 			std::vector<FaceElement> faceIndices;

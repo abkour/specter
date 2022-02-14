@@ -1,5 +1,7 @@
 #include "octree.hpp"
 
+#include <numeric>	// For std::iota
+
 namespace specter {
 
 static const unsigned nSubRegions = 8;
@@ -77,14 +79,9 @@ void Octree::build(Mesh* mesh) {
 	root = new Node;
 	root->nIndices = mesh->getTriangleCount();
 	root->bbox = mesh->computeBoundingBox();
-	root->m_children = nullptr;
-	root->indices = nullptr;
 
-	std::vector<uint32_t> initialIndexList;
-	initialIndexList.resize(mesh->getTriangleCount());
-	for (int i = 0; i < initialIndexList.size(); ++i) {
-		initialIndexList[i] = i;
-	}
+	std::vector<uint32_t> initialIndexList(mesh->getTriangleCount());
+	std::iota(initialIndexList.begin(), initialIndexList.end(), 0);
 
 	maxDepth = log8(mesh->getTriangleCount());
 	buildRec(root, mesh->getVertices(), mesh->getFaces(), initialIndexList.data(), 0);
@@ -105,15 +102,12 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		return;
 	}
 
-	std::vector<AxisAlignedBoundingBox> subRegions;
-	subRegions.reserve(nSubRegions);
+	std::vector<AxisAlignedBoundingBox> subRegions(nSubRegions);
 	for (int i = 0; i < nSubRegions; ++i) {
-		subRegions.push_back(constructSubRegion(node->bbox, i));
+		subRegions[i] = constructSubRegion(node->bbox, i);
 	}
 
-	std::vector<std::vector<uint32_t>> subRegionTriangleCounts;
-	subRegionTriangleCounts.resize(nSubRegions);
-
+	std::vector<std::vector<uint32_t>> subRegionTriangleCounts(nSubRegions);
 	for (int i = 0; i < node->nIndices; i++) {
 		uint32_t i0 = faces[trianglePositions[i] * 3].p;
 		uint32_t i1 = faces[trianglePositions[i] * 3 + 1].p;
@@ -130,7 +124,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		}
 	}
 
-	node->m_children = new Node * [nSubRegions];
+	node->m_children = new Node*[nSubRegions];
 	for (int i = 0; i < nSubRegions; ++i) {
 		if (subRegionTriangleCounts[i].size() != 0) {
 			node->m_children[i] = new Node;

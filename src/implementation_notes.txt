@@ -13,3 +13,7 @@ Rasterization:
 -	Maaaaaaybe, in the future, this project will support a hybrid rendering approach.
 	For that reason, support for rasterization would be great to have. 
 	It's also not difficult to implement.
+
+Threading support:
+
+-	Only once single-threading is working correctly will multi-threading be supported
