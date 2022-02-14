@@ -159,6 +159,13 @@ struct IndexDistancePair {
 	}
 };
 
+// On intersection t stores the distance to the closest triangle it collided with.
+// u and v store the barycentric coordinates of that intersection point
+// index refers to the triangle in the the indices array of the mesh class.
+// The algorithm sorts the sub-regions according to their intersection distances with the ray.
+// The ray then recursively travels through the sub-regions in ascending order with respect to the intersection distance.
+// If any intersection with a triangle is found on leaf encounter, it is guaranteed to be the closest triangle,
+// and further processing can stop.
 void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
 	if (node == nullptr) {
 		return;
