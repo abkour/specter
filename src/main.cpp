@@ -11,6 +11,7 @@
 #include "shader.hpp"
 #include "view.hpp"
 #include "octree.hpp"
+#include "accel.hpp"
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
@@ -18,13 +19,8 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 
 int main(int argc, const char** argv) {
 	try {
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cylinder\\cylinder.obj";
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\monkey\\monkey.obj";
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cone\\cone.obj";
+		
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\torus\\torus.obj";
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\bunny\\bunny.obj";
-		//static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
 		specter::ObjLoader* mesh = new specter::ObjLoader(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
@@ -39,19 +35,14 @@ int main(int argc, const char** argv) {
 		std::vector<specter::vec3f> frame;
 		frame.resize(specter::product(screen_resolution));
 
-		std::cout << "Building octree of mesh...\n";
-		specter::Timer octreeTimer;
-
-		specter::Octree octree;
-		octree.build(mesh);
-
-		std::cout << "Construction finished in: " << octreeTimer.elapsedTime() << " seconds.\n";
+		specter::Accel accel;
+		accel.addMesh(mesh);
+		accel.build();
 
 		std::cout << "Rendering mesh...\n";
 		specter::Timer rtxtime;
 
 		unsigned nHits = 0;
-
 		for (int y = 0; y < screen_resolution.y; ++y) {
 			for (int x = 0; x < screen_resolution.x; ++x) {
 				unsigned fs[nSamplesPerPixel];
@@ -62,12 +53,10 @@ int main(int argc, const char** argv) {
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
 						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
-						
-						float u, v, t;
-						unsigned f;
-						// Traverse through the octree
-						if (octree.traverse(mesh, ray, u, v, t, f)) {
-							fs[spi] = f;
+						specter::Intersection its;
+
+						if (accel.traceRay(ray, its)) {
+							fs[spi] = its.f;
 						}
 					}
 				}

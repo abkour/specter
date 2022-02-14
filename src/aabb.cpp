@@ -2,6 +2,11 @@
 
 namespace specter {
 
+AxisAlignedBoundingBox::AxisAlignedBoundingBox() 
+	: min({ 0 })
+	, max({ 0 })
+{}
+
 AxisAlignedBoundingBox::AxisAlignedBoundingBox(const vec3f& bmin, const vec3f& bmax)
 	: min(bmin)
 	, max(bmax)
@@ -29,6 +34,11 @@ bool AxisAlignedBoundingBox::operator!=(const AxisAlignedBoundingBox& other) con
 bool AxisAlignedBoundingBox::isValid() const {
 	return min < max;
 }
+
+bool AxisAlignedBoundingBox::isCollapsed() const {
+	return min == max;
+}
+
 
 bool AxisAlignedBoundingBox::contains(const vec3f& point) const {
 	return point < max&& point > min;

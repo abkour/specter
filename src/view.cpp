@@ -14,17 +14,6 @@ View::View(const vec3f& pos, const vec3f& dir) {
 	view = lookAt(pos, pos + dir, vec3f(0.f, 1.f, 0.f));
 }
 
-/*View::View(const glm::vec3& pos, const glm::vec3& dir) {
-	this->pos = pos;
-	this->dir = dir;
-	yaw = -89.f;
-	pitch = 0.f;
-
-	movementSpeed = 5.f;
-
-	view = glm::lookAt(pos, pos + dir, glm::vec3(0.f, 1.f, 0.f));
-}*/
-
 void View::look(float xoff, float yoff) {
 	yaw += xoff * 0.14f;
 	pitch += yoff * 0.14f;

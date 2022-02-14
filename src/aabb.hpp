@@ -7,7 +7,7 @@ namespace specter {
 
 struct AxisAlignedBoundingBox {
 
-	AxisAlignedBoundingBox() = default;
+	AxisAlignedBoundingBox();
 	AxisAlignedBoundingBox(const vec3f& bmin, const vec3f& bmax);
 	AxisAlignedBoundingBox(const AxisAlignedBoundingBox& other);
 	AxisAlignedBoundingBox& operator=(const AxisAlignedBoundingBox& other);
@@ -16,6 +16,7 @@ struct AxisAlignedBoundingBox {
 	bool operator!=(const AxisAlignedBoundingBox& other) const;
 
 	bool isValid() const;
+	bool isCollapsed() const;
 	bool contains(const vec3f& point) const;
 	bool containsEdgeInclusive(const vec3f& point) const;
 	bool overlaps(const AxisAlignedBoundingBox& other) const;
