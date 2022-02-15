@@ -22,7 +22,7 @@ public:
 	
 	void build();
 
-	bool traceRay(const Ray& ray, Intersection& intersection);
+	bool traceRay(const Ray& ray, Intersection& intersection, bool shadowRay = false);
 
 private:
 

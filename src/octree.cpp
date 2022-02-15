@@ -216,6 +216,48 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 	}
 }
 
+bool Octree::intersectsAny(const Mesh* mesh, const Ray& ray) {
+	bool intersectionFound = false;
+	intersectsAnyRec(mesh, root, ray, intersectionFound);
+	return intersectionFound;
+}
+
+void Octree::intersectsAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) {
+	if (node == nullptr) {
+		return;
+	}
+
+	// Closest triangle found and further processing can stop.
+	if (intersectionFound) {
+		return;
+	}
+
+	if (node->indices != nullptr) {
+		for (int i = 0; i < node->nIndices; ++i) {
+			float uu, vv, tt;
+			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+				intersectionFound = true;
+				return;
+			}
+		}
+	}
+
+	else {
+		if (node->m_children == nullptr) {
+			return;
+		}
+
+		for (int i = 0; i < 8; ++i) {
+			if (node->m_children[i] != nullptr) {
+				auto subRegion = node->m_children[i]->bbox;
+				float near, far;
+				if (subRegion.rayIntersect(ray, near, far)) {
+					intersectsAnyRec(mesh, node, ray, intersectionFound);
+				}
+			}
+		}
+	}
+}
 
 void Octree::freeOctreeRec(Node* node) {
 	if (node == nullptr) {

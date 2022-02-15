@@ -23,11 +23,14 @@ struct Octree {
 
 	void build(Mesh* mesh);
 	bool traverse(const Mesh* mesh, const Ray& ray, float& u, float &v, float& t, uint32_t& index);
+	bool intersectsAny(const Mesh* mesh, const Ray& ray);
 
 private:
 	
 	void buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth = 0);
 	void traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index);
+	void intersectsAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound);
+
 	void freeOctreeRec(Node* node);
 
 private:
