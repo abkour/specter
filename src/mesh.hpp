@@ -16,6 +16,12 @@ struct FaceElement {
 	unsigned t;	// Texture Coordinate
 };
 
+struct Intersection {
+	vec2f uv;
+	unsigned f;
+	float t = std::numeric_limits<float>::max();
+};
+
 std::ostream& operator<<(std::ostream& os, const FaceElement& face);
 
 // This will be constructed by different file loaders. For now only the .obj loader is implemented.

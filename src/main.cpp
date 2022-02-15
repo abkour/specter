@@ -12,22 +12,26 @@
 #include "view.hpp"
 #include "octree.hpp"
 #include "accel.hpp"
+#include "light.hpp"
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::FaceElement* indices, std::size_t nIndices);
 
+specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, const specter::vec3f& point, const specter::vec3f& surfaceNormal);
+
 int main(int argc, const char** argv) {
 	try {
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
+		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\monkey\\monkey.obj";
 		specter::ObjLoader mesh(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
-		const specter::vec3f eyepos(2.f, 2.f, 3.f);
+		const specter::Light pointLight(specter::vec3f(25.f, 0.f, -1.f), specter::vec3f(250'000));
+		const specter::vec3f eyepos(2.f, 2.f, -3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(1920, 1080);
 		specter::Camera camera(screen_resolution);
-		const unsigned nSamplesPerPixel = 16;
+		const unsigned nSamplesPerPixel = 4;
 		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
 		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
 		
@@ -44,34 +48,48 @@ int main(int argc, const char** argv) {
 		unsigned nHits = 0;
 		for (int y = 0; y < screen_resolution.y; ++y) {
 			for (int x = 0; x < screen_resolution.x; ++x) {
-				unsigned fs[nSamplesPerPixel];
-				std::fill_n(fs, nSamplesPerPixel, std::numeric_limits<unsigned>::max());
+				specter::vec3f cumulativeColor(0.f);
 				for (int sxoff = 0; sxoff < nSamplesPerDirection; sxoff++) {
 					for (int syoff = 0; syoff < nSamplesPerDirection; syoff++) {
 						const unsigned spi = syoff * nSamplesPerDirection + sxoff;
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
+						
 						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 						specter::Intersection its;
 
 						if (accel.traceRay(ray, its)) {
-							fs[spi] = its.f;
+							unsigned normalIndex = mesh.getFace(its.f * 3).n;
+							specter::vec3f normal = mesh.getNormal(normalIndex);
+
+							// Compute exact intersection point using barycentric coordinates
+							specter::vec3f bary;
+							bary.x = its.uv.x;
+							bary.y = its.uv.y;
+							bary.z = 1.f - bary.x - bary.y;
+
+							int pixelIndex = sxoff + syoff * nSamplesPerDirection;
+							specter::vec3f p0 = mesh.getVertex(mesh.getFace(its.f * 3 + 0).p);
+							specter::vec3f p1 = mesh.getVertex(mesh.getFace(its.f * 3 + 1).p);
+							specter::vec3f p2 = mesh.getVertex(mesh.getFace(its.f * 3 + 2).p);
+
+							const specter::vec3f intersectionPoint = p0 * bary.x + p1 * bary.y + p2 * bary.z;
+
+							// Cast shadow ray to check for mutual visibility between the surface point and the point light source
+							specter::Ray shadowRay;
+							shadowRay.d = specter::normalize(pointLight.position - intersectionPoint);
+							shadowRay.o = intersectionPoint;// + shadowRay.d * 1e-6;
+							shadowRay.invd = 1.f / shadowRay.d;
+
+							specter::Intersection itsShadow;
+							if (!accel.traceRay(shadowRay, itsShadow, true)) {
+								cumulativeColor += computeColorFromPointLight(pointLight, intersectionPoint, normal);
+							}
+							nHits++;
 						}
 					}
 				}
-
-				specter::vec3f cumulativeColor(0.f);
-
-				// Compute the average of the subpixels as the final pixel color
-				for (int i = 0; i < nSamplesPerPixel; ++i) {
-					if (fs[i] != std::numeric_limits<unsigned>::max()) {
-						unsigned normalIndex = mesh.getFace(fs[i]).n;
-						specter::vec3f normal = mesh.getNormal(normalIndex);
-						cumulativeColor += abs(normal);
-						nHits++;
-					} 
-				}
-
+				
 				const std::size_t index = y * screen_resolution.x + x;
 				cumulativeColor /= static_cast<float>(nSamplesPerPixel);
 				frame[index].x = cumulativeColor.x;
@@ -241,4 +259,20 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
+}
+
+specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, const specter::vec3f& point, const specter::vec3f& surfaceNormal) {
+	const float FourPiSquared = 39.478417604357434;
+
+	specter::vec3f incv = point - pointLight.position;
+	specter::vec3f toLight = pointLight.position - point;
+
+	float cosAngle = specter::dot(incv, surfaceNormal / specter::length(incv));
+
+	const float t0 = pointLight.energy.x / FourPiSquared;
+	const float t1 = std::max(0.f, cosAngle);
+	const float t2 = specter::length(incv) * specter::length(incv);
+	const float t3 = t0 * (t1 / t2);
+
+	return specter::vec3f(t3);
 }

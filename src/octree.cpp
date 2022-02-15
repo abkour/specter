@@ -109,7 +109,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 
 	std::vector<std::vector<uint32_t>> subRegionTriangleCounts(nSubRegions);
 	for (int i = 0; i < node->nIndices; i++) {
-		uint32_t i0 = faces[trianglePositions[i] * 3].p;
+		uint32_t i0 = faces[trianglePositions[i] * 3 + 0].p;
 		uint32_t i1 = faces[trianglePositions[i] * 3 + 1].p;
 		uint32_t i2 = faces[trianglePositions[i] * 3 + 2].p;
 		vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
@@ -140,10 +140,9 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 	}
 }
 
-bool Octree::traverse(const Mesh* mesh, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
-	t = std::numeric_limits<float>::max();
-	traverseRec(mesh, root, ray, u, v, t, index);
-	return t != std::numeric_limits<float>::max();
+bool Octree::traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection) {
+	traverseRec(mesh, root, ray, intersection);
+	return intersection.t != std::numeric_limits<float>::max();
 }
 
 struct IndexDistancePair {
@@ -162,25 +161,25 @@ struct IndexDistancePair {
 // The ray then recursively travels through the sub-regions in ascending order with respect to the intersection distance.
 // If any intersection with a triangle is found on leaf encounter, it is guaranteed to be the closest triangle,
 // and further processing can stop.
-void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u, float& v, float& t, uint32_t& index) {
+void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) {
 	if (node == nullptr) {
 		return;
 	}
 
 	// Closest triangle found and further processing can stop.
-	if (t != std::numeric_limits<float>::max()) {
+	if (intersection.t != std::numeric_limits<float>::max() && multipleBoxesHit) {
 		return;
 	}
 
 	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
-			float uu, vv, tt;
-			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
-				if (t > tt) {
+			float u, v, t = std::numeric_limits<float>::max();
+			if (mesh->rayIntersectionV2(ray, node->indices[i], u, v, t)) {
+				if (intersection.t > t) {
 					// Success, closest triangle found. Any further processing can stop.
-					t = tt;
-					index = node->indices[i];
-					return;
+					intersection.t = t;
+					intersection.uv = vec2f(u, v);
+					intersection.f = node->indices[i];
 				}
 			}
 		}
@@ -191,8 +190,8 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 			return;
 		}
 
-		IndexDistancePair distanceToBoxes[8];
-		for (int i = 0; i < 8; ++i) {
+		IndexDistancePair distanceToBoxes[nSubRegions];
+		for (int i = 0; i < nSubRegions; ++i) {
 			if (node->m_children[i] != nullptr) {
 				auto subRegion = node->m_children[i]->bbox;
 				float near, far;
@@ -202,32 +201,47 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, float& u,
 				}
 			}
 		}
-		
+
 		// Sort sub-regions according to the intersection distance, in order 
 		// to perform a sorted descend.
 		std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
-		for (int i = 0; i < 8; i++) {
-			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
-				traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, u, v, t, index);
+
+		for (int i = 0; i < nSubRegions; ++i) {
+			if (distanceToBoxes[i].distance > 0.f && distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
+				if (i != nSubRegions - 1) {
+					// If a ray hits two bounding boxes at the same point, we have to traverse through both of them
+					// to find the closest triangle. This is an extremely rare edge case, but for correctness sake it needs to 
+					// be handled.
+					if (distanceToBoxes[i].distance == distanceToBoxes[i + 1].distance) {
+						traverseRec(mesh, node->m_children[distanceToBoxes[i + 0].index], ray, intersection, false);
+						traverseRec(mesh, node->m_children[distanceToBoxes[i + 1].index], ray, intersection, true);	// Prevent early termination
+					} else {
+						traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, intersection);
+					}
+				}
+				else {
+					traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, intersection);
+				}
 			} else {
+				// We can stop now, since subsequent distances will be MAX_FLOAT as well.
 				break;
 			}
 		}
 	}
 }
 
-bool Octree::intersectsAny(const Mesh* mesh, const Ray& ray) {
+bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) {
 	bool intersectionFound = false;
-	intersectsAnyRec(mesh, root, ray, intersectionFound);
+	traverseAnyRec(mesh, root, ray, intersectionFound);
 	return intersectionFound;
 }
 
-void Octree::intersectsAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) {
+void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) {
 	if (node == nullptr) {
 		return;
 	}
 
-	// Closest triangle found and further processing can stop.
+	// Any triangle found, therefore further processing can stop.
 	if (intersectionFound) {
 		return;
 	}
@@ -236,6 +250,12 @@ void Octree::intersectsAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool
 		for (int i = 0; i < node->nIndices; ++i) {
 			float uu, vv, tt;
 			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+				// Rays with origins inside the space represented by the octree can 
+				// have intersections with geometry, where the ray parameter is negative.
+				// This occurs, when the ray is colliding with objects that are in opposite 
+				// direction of the ray direction vector. 
+				// We don't want to consider this case at all.
+				if (tt <= 0.f) return;
 				intersectionFound = true;
 				return;
 			}
@@ -247,12 +267,18 @@ void Octree::intersectsAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool
 			return;
 		}
 
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < nSubRegions; ++i) {
 			if (node->m_children[i] != nullptr) {
-				auto subRegion = node->m_children[i]->bbox;
 				float near, far;
-				if (subRegion.rayIntersect(ray, near, far)) {
-					intersectsAnyRec(mesh, node, ray, intersectionFound);
+				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
+					// Rays with origins inside the space represented by the octree can 
+					// have intersections with geometry, where the ray parameter is negative.
+					// This occurs, when the ray is colliding with objects that are in opposite 
+					// direction of the ray direction vector. 
+					// We don't want to consider this case at all.
+					if (near > 0.f) {
+						traverseAnyRec(mesh, node->m_children[i], ray, intersectionFound);
+					}
 				}
 			}
 		}

@@ -18,13 +18,17 @@ void Accel::build() {
 }
 
 bool Accel::traceRay(const Ray& ray, Intersection& intersection, bool shadowRay) {
-	float u, v, t;
-	unsigned f;
 	// Traverse through the octree
-	if (octree.traverse(mesh, ray, u, v, t, f)) {
-		intersection.uv = vec2f(u, v);
-		intersection.t = t;
-		intersection.f = f;
+	if (shadowRay) {
+		if (octree.traverseAny(mesh, ray)) {
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	if (octree.traverse(mesh, ray, intersection)) {
 		return true;
 	} else {
 		return false;
