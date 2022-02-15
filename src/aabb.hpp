@@ -1,5 +1,4 @@
 #pragma once
-#include "aabb.hpp"
 #include "ray.hpp"
 #include "vec3.hpp"
 
@@ -40,7 +39,6 @@ struct AxisAlignedBoundingBox {
 
 	float surfaceArea() const;
 	float volume() const;
-	
 	vec3f center() const;
 
 	vec3f min, max;

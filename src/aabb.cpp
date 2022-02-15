@@ -3,8 +3,8 @@
 namespace specter {
 
 AxisAlignedBoundingBox::AxisAlignedBoundingBox() 
-	: min({ 0 })
-	, max({ 0 })
+	: min(vec3f(0.f))
+	, max(vec3f(0.f))
 {}
 
 AxisAlignedBoundingBox::AxisAlignedBoundingBox(const vec3f& bmin, const vec3f& bmax)
@@ -167,7 +167,7 @@ bool AxisAlignedBoundingBox::rayIntersect(const Ray& ray, float& nearT, float& f
 }
 
 vec3f AxisAlignedBoundingBox::center() const {
-	return vec3f((min + max) / 2);
+	return vec3f((min + max) / 2.f);
 }
 
 float AxisAlignedBoundingBox::surfaceArea() const {

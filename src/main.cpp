@@ -20,6 +20,9 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 int main(int argc, const char** argv) {
 	try {
 		
+		specter::AxisAlignedBoundingBox aabb;
+		std::cout << aabb.min << '\n';
+
 		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\torus\\torus.obj";
 		specter::ObjLoader* mesh = new specter::ObjLoader(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
