@@ -19,19 +19,15 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 
 int main(int argc, const char** argv) {
 	try {
-		
-		specter::AxisAlignedBoundingBox aabb;
-		std::cout << aabb.min << '\n';
-
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\torus\\torus.obj";
-		specter::ObjLoader* mesh = new specter::ObjLoader(filename);
+		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
+		specter::ObjLoader mesh(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
-		const specter::vec3f eyepos(1.f, 2.f, 3.f);
+		const specter::vec3f eyepos(2.f, 2.f, 3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
-		const specter::vec2u screen_resolution(500);
+		const specter::vec2u screen_resolution(1920, 1080);
 		specter::Camera camera(screen_resolution);
-		const unsigned nSamplesPerPixel = 64;
+		const unsigned nSamplesPerPixel = 16;
 		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
 		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
 		
@@ -39,7 +35,7 @@ int main(int argc, const char** argv) {
 		frame.resize(specter::product(screen_resolution));
 
 		specter::Accel accel;
-		accel.addMesh(mesh);
+		accel.addMesh(&mesh);
 		accel.build();
 
 		std::cout << "Rendering mesh...\n";
@@ -69,8 +65,8 @@ int main(int argc, const char** argv) {
 				// Compute the average of the subpixels as the final pixel color
 				for (int i = 0; i < nSamplesPerPixel; ++i) {
 					if (fs[i] != std::numeric_limits<unsigned>::max()) {
-						unsigned normalIndex = mesh->getFace(fs[i]).n;
-						specter::vec3f normal = mesh->getNormal(normalIndex);
+						unsigned normalIndex = mesh.getFace(fs[i]).n;
+						specter::vec3f normal = mesh.getNormal(normalIndex);
 						cumulativeColor += abs(normal);
 						nHits++;
 					} 
@@ -86,7 +82,7 @@ int main(int argc, const char** argv) {
 
 		std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
 		
-		specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(728), "Specter Raytracer");
+		specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Raytracer");
 		glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		static float quad[] = 
@@ -95,6 +91,7 @@ int main(int argc, const char** argv) {
 			-1.f, -1.f,		0.f, 0.f,
 			1.f, -1.f,		1.f, 0.f,
 			1.f, 1.f,		1.f, 1.f,
+
 			-1.f, -1.f,		0.f, 0.f,
 			1.f, 1.f,		1.f, 1.f,
 			-1.f, 1.f,		0.f, 1.f
@@ -144,8 +141,6 @@ int main(int argc, const char** argv) {
 		glDeleteTextures(1, &image);
 		glDeleteBuffers(1, &vbo);
 		glDeleteVertexArrays(1, &vao);
-
-		delete mesh;
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();
