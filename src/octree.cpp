@@ -174,7 +174,7 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
 			float u, v, t = std::numeric_limits<float>::max();
-			if (mesh->rayIntersectionV2(ray, node->indices[i], u, v, t)) {
+			if (mesh->rayIntersection(ray, node->indices[i], u, v, t)) {
 				if (intersection.t > t) {
 					// Success, closest triangle found. Any further processing can stop.
 					intersection.t = t;
@@ -249,7 +249,7 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 	if (node->indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
 			float uu, vv, tt;
-			if (mesh->rayIntersectionV2(ray, node->indices[i], uu, vv, tt)) {
+			if (mesh->rayIntersection(ray, node->indices[i], uu, vv, tt)) {
 				// Rays with origins inside the space represented by the octree can 
 				// have intersections with geometry, where the ray parameter is negative.
 				// This occurs, when the ray is colliding with objects that are in opposite 

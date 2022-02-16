@@ -8,39 +8,6 @@ bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, fl
 	const float epsilon = 0.0000001;
 	const unsigned i0 = faces[index * 3 + 0].p, i1 = faces[index * 3 + 1].p, i2 = faces[index * 3 + 2].p;
 	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
-	const vec3f edge0 = v1 - v0;
-	const vec3f edge1 = v2 - v0;
-	
-	const vec3f h = cross(ray.d, edge1);
-	const float a = dot(edge0, h);
-	if (a > -epsilon && a < epsilon) {
-		return false;
-	}
-
-	const float f = 1.f / a;
-	const vec3f s = ray.o - v0;
-	u = f * dot(s, h);
-	if (u < 0.f || u > 1.f) {
-		return false;
-	}
-
-	const vec3f q = cross(s, edge0);
-	v = f * dot(ray.d, q);
-	if (v < 0.f || u + v > 1.f) {
-		return false;
-	}
-
-	t = f * dot(edge1, q);
-	if (t > epsilon) {
-		return true;
-	}
-	return false;
-}
-
-bool Mesh::rayIntersectionV2(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
-	const float epsilon = 0.0000001;
-	const unsigned i0 = faces[index * 3 + 0].p, i1 = faces[index * 3 + 1].p, i2 = faces[index * 3 + 2].p;
-	const vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
 
 	vec3f e0 = v1 - v0;
 	vec3f e1 = v2 - v0;

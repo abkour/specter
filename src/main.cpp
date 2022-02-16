@@ -22,7 +22,7 @@ specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, cons
 
 int main(int argc, const char** argv) {
 	try {
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
+		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cylinder\\cylinder.obj";
 		specter::ObjLoader mesh(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
@@ -31,7 +31,7 @@ int main(int argc, const char** argv) {
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(1920, 1080);
 		specter::Camera camera(screen_resolution);
-		const unsigned nSamplesPerPixel = 4;
+		const unsigned nSamplesPerPixel = 1;
 		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
 		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
 		
@@ -84,8 +84,9 @@ int main(int argc, const char** argv) {
 							specter::Intersection itsShadow;
 							if (!accel.traceRay(shadowRay, itsShadow, true)) {
 								//cumulativeColor += computeColorFromPointLight(pointLight, intersectionPoint, normal);
-								cumulativeColor += abs(normal);
+								//cumulativeColor += abs(normal);
 							}
+							cumulativeColor += abs(normal);
 							nHits++;
 						}
 					}
@@ -245,7 +246,7 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 		}
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "proj"), 1, GL_FALSE, &proj[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "view"), 1, GL_FALSE, &view.view[0][0]);
+		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "view"), 1, GL_FALSE, view.getAddress());
 
 		glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
 
