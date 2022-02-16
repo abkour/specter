@@ -4,6 +4,7 @@
 
 namespace specter {
 
+// Defines a 4x4 matrix of type T in row-major order
 template<typename T>
 struct mat4 {
 

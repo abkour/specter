@@ -12,10 +12,14 @@ class Accel {
 
 public:
 
+	// Adds mesh to the accelerating structure. 
+	// At the moment only one mesh is supported
 	void addMesh(Mesh* newMesh);
 	
+	// Construct the underlying accelerating structure object.
 	void build();
 
+	// Trace ray using the accelerating structure. Returns true if the ray collides with mesh geometry.
 	bool traceRay(const Ray& ray, Intersection& intersection, bool shadowRay = false);
 
 private:

@@ -22,11 +22,11 @@ specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, cons
 
 int main(int argc, const char** argv) {
 	try {
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\monkey\\monkey.obj";
+		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\cube\\cube.obj";
 		specter::ObjLoader mesh(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
-		const specter::Light pointLight(specter::vec3f(25.f, 0.f, -1.f), specter::vec3f(250'000));
+		const specter::Light pointLight(specter::vec3f(10.f, 0.5f, 1.f), specter::vec3f(250'000));
 		const specter::vec3f eyepos(2.f, 2.f, -3.f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(1920, 1080);
@@ -83,7 +83,8 @@ int main(int argc, const char** argv) {
 
 							specter::Intersection itsShadow;
 							if (!accel.traceRay(shadowRay, itsShadow, true)) {
-								cumulativeColor += computeColorFromPointLight(pointLight, intersectionPoint, normal);
+								//cumulativeColor += computeColorFromPointLight(pointLight, intersectionPoint, normal);
+								cumulativeColor += abs(normal);
 							}
 							nHits++;
 						}

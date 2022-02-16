@@ -3,7 +3,7 @@
 
 namespace specter {
 
-
+// Defines a 3x3 matrix of type T in row-major order
 template<typename T>
 struct mat3 {
 
