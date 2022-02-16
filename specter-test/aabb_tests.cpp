@@ -52,12 +52,6 @@ TEST(intersections, aabb) {
 	// Rays going in the opposite direction of the AABB should not collide with the AABB
 	specter::Ray ray03(specter::vec3f(0.f, 0.f, 3.f), specter::vec3f(0.f, 0.f, 1.f));
 	EXPECT_TRUE(aabb00.rayIntersect(ray03, near, far) == false);
-
-	if (aabb00.rayIntersect(ray03, near, far)) {
-		std::cout << "reuslt.\n";
-		std::cout << "near: " << near << '\n';
-		std::cout << "far: " << far << '\n';
-	}
 }
 
 TEST(miscellaneous, aabb) {
