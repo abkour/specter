@@ -4,6 +4,7 @@
 
 namespace specter {
 
+// Represents a 4D vector of type T
 template<typename T>
 struct vec4 {
 

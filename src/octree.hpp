@@ -45,14 +45,16 @@ private:
 	// Traverse the octree recursively. This is initially called by the public function traverse()
 	void traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit = false);
 	
+	// Traverse the octree recursively. This is initially called by the public function traverseAny()
 	void traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound);
 
+	// Free the octree recursively. This is called by the destructor.
 	void freeOctreeRec(Node* node);
 
 private:
 
-	Node* root;
-	std::size_t maxDepth;
+	Node* root;	// Represents the root of the octree
+	std::size_t maxDepth;	// Specifies the maximum depth the octree can have. This parameter is used to avoid infinite depth octrees in pathological cases.
 
 };
 
