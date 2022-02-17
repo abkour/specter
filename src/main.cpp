@@ -15,100 +15,14 @@
 #include "point_light.hpp"
 #include "renderer.hpp"
 
-#include <json.hpp>
-
-struct POD {
-	float x, y, z;
-};
-
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
-
-static const specter::vec2u screen_resolution(1920, 1080);
 
 void renderRasterized();
 void renderRTX();
 
-static const unsigned long light_types[] =
-{
-	271082479
-};
-
-// These hash values are computed via the hash function in common_math.hpp
-#define SPECTER_AMBIENT_LIGHT       (872128645)  // "ambient"
-#define SPECTER_AREA_LIGHT          (2090087070) // "area"
-#define SPECTER_DIRECTIONAL_LIGHT   (2623544947) // "directional"
-#define SPECTER_POINT_LIGHT         (271082479)  // "point"
-
 int main(int argc, const char** argv) {
 	try {
-
-		const char* filename = "C:\\users\\flora\\rsc\\assets\\ajax\\ajax-setup.json";
-		std::ifstream file("C:\\users\\flora\\rsc\\assets\\ajax\\ajax-setup.json");
-
-		specter::Scene scene(filename);
-
-		std::cout << scene.lightEnergy << '\n';
-		std::cout << scene.lightPosition << '\n';
-		std::cout << scene.cameraPosition << '\n';
-		
-
-		return 0;
-
-		std::stringstream fileContents;
-		fileContents << file.rdbuf();
-
-		auto jfile = nlohmann::json::parse(fileContents.str());
-
-		auto lightType = jfile["light"]["type"];
-
-		auto lightString = lightType.get<std::string>();
-		auto val = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightString[0]));
-
-		//POD position;
-		float position[3];
-		jfile["light"]["energy"].get_to(position);
-
-
-		std::cout << position[0] << ", " << position[0] << ", " << position[0] << '\n';
-
-		//delete position;
-
-		switch (val) {
-		case SPECTER_AMBIENT_LIGHT:
-			std::cout << "is ambient light";
-			break;
-		case SPECTER_AREA_LIGHT:
-			std::cout << "is area light";
-			break;
-		case SPECTER_DIRECTIONAL_LIGHT:
-			std::cout << "is directional light";
-			break;
-		case SPECTER_POINT_LIGHT:
-			std::cout << "is point light";
-			break;
-		default:
-			std::cout << "is not a light source!";
-			break;
-		}
-
-		if (!lightType.is_string()) {
-			throw std::runtime_error("light/type must specify a light type");
-		}
-		
-		auto ptr = lightType;
-		
-		if (lightType == "point") {
-			std::cout << "Compared\n";
-		}
-		
-
-		return 0;
-
-		/*
-		for (auto j : jfile) {
-			std::cout << j << '\n';
-		}*/
-
+		std::cout << "specter 3D rendering engine\n\n";
 		renderRTX();
 		//renderRasterized();
 	}
@@ -137,14 +51,8 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
 }
 
 void renderRTX() {
-	const specter::vec3f eyepos(-39.8512, 19.539, 14.1864);
-	const specter::vec3f eyetarget(-39.06999, 19.470637, 13.565886);
-
-	specter::RTX_Renderer renderer;
-	renderer.loadMesh("C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj");
-	renderer.initAccel();
-	renderer.initCamera(screen_resolution, eyepos, eyetarget);
-
+	specter::Scene scene_descriptor("C:\\Users\\flora\\rsc\\assets\\ajax\\ajax-setup.json");
+	specter::RTX_Renderer renderer(scene_descriptor);
 	renderer.run();
 }
 
@@ -152,6 +60,7 @@ void renderRasterized() {
 	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
 	specter::ObjLoader mesh;
 	mesh.open_read(filename);
+	const specter::vec2u screen_resolution(1920, 1080);
 	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Rasterizer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	window.enableCursorCallback();

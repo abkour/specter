@@ -2,7 +2,8 @@
 
 namespace specter {
 
-Scene::Scene(const char* filename) {
+Scene::Scene(const char* filename) : filename(filename) {
+
 	std::ifstream file(filename);
 	if (file.fail()) {
 		throw std::runtime_error("Could not open json file: " + std::string(filename));
@@ -35,7 +36,7 @@ Scene::Scene(const char* filename) {
 		break;
 	}
 
-	float vec2tmp[2];
+	unsigned vec2tmp[2];
 	float vec3tmp[3];
 
 	jsonFile["light"]["energy"].get_to(vec3tmp);
@@ -50,8 +51,14 @@ Scene::Scene(const char* filename) {
 	jsonFile["camera"]["target"].get_to(vec3tmp);
 	std::memcpy(&cameraTarget, vec3tmp, sizeof(float) * 3);
 
+	cameraFov = jsonFile["camera"]["fov"].get<float>();
+
+	samplesPerPixel = jsonFile["camera"]["samples"].get<int>();
+	
 	jsonFile["resolution"].get_to(vec2tmp);
-	std::memcpy(&screenResolution, vec2tmp, sizeof(float) * 2);
+	std::memcpy(&screenResolution, vec2tmp, sizeof(unsigned) * 2);
+
+	meshPath = jsonFile["path"].get<std::string>();
 }
 
 }

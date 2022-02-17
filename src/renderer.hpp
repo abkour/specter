@@ -17,12 +17,8 @@ class RTX_Renderer {
 
 public:
 
-	RTX_Renderer();
+	RTX_Renderer(const Scene& scene);
 	
-	void loadMesh(const char* filename);
-	void initAccel();
-	void initCamera(const vec2u& screenResolution, const vec3f& eyepos, const vec3f& target);
-
 	void run();
 
 private:

@@ -3,20 +3,16 @@
 
 namespace specter {
 
-RTX_Renderer::RTX_Renderer() {}
-
-void RTX_Renderer::loadMesh(const char* filename) {
-	mesh.open_read(filename);
-}
-
-void RTX_Renderer::initAccel() {
+RTX_Renderer::RTX_Renderer(const Scene& scene) {
+	std::cout << scene << '\n';
+	
+	mesh.open_read(scene.meshPath.c_str());
+	
 	accel.addMesh(&mesh);
 	accel.build();
-}
 
-void RTX_Renderer::initCamera(const vec2u& screenResolution, const vec3f& eyepos, const vec3f& target) {
-	camera.setResolution(screenResolution);
-	camera.initializeVariables(eyepos, target, 90.f, 1);
+	camera.setResolution(scene.screenResolution);
+	camera.initializeVariables(scene.cameraPosition, scene.cameraTarget, scene.cameraFov, scene.samplesPerPixel);
 }
 
 void RTX_Renderer::run() {

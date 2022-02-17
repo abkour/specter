@@ -12,9 +12,10 @@ void Accel::addMesh(Mesh* newMesh) {
 }
 
 void Accel::build() {
+	std::cout << "Building octree...";
 	specter::Timer octreeTimer;
 	octree.build(mesh);
-	std::cout << "Construction finished in: " << octreeTimer.elapsedTime() << " seconds.\n";
+	std::cout << " Finished in : " << octreeTimer.elapsedTime() << " seconds.\n\n";
 }
 
 bool Accel::traceRay(const Ray& ray, Intersection& intersection, bool shadowRay) {
