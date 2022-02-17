@@ -2,6 +2,9 @@
 
 namespace specter {
 
+
+static int _debug_nhits = 0;
+
 // Implements the möller&trumbore algorithm.
 // For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
@@ -15,7 +18,9 @@ bool Mesh::rayIntersection(const Ray& ray, const std::size_t index, float& u, fl
 	vec3f q = cross(ray.d, e1);
 	float a = dot(e0, q);
 
-	if (a > -epsilon && a < epsilon) return false;
+	if (a > -epsilon && a < epsilon) {
+		return false;
+	}
 
 	float f = 1.f / a;
 	vec3f s = ray.o - v0;
