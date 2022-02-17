@@ -20,22 +20,6 @@ int main(int argc, const char** argv) {
 	}
 }
 
-static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		return specter::MovementDirection::Forward;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		return specter::MovementDirection::Backward;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		return specter::MovementDirection::Left;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		return specter::MovementDirection::Right;
-	}
-	return specter::MovementDirection::None;
-}
-
 void renderRTX(const char* scene_descriptor_file) {
 	specter::Scene scene_descriptor(scene_descriptor_file);
 	specter::RTX_Renderer renderer(scene_descriptor);
@@ -141,4 +125,20 @@ void renderRasterized() {
 	glDeleteVertexArrays(1, &vao);
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
+}
+
+static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		return specter::MovementDirection::Forward;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		return specter::MovementDirection::Backward;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		return specter::MovementDirection::Left;
+	}
+	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+		return specter::MovementDirection::Right;
+	}
+	return specter::MovementDirection::None;
 }
