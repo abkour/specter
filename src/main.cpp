@@ -30,10 +30,10 @@ static const unsigned long light_types[] =
 };
 
 // These hash values are computed via the hash function in common_math.hpp
-#define SPECTER_AMBIENT_LIGHT       (872128645)		// "ambient"
-#define SPECTER_AREA_LIGHT          (2090087070)	// "area"
-#define SPECTER_DIRECTIONAL_LIGHT   (2623544947)	// "directional"
-#define SPECTER_POINT_LIGHT         (271082479)		// "point"
+#define SPECTER_AMBIENT_LIGHT       (872128645)  // "ambient"
+#define SPECTER_AREA_LIGHT          (2090087070) // "area"
+#define SPECTER_DIRECTIONAL_LIGHT   (2623544947) // "directional"
+#define SPECTER_POINT_LIGHT         (271082479)  // "point"
 
 int main(int argc, const char** argv) {
 	try {
