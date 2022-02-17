@@ -3,13 +3,13 @@
 
 namespace specter {
 
-struct Light {
+class Light {
 	
-	// Initialize a light object in world space
-	Light(const vec3f& pos, const vec3f& energy)
-		: position(pos)
-		, energy(energy)
-	{}
+public:
+
+	virtual ~Light() = 0 {}
+
+	virtual vec3f sample_Light(const vec3f& point, const vec3f& normal) const = 0;
 
 	vec3f energy;
 	vec3f position;

@@ -12,13 +12,11 @@
 #include "view.hpp"
 #include "octree.hpp"
 #include "accel.hpp"
-#include "light.hpp"
+#include "point_light.hpp"
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::FaceElement* indices, std::size_t nIndices);
-
-specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, const specter::vec3f& point, const specter::vec3f& surfaceNormal);
 
 int main(int argc, const char** argv) {
 	try {
@@ -26,7 +24,7 @@ int main(int argc, const char** argv) {
 		specter::ObjLoader mesh(filename);
 		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
 		
-		const specter::Light pointLight(specter::vec3f(10.f, 3.f, 1.f), specter::vec3f(17'000));
+		const specter::PointLight pointLight(specter::vec3f(10.f, 3.f, 1.f), specter::vec3f(17'000));
 		const specter::vec3f eyepos(0.1f, -0.1f, 0.1f);
 		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
 		const specter::vec2u screen_resolution(1920, 1080);
@@ -72,10 +70,10 @@ int main(int argc, const char** argv) {
 							shadowRay.d = specter::normalize(pointLight.position - intersectionPoint);
 							shadowRay.o = intersectionPoint + normal * 1e-6;	// Avoid self-shadowing
 							shadowRay.invd = 1.f / shadowRay.d;
-
+							
 							specter::Intersection itsShadow;
 							if (!accel.traceRay(shadowRay, itsShadow, true)) {
-								cumulativeColor += computeColorFromPointLight(pointLight, intersectionPoint, normal);
+								cumulativeColor += pointLight.sample_Light(intersectionPoint, normal);
 							}
 						}
 					}
@@ -252,18 +250,3 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 	glDeleteBuffers(1, &ebo);
 }
 
-specter::vec3f computeColorFromPointLight(const specter::Light& pointLight, const specter::vec3f& point, const specter::vec3f& surfaceNormal) {
-	const float FourPiSquared = 39.478417604357434;
-
-	specter::vec3f toLight = pointLight.position - point;
-	specter::vec3f toPoint = point - pointLight.position;
-
-	float cosAngle = specter::dot(toLight, surfaceNormal / specter::length(toLight));
-
-	const float t0 = pointLight.energy.x / FourPiSquared;
-	const float t1 = std::max(0.f, cosAngle);
-	const float t2 = specter::length(toPoint) * specter::length(toPoint);
-	const float t3 = t0 * (t1 / t2);
-
-	return specter::vec3f(t3);
-}
