@@ -20,6 +20,9 @@ struct Window {
 	// Destroy this instance and release GLFW resources
 	~Window();
 
+	// Initialize the window manually.
+	void openWindow(const WindowMode windowMode, const vec2u& resolution, const char* title);
+	
 	// Enable the cursor in the window
 	void enableCursorCallback() const;
 
@@ -37,9 +40,9 @@ struct Window {
 
 protected:
 
-	GLFWwindow* window;	// Represents the window object
-	GLFWmonitor* primaryMonitor;	// Represents the primary monitor
-	GLFWvidmode* vidMode;	// Represents the video mode of the primary monitor
+	GLFWwindow* window = nullptr;	// Represents the window object
+	GLFWmonitor* primaryMonitor = nullptr;	// Represents the primary monitor
+	GLFWvidmode* vidMode = nullptr;	// Represents the video mode of the primary monitor
 
 	WindowMode windowMode;	// Represents the mode of the window 
 

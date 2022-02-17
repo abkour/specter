@@ -11,6 +11,9 @@
 #include <glad/glad.h>
 #include <glfw3.h>
 
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+
 namespace specter {
 
 class RTX_Renderer {
@@ -26,6 +29,8 @@ private:
 	Accel accel;
 	Camera camera;
 	ObjLoader mesh;
+	Window window;
+
 };
 
 }

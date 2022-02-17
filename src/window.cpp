@@ -3,11 +3,12 @@
 
 namespace specter {
 
-Window::Window() {
+Window::Window() = default;
+
+Window::Window(const WindowMode windowMode, const vec2u& resolution, const char* title) {
 	if (!glfwInit()) {
 		throw std::runtime_error("Error. GLFW could not be initialized!");
 	}
-
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -23,18 +24,33 @@ Window::Window() {
 		throw std::runtime_error("Error. GLFW coudln't retrieve video mode of current monitor!");
 	}
 
-	screenResolution.x = vidMode->width;
-	screenResolution.y = vidMode->height;
+	switch (windowMode) {
+	case WindowMode::WINDOWED:
+		window = glfwCreateWindow(resolution.x, resolution.y, title, NULL, NULL);
+		break;
+	case WindowMode::BORDERLESS:
+		glfwWindowHint(GLFW_RED_BITS, vidMode->redBits);
+		glfwWindowHint(GLFW_GREEN_BITS, vidMode->greenBits);
+		glfwWindowHint(GLFW_BLUE_BITS, vidMode->blueBits);
+		glfwWindowHint(GLFW_REFRESH_RATE, vidMode->refreshRate);
+		window = glfwCreateWindow(resolution.x, resolution.y, title, primaryMonitor, NULL);
+		break;
+	case WindowMode::FULLSCREEN:
+		window = glfwCreateWindow(resolution.x, resolution.y, title, primaryMonitor, NULL);
+		break;
+	default:
+		throw std::invalid_argument("Error. (Note to programmer) WindowMode structure should not contain cases outside the once handled from this location!");
+		break;
+	}
 
-	windowMode = WindowMode::WINDOWED;
-
-	window = glfwCreateWindow(screenResolution.x, screenResolution.y, "Specter", NULL, NULL);
 	if (!window) {
 		throw std::runtime_error("Error. GLFW could not create window!");
 	}
 
-	glfwMakeContextCurrent(window);
+	screenResolution = resolution;
+	this->windowMode = windowMode;
 
+	glfwMakeContextCurrent(window);
 	if (glfwGetError(NULL)) {
 		throw std::runtime_error("Error. GLFW could not make context current!");
 	}
@@ -44,7 +60,11 @@ Window::Window() {
 	}
 }
 
-Window::Window(const WindowMode windowMode, const vec2u& resolution, const char* title) {
+void Window::openWindow(const WindowMode windowMode, const vec2u& resolution, const char* title) {
+	if (window != nullptr) {
+		throw std::runtime_error("This winodw has already been initialized!");
+	}
+
 	if (!glfwInit()) {
 		throw std::runtime_error("Error. GLFW could not be initialized!");
 	}

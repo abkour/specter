@@ -1,18 +1,4 @@
-#include "vec2.hpp"
-#include "vec3.hpp"
-#include "vec4.hpp"
-#include "mat3.hpp"
-#include "mat4.hpp"
-#include "mesh.hpp"
-#include "obj.hpp"
-#include "camera.hpp"
-#include "common_math.hpp"
-#include "window.hpp"
-#include "shader.hpp"
 #include "view.hpp"
-#include "octree.hpp"
-#include "accel.hpp"
-#include "point_light.hpp"
 #include "renderer.hpp"
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);

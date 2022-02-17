@@ -25,6 +25,7 @@ void RTX_Renderer::run() {
 	std::cout << "Rendering mesh...\n";
 	specter::Timer rtxtime;
 
+	unsigned nSamplesPerPixel = 1;
 	unsigned nSamplesPerDirection = 1;
 	unsigned nHits = 0;
 	for (int y = 0; y < camera.getResolution().y; ++y) {
@@ -60,16 +61,16 @@ void RTX_Renderer::run() {
 			}
 
 			const std::size_t index = y * camera.getResolution().x + x;
-			cumulativeColor /= static_cast<float>(1);
-			frame[index].x = cumulativeColor.x;
-			frame[index].y = cumulativeColor.y;
-			frame[index].z = cumulativeColor.z;
+			cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+			frame[index] = cumulativeColor;
 		}
 	}
 
 	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
 
-	specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
+	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
+
+	//specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	static float quad[] =
