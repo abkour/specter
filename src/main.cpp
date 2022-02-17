@@ -18,12 +18,12 @@
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 void renderRasterized();
-void renderRTX();
+void renderRTX(const char* scene_descriptor_file);
 
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		renderRTX();
+		renderRTX(argv[1]);
 		//renderRasterized();
 	}
 	catch (std::runtime_error& e) {
@@ -50,8 +50,8 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
 	return specter::MovementDirection::None;
 }
 
-void renderRTX() {
-	specter::Scene scene_descriptor("C:\\Users\\flora\\rsc\\assets\\ajax\\ajax-setup.json");
+void renderRTX(const char* scene_descriptor_file) {
+	specter::Scene scene_descriptor(scene_descriptor_file);
 	specter::RTX_Renderer renderer(scene_descriptor);
 	renderer.run();
 }

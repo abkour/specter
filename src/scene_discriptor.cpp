@@ -33,6 +33,7 @@ Scene::Scene(const char* filename) : filename(filename) {
 		break;
 	default:
 		lightType = SPECTER_INVALID;
+		throw std::runtime_error("Light descriptor in scene file doesn't specify a valid light type!");
 		break;
 	}
 
