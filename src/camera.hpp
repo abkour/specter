@@ -7,6 +7,8 @@ namespace specter {
 
 struct Camera {
 
+	Camera() = default;
+
 	// Initialize the virtual camera
 	Camera(const vec2u resolution);
 
@@ -19,9 +21,12 @@ struct Camera {
 	// in world space.
 	Ray getRay(const vec2u& pixelLocation);
 
+	vec2u getResolution() const;
+	void setResolution(vec2u newResolution);
+
 protected:
 
-	vec2f resolution;
+	vec2u resolution;
 	vec3f eyepos;
 	vec3f shiftx, shifty, topLeftPixel;
 };

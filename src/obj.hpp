@@ -9,9 +9,11 @@ namespace specter {
 // This object is used to load a wavefront obj file and initialize the members of Mesh with it.
 struct ObjLoader : Mesh {
 
+	ObjLoader() = default;
+
 	// Initializes the mesh through data in filename.obj. This method does NOT check for validity of the object file.
 	// Invalid object files will lead to undefined program behavior.
-	ObjLoader(const char* filename);
+	void open_read(const char* filename);
 
 };
 
