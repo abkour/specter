@@ -2,6 +2,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include <immintrin.h>
+
 namespace specter {
 
 // Represents a 3D vector of type T

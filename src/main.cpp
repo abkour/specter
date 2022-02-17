@@ -15,6 +15,8 @@
 #include "point_light.hpp"
 #include "renderer.hpp"
 
+#include <json.hpp>
+
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 static const specter::vec2u screen_resolution(1920, 1080);
@@ -22,9 +24,68 @@ static const specter::vec2u screen_resolution(1920, 1080);
 void renderRasterized();
 void renderRTX();
 
+static const unsigned long light_types[] =
+{
+	271082479
+};
+
+// These hash values are computed via the hash function in common_math.hpp
+#define SPECTER_AMBIENT_LIGHT		(872128645)		// "ambient"
+#define SPECTER_AREA_LIGHT			(2090087070)	// "area"
+#define SPECTER_DIRECTIONAL_LIGHT	(2623544947)	// "directional"
+#define SPECTER_POINT_LIGHT			(271082479)		// "point"
+
 int main(int argc, const char** argv) {
 	try {
-		renderRTX();
+
+		std::ifstream file("C:\\users\\flora\\rsc\\assets\\ajax\\ajax-setup.json");
+		std::stringstream fileContents;
+		fileContents << file.rdbuf();
+
+		auto jfile = nlohmann::json::parse(fileContents.str());
+
+		auto lightType = jfile["light"]["type"];
+
+		auto lightString = lightType.get<std::string>();
+		auto val = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightString[0]));
+
+
+
+		switch (val) {
+		case SPECTER_AMBIENT_LIGHT:
+			std::cout << "is ambient light";
+			break;
+		case SPECTER_AREA_LIGHT:
+			std::cout << "is area light";
+			break;
+		case SPECTER_DIRECTIONAL_LIGHT:
+			std::cout << "is directional light";
+			break;
+		case SPECTER_POINT_LIGHT:
+			std::cout << "is point light";
+			break;
+		default:
+			std::cout << "is not a light source!";
+			break;
+		}
+
+		if (!lightType.is_string()) {
+			throw std::runtime_error("light/type must specify a light type");
+		}
+		
+		auto ptr = lightType;
+		
+		if (lightType == "point") {
+			std::cout << "Compared\n";
+		}
+		
+
+		/*
+		for (auto j : jfile) {
+			std::cout << j << '\n';
+		}*/
+
+		//renderRTX();
 		//renderRasterized();
 	}
 	catch (std::runtime_error& e) {
