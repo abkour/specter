@@ -9,11 +9,15 @@ namespace specter {
 // An abstraction of the OpenGL shader
 struct Shader {
 
+	Shader() = default;
+
 	// Constructs the shader pipeline through shadertype and shaderfile pairs.
 	Shader(std::initializer_list<std::pair<GLenum, std::string>>&& shaders)
 		: shaders(shaders)
 		, programId(0)
 	{}
+
+	Shader& operator=(Shader&& other);
 
 	// Destroys the glProgram
 	~Shader();

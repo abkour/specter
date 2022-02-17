@@ -14,6 +14,12 @@ Shader::~Shader() {
 	glDeleteProgram(programId);
 }
 
+Shader& Shader::operator=(Shader&& other) {
+	programId = other.id();
+	other.programId = 0;
+	return *this;
+}
+
 void Shader::bind() const {
 	glUseProgram(programId);
 }

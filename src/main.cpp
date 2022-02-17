@@ -32,16 +32,19 @@ int main(int argc, const char** argv) {
 	catch (...) {
 		std::cout << "Unexpected error somewhere...";
 	}
-} 
+}
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		return specter::MovementDirection::Forward;
-	} else if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+	}
+	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		return specter::MovementDirection::Backward;
-	} else if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+	}
+	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		return specter::MovementDirection::Left;
-	} else if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+	}
+	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		return specter::MovementDirection::Right;
 	}
 	return specter::MovementDirection::None;
@@ -237,7 +240,7 @@ void renderRasterized() {
 			key_c_hit = true;
 		}
 
-		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_RELEASE && key_c_hit)  {
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_RELEASE && key_c_hit) {
 			std::cout << "pos: " << view.getPosition() << '\n';
 			std::cout << "dir: " << view.getDirection() << '\n';
 			key_c_hit = false;
@@ -272,4 +275,3 @@ void renderRasterized() {
 	glDeleteBuffers(1, &vbo);
 	glDeleteBuffers(1, &ebo);
 }
-

@@ -18,25 +18,23 @@ struct vec2 {
 
 	bool operator==(const vec2<T>& other) const;
 	bool operator!=(const vec2<T>& other) const;
+	bool operator<(const vec2<T>& other) const;
+	bool operator>(const vec2<T>& other) const;
 
-	vec2<T> operator+(const vec2<T>& other);
-	vec2<T> operator-(const vec2<T>& other);
-	vec2<T> operator*(const vec2<T>& other);
-	vec2<T> operator/(const vec2<T>& other);
+	vec2<T> operator+(const vec2<T>& other) const;
+	vec2<T> operator-(const vec2<T>& other) const;
+	vec2<T> operator*(const vec2<T>& other) const;
+	vec2<T> operator/(const vec2<T>& other) const;
 
 	vec2<T>& operator+=(const vec2<T>& other);
 	vec2<T>& operator-=(const vec2<T>& other);
 	vec2<T>& operator*=(const vec2<T>& other);
 	vec2<T>& operator/=(const vec2<T>& other);
 
-	template<typename U>
-	vec2<T>& operator+=(const U s);
-	template<typename U>
-	vec2<T>& operator-=(const U s);
-	template<typename U>
-	vec2<T>& operator*=(const U s);
-	template<typename U>
-	vec2<T>& operator/=(const U s);
+	vec2<T>& operator+=(const T s);
+	vec2<T>& operator-=(const T s);
+	vec2<T>& operator*=(const T s);
+	vec2<T>& operator/=(const T s);
 
 	T operator[](const std::size_t index) const;
 	T& operator[](const std::size_t index);
@@ -97,22 +95,32 @@ bool vec2<T>::operator!=(const vec2<T>&other) const {
 }
 
 template<typename T>
-vec2<T> vec2<T>::operator+(const vec2<T>& other) {
+bool vec2<T>::operator<(const vec2<T>& other) const {
+	return x < other.x && y < other.y;
+}
+
+template<typename T>
+bool vec2<T>::operator>(const vec2<T>& other) const {
+	return x > other.x && y > other.y;
+}
+
+template<typename T>
+vec2<T> vec2<T>::operator+(const vec2<T>& other) const {
 	return vec2<T>(x + other.x, y + other.y);
 }
 
 template<typename T>
-vec2<T> vec2<T>::operator-(const vec2<T>& other) {
+vec2<T> vec2<T>::operator-(const vec2<T>& other) const {
 	return vec2<T>(x - other.x, y - other.y);
 }
 
 template<typename T>
-vec2<T> vec2<T>::operator*(const vec2<T>& other) {
+vec2<T> vec2<T>::operator*(const vec2<T>& other) const {
 	return vec2<T>(x * other.x, y * other.y);
 }
 
 template<typename T>
-vec2<T> vec2<T>::operator/(const vec2<T>& other) {
+vec2<T> vec2<T>::operator/(const vec2<T>& other) const {
 	return vec2<T>(x / other.x, y / other.y);
 }
 
@@ -144,73 +152,69 @@ vec2<T>& vec2<T>::operator/=(const vec2<T>& other) {
 	return *this;
 }
 
-template<typename T, typename U>
-vec2<T> operator+(const vec2<T>& v, const U s) {
+template<typename T>
+vec2<T> operator+(const vec2<T>& v, const T s) {
 	return vec2<T>(v.x + static_cast<T>(s), v.y + static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator+(const U s, const vec2<T>& v) {
+template<typename T>
+vec2<T> operator+(const T s, const vec2<T>& v) {
 	return vec2<T>(v.x + static_cast<T>(s), v.y + static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator-(const vec2<T>& v, const U s) {
+template<typename T>
+vec2<T> operator-(const vec2<T>& v, const T s) {
 	return vec2<T>(v.x - static_cast<T>(s), v.y - static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator-(const U s, const vec2<T>& v) {
+template<typename T>
+vec2<T> operator-(const T s, const vec2<T>& v) {
 	return vec2<T>(v.x - static_cast<T>(s), v.y - static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator*(const vec2<T>& v, const U s) {
+template<typename T>
+vec2<T> operator*(const vec2<T>& v, const T s) {
 	return vec2<T>(v.x * static_cast<T>(s), v.y * static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator*(const U s, const vec2<T>& v) {
+template<typename T>
+vec2<T> operator*(const T s, const vec2<T>& v) {
 	return vec2<T>(v.x * static_cast<T>(s), v.y * static_cast<T>(s));
 }
 
-template<typename T, typename U>
-vec2<T> operator/(const vec2<T>& v, const U s) {
-	return vec2<T>(v.x / static_cast<T>(s), v.y / static_cast<T>(s));
-}
-
-template<typename T, typename U>
-vec2<T> operator/(const U s, const vec2<T>& v) {
+template<typename T>
+vec2<T> operator/(const vec2<T>& v, const T s) {
 	return vec2<T>(v.x / static_cast<T>(s), v.y / static_cast<T>(s));
 }
 
 template<typename T>
-template<typename U>
-vec2<T>& vec2<T>::operator+=(const U s) {
+vec2<T> operator/(const T s, const vec2<T>& v) {
+	return vec2<T>(v.x / static_cast<T>(s), v.y / static_cast<T>(s));
+}
+
+template<typename T>
+vec2<T>& vec2<T>::operator+=(const T s) {
 	x += static_cast<T>(s);
 	y += static_cast<T>(s);
 	return *this;
 }
 
 template<typename T>
-template<typename U>
-vec2<T>& vec2<T>::operator-=(const U s) {
+vec2<T>& vec2<T>::operator-=(const T s) {
 	x -= static_cast<T>(s);
 	y -= static_cast<T>(s);
 	return *this;
 }
 
 template<typename T>
-template<typename U>
-vec2<T>& vec2<T>::operator*=(const U s) {
+vec2<T>& vec2<T>::operator*=(const T s) {
 	x *= static_cast<T>(s);
 	y *= static_cast<T>(s);
 	return *this;
 }
 
 template<typename T>
-template<typename U>
-vec2<T>& vec2<T>::operator/=(const U s) {
+vec2<T>& vec2<T>::operator/=(const T s) {
 	x /= static_cast<T>(s);
 	y /= static_cast<T>(s);
 	return *this;
