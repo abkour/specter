@@ -16,138 +16,15 @@
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
-void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::FaceElement* indices, std::size_t nIndices);
+static const specter::vec2u screen_resolution(1920, 1080);
+
+void renderRasterized();
+void renderRTX();
 
 int main(int argc, const char** argv) {
 	try {
-		static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
-		specter::ObjLoader mesh(filename);
-		//renderRasterized(mesh.getVertices(), mesh.getVertexCount(), mesh.getFaces(), mesh.getTriangleCount() * 3);
-		
-		const specter::PointLight pointLight(specter::vec3f(10.f, 3.f, 1.f), specter::vec3f(17'000));
-		const specter::vec3f eyepos(0.1f, -0.1f, 0.1f);
-		const specter::vec3f eyetarget(0.f, 0.f, 0.f);
-		const specter::vec2u screen_resolution(1920, 1080);
-		specter::Camera camera(screen_resolution);
-		const unsigned nSamplesPerPixel = 1;
-		const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
-		camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
-		
-		std::vector<specter::vec3f> frame;
-		frame.resize(specter::product(screen_resolution));
-
-		specter::Accel accel;
-		accel.addMesh(&mesh);
-		accel.build();
-
-		std::cout << "Rendering mesh...\n";
-		specter::Timer rtxtime;
-
-		bool llt = false;
-		bool frt = false;
-
-		unsigned nHits = 0;
-		for (int y = 0; y < screen_resolution.y; ++y) {
-			for (int x = 0; x < screen_resolution.x; ++x) {
-				specter::vec3f cumulativeColor(0.f);
-				for (int sxoff = 0; sxoff < nSamplesPerDirection; sxoff++) {
-					for (int syoff = 0; syoff < nSamplesPerDirection; syoff++) {
-						const unsigned spi = syoff * nSamplesPerDirection + sxoff;
-						const unsigned spx = x * nSamplesPerDirection + 1;
-						const unsigned spy = y * nSamplesPerDirection + 1;
-						
-						specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
-						specter::Intersection its;
-
-						if (accel.traceRay(ray, its)) {
-							unsigned normalIndex = mesh.getFace(its.f * 3).n;
-							specter::vec3f normal = mesh.getNormal(normalIndex);
-
-							const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-
-							// Cast shadow ray to check for mutual visibility between the surface point and the point light source
-							specter::Ray shadowRay;
-							shadowRay.d = specter::normalize(pointLight.position - intersectionPoint);
-							shadowRay.o = intersectionPoint + normal * 1e-6;	// Avoid self-shadowing
-							shadowRay.invd = 1.f / shadowRay.d;
-							
-							specter::Intersection itsShadow;
-							if (!accel.traceRay(shadowRay, itsShadow, true)) {
-								cumulativeColor += pointLight.sample_Light(intersectionPoint, normal);
-							}
-						}
-					}
-				}
-				
-				const std::size_t index = y * screen_resolution.x + x;
-				cumulativeColor /= static_cast<float>(nSamplesPerPixel);
-				frame[index].x = cumulativeColor.x;
-				frame[index].y = cumulativeColor.y;
-				frame[index].z = cumulativeColor.z;
-			}
-		}
-
-		std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
-		
-		specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Raytracer");
-		glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-		static float quad[] = 
-		{
-			// vertices		// uv
-			-1.f, -1.f,		0.f, 0.f,
-			1.f, -1.f,		1.f, 0.f,
-			1.f, 1.f,		1.f, 1.f,
-
-			-1.f, -1.f,		0.f, 0.f,
-			1.f, 1.f,		1.f, 1.f,
-			-1.f, 1.f,		0.f, 1.f
-		};
-
-		GLuint vao, vbo;
-		glGenVertexArrays(1, &vao);
-		glGenBuffers(1, &vbo);
-		glBindVertexArray(vao);
-		glBindBuffer(GL_ARRAY_BUFFER, vbo);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
-
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
-
-		specter::Shader quadShader =
-		{
-			{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.vs" },
-			{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.fs" }
-		};
-		quadShader.create();
-		quadShader.bind();
-
-		GLuint image;
-		glGenTextures(1, &image);
-		glBindTexture(GL_TEXTURE_2D, image);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_resolution.x, screen_resolution.y, 0, GL_RGB, GL_FLOAT, frame.data());
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glBindTextureUnit(0, image);
-
-		while (!glfwWindowShouldClose(window.getWindow())) {
-			glClearColor(0.f, 0.f, 0.f, 0.f);
-			glClear(GL_COLOR_BUFFER_BIT);
-
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-
-			glfwSwapBuffers(window.getWindow());
-			glfwPollEvents();
-
-			if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-				glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
-			}
-		}
-
-		glDeleteTextures(1, &image);
-		glDeleteBuffers(1, &vbo);
-		glDeleteVertexArrays(1, &vao);
+		renderRTX();
+		//renderRasterized();
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();
@@ -170,12 +47,146 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
 	return specter::MovementDirection::None;
 }
 
-void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::FaceElement* indices, std::size_t nIndices) {
-	specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(728), "Specter Raytracer");
+void renderRTX() {
+	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
+	specter::ObjLoader mesh(filename);
+	const specter::PointLight pointLight(specter::vec3f(-70, 3.f, 1.f), specter::vec3f(50'000));
+	const specter::vec3f eyepos(-39.8512, 19.539, 14.1864);
+	const specter::vec3f eyetarget(eyepos + specter::vec3f(0.78121, -0.0683631, -0.620514));
+	specter::Camera camera(screen_resolution);
+	const unsigned nSamplesPerPixel = 1;
+	const unsigned nSamplesPerDirection = std::sqrt(nSamplesPerPixel);
+	camera.initializeVariables(eyepos, eyetarget, 90.f, nSamplesPerPixel);
+	std::vector<specter::vec3f> frame;
+	frame.resize(specter::product(screen_resolution));
+
+	specter::Accel accel;
+	accel.addMesh(&mesh);
+	accel.build();
+
+	std::cout << "Rendering mesh...\n";
+	specter::Timer rtxtime;
+
+	bool llt = false;
+	bool frt = false;
+
+	unsigned nHits = 0;
+	for (int y = 0; y < screen_resolution.y; ++y) {
+		for (int x = 0; x < screen_resolution.x; ++x) {
+			specter::vec3f cumulativeColor(0.f);
+			for (int sxoff = 0; sxoff < nSamplesPerDirection; sxoff++) {
+				for (int syoff = 0; syoff < nSamplesPerDirection; syoff++) {
+					const unsigned spi = syoff * nSamplesPerDirection + sxoff;
+					const unsigned spx = x * nSamplesPerDirection + 1;
+					const unsigned spy = y * nSamplesPerDirection + 1;
+
+					specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+					specter::Intersection its;
+
+					if (accel.traceRay(ray, its)) {
+						unsigned normalIndex = mesh.getFace(its.f * 3).n;
+						specter::vec3f normal = mesh.getNormal(normalIndex);
+
+						const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
+
+						// Cast shadow ray to check for mutual visibility between the surface point and the point light source
+						specter::Ray shadowRay;
+						shadowRay.d = specter::normalize(pointLight.position - intersectionPoint);
+						shadowRay.o = intersectionPoint + normal * 1e-5;	// Avoid self-shadowing
+						shadowRay.invd = 1.f / shadowRay.d;
+
+						specter::Intersection itsShadow;
+						if (!accel.traceRay(shadowRay, itsShadow, true)) {
+							cumulativeColor += pointLight.sample_Light(intersectionPoint, normal);
+						}
+					}
+				}
+			}
+
+			const std::size_t index = y * screen_resolution.x + x;
+			cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+			frame[index].x = cumulativeColor.x;
+			frame[index].y = cumulativeColor.y;
+			frame[index].z = cumulativeColor.z;
+		}
+	}
+
+	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
+
+	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Raytracer");
+	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	static float quad[] =
+	{
+		// vertices		// uv
+		-1.f, -1.f,		0.f, 0.f,
+		1.f, -1.f,		1.f, 0.f,
+		1.f, 1.f,		1.f, 1.f,
+
+		-1.f, -1.f,		0.f, 0.f,
+		1.f, 1.f,		1.f, 1.f,
+		-1.f, 1.f,		0.f, 1.f
+	};
+
+	GLuint vao, vbo;
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+
+	specter::Shader quadShader =
+	{
+		{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.vs" },
+		{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.fs" }
+	};
+	quadShader.create();
+	quadShader.bind();
+
+	GLuint image;
+	glGenTextures(1, &image);
+	glBindTexture(GL_TEXTURE_2D, image);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screen_resolution.x, screen_resolution.y, 0, GL_RGB, GL_FLOAT, frame.data());
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTextureUnit(0, image);
+
+	while (!glfwWindowShouldClose(window.getWindow())) {
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glfwSwapBuffers(window.getWindow());
+		glfwPollEvents();
+
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
+		}
+	}
+
+	glDeleteTextures(1, &image);
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
+}
+
+void renderRasterized() {
+	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
+	specter::ObjLoader mesh(filename);
+	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	window.enableCursorCallback();
 	glfwSwapInterval(0);
 	glEnable(GL_DEPTH_TEST);
+
+	auto indices = mesh.getFaces();
+	auto vertices = mesh.getVertices();
+	auto nIndices = mesh.getTriangleCount();
+	auto nVertices = mesh.getVertexCount();
 
 	std::vector<unsigned> vertexIndices;
 	vertexIndices.resize(nIndices);
@@ -213,12 +224,24 @@ void renderRasterized(specter::vec3f* vertices, std::size_t nVertices, specter::
 	float deltatime = 0.f;
 	float lasttime = 0.f;
 
+	bool key_c_hit = false;
+
 	while (!glfwWindowShouldClose(window.getWindow())) {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		deltatime = glfwGetTime() - lasttime;
 		lasttime += deltatime;
+
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_PRESS) {
+			key_c_hit = true;
+		}
+
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_RELEASE && key_c_hit)  {
+			std::cout << "pos: " << view.getPosition() << '\n';
+			std::cout << "dir: " << view.getDirection() << '\n';
+			key_c_hit = false;
+		}
 
 		float xoff = window.getXoffset();
 		float yoff = window.getYoffset();
