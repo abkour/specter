@@ -154,6 +154,9 @@ struct IndexDistancePair {
 	}
 };
 
+static float avgNumIndices = 0;
+static float nLeafsVisited = 0;
+
 // On intersection t stores the distance to the closest triangle it collided with.
 // u and v store the barycentric coordinates of that intersection point
 // index refers to the triangle in the indices array of the mesh class.
@@ -183,6 +186,8 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 				}
 			}
 		}
+		avgNumIndices += node->nIndices;
+		nLeafsVisited += 1.f;
 	}
 
 	else {
@@ -228,6 +233,10 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 			}
 		}
 	}
+}
+
+void Octree::dbg_print() {
+	std::cout << "average number of indices: " << avgNumIndices / nLeafsVisited << '\n';
 }
 
 bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) {

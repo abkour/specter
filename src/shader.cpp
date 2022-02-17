@@ -15,7 +15,9 @@ Shader::~Shader() {
 }
 
 Shader& Shader::operator=(Shader&& other) {
-	programId = other.id();
+	auto tmpId = programId;
+	programId = other.programId;
+	glDeleteProgram(tmpId);
 	other.programId = 0;
 	return *this;
 }

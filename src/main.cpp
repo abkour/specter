@@ -1,6 +1,8 @@
 #include "view.hpp"
 #include "renderer.hpp"
 
+#include "misc.hpp"
+
 void renderRasterized();
 void renderRTX(const char* scene_descriptor_file);
 

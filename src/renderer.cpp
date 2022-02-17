@@ -65,8 +65,9 @@ void RTX_Renderer::run() {
 			frame[index] = cumulativeColor;
 		}
 	}
-
+	
 	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
+	accel.dbg_print();
 
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
 

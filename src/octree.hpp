@@ -27,6 +27,8 @@ struct Octree {
 	// RAII -> delete octree
 	~Octree();
 
+	static void dbg_print();
+
 	// build the octree
 	void build(Mesh* mesh);
 	

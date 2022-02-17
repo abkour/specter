@@ -1,6 +1,7 @@
 #pragma once
 #include "aabb.hpp"
 #include "ray.hpp"
+#include "simd_math.hpp"
 #include "vec2.hpp"
 #include "vec3.hpp"
 
@@ -32,7 +33,7 @@ struct Mesh {
 	// Implements the möller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 	bool rayIntersection(const Ray& ray, const std::size_t index, float& u, float &v, float& t) const;
-
+	
 	// Get vertex at position i 
 	vec3f getVertex(const std::size_t i) const;
 	// Get normal at position i

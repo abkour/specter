@@ -4,6 +4,10 @@
 
 namespace specter {
 
+void Accel::dbg_print() {
+	octree.dbg_print();
+}
+
 void Accel::addMesh(Mesh* newMesh) {
 	if (mesh) {
 		throw std::runtime_error("Only one mesh is supported");

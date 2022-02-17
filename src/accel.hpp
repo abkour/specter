@@ -12,6 +12,8 @@ class Accel {
 
 public:
 
+	void dbg_print();
+
 	// Adds mesh to the accelerating structure. 
 	// At the moment only one mesh is supported
 	void addMesh(Mesh* newMesh);

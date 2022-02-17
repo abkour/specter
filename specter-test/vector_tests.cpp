@@ -5,6 +5,8 @@
 #include "../src/vec3.hpp"
 #include "../src/vec4.hpp"
 
+#include "../src/simd_math.hpp"
+
 //
 // Vec2
 TEST(constructor, vec2) {
@@ -343,4 +345,17 @@ TEST(access, vec4) {
 
 	v0[0] += 1;
 	EXPECT_EQ(v0[0] == 2, true);
+}
+
+
+//
+// SIMD operations
+TEST(SIMD, vec3) {
+	specter::vec3f v0(2.f, 1.f, 2.f);
+	specter::vec3f v1(3.f, 4.f, 5.f);
+	specter::vec4f v2 = specter::simd_cross(v0, v1);
+
+	EXPECT_TRUE(v2.x == -3.f);
+	EXPECT_TRUE(v2.y == -4.f);
+	EXPECT_TRUE(v2.z == 5.f);
 }
