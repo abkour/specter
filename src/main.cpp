@@ -1,8 +1,6 @@
 #include "view.hpp"
 #include "renderer.hpp"
 
-static specter::MovementDirection getMovementDirection(GLFWwindow* window);
-
 void renderRasterized();
 void renderRTX(const char* scene_descriptor_file);
 
@@ -10,7 +8,6 @@ int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
 		renderRTX(argv[1]);
-		//renderRasterized();
 	}
 	catch (std::runtime_error& e) {
 		std::cout << e.what();
@@ -25,6 +22,8 @@ void renderRTX(const char* scene_descriptor_file) {
 	specter::RTX_Renderer renderer(scene_descriptor);
 	renderer.run();
 }
+
+static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 void renderRasterized() {
 	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
