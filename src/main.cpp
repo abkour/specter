@@ -17,6 +17,10 @@
 
 #include <json.hpp>
 
+struct POD {
+	float x, y, z;
+};
+
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 static const specter::vec2u screen_resolution(1920, 1080);
@@ -38,7 +42,18 @@ static const unsigned long light_types[] =
 int main(int argc, const char** argv) {
 	try {
 
+		const char* filename = "C:\\users\\flora\\rsc\\assets\\ajax\\ajax-setup.json";
 		std::ifstream file("C:\\users\\flora\\rsc\\assets\\ajax\\ajax-setup.json");
+
+		specter::Scene scene(filename);
+
+		std::cout << scene.lightEnergy << '\n';
+		std::cout << scene.lightPosition << '\n';
+		std::cout << scene.cameraPosition << '\n';
+		
+
+		return 0;
+
 		std::stringstream fileContents;
 		fileContents << file.rdbuf();
 
@@ -49,7 +64,14 @@ int main(int argc, const char** argv) {
 		auto lightString = lightType.get<std::string>();
 		auto val = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightString[0]));
 
+		//POD position;
+		float position[3];
+		jfile["light"]["energy"].get_to(position);
 
+
+		std::cout << position[0] << ", " << position[0] << ", " << position[0] << '\n';
+
+		//delete position;
 
 		switch (val) {
 		case SPECTER_AMBIENT_LIGHT:
@@ -80,12 +102,14 @@ int main(int argc, const char** argv) {
 		}
 		
 
+		return 0;
+
 		/*
 		for (auto j : jfile) {
 			std::cout << j << '\n';
 		}*/
 
-		//renderRTX();
+		renderRTX();
 		//renderRasterized();
 	}
 	catch (std::runtime_error& e) {
@@ -114,7 +138,7 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
 
 void renderRTX() {
 	const specter::vec3f eyepos(-39.8512, 19.539, 14.1864);
-	const specter::vec3f eyetarget(eyepos + specter::vec3f(0.78121, -0.0683631, -0.620514));
+	const specter::vec3f eyetarget(-39.06999, 19.470637, 13.565886);
 
 	specter::RTX_Renderer renderer;
 	renderer.loadMesh("C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj");
