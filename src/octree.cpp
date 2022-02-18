@@ -126,20 +126,6 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 
 	node->m_children = new Node*[nSubRegions];
 	
-	/*for (int i = 0; i < nSubRegions; ++i) {
-		if (subRegionTriangleCounts[i].size() != 0) {
-			node->m_children[i] = new Node;
-			node->m_children[i]->bbox.min = subRegions[i].min;
-			node->m_children[i]->bbox.max = subRegions[i].max;
-			node->m_children[i]->nIndices = subRegionTriangleCounts[i].size();
-			buildRec(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
-		}
-		else {
-			node->m_children[i] = nullptr;
-			node->nIndices = std::numeric_limits<unsigned int>::max();
-		}
-	}*/
-	
 	tbb::parallel_for(tbb::blocked_range<int>(0, nSubRegions),
 		[&](const tbb::blocked_range<int>& r) {
 			for(int i = r.begin(); i != r.end(); ++i) {
