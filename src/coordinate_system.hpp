@@ -13,6 +13,9 @@ struct CoordinateSystem {
 	// Transform vector from world space to local space
 	vec3f toLocal(const vec3f& v);
 
+	// Transform vector from local space to world space
+	vec3f toWorld(const vec3f& v);
+
 	vec3f xaxis, yaxis, zaxis;
 };
 
