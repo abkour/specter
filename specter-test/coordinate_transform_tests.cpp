@@ -25,7 +25,8 @@ TEST(transform, coordinate_system) {
 
 	specter::vec3f v00(0.f, 0.5f, 1.f);
 	auto v00local = frame00.toLocal(v00);
-	std::cout << "v00local: " << v00local << '\n';
-	std::cout << "v00World: " << frame00.toWorld(v00local) << '\n';
+	auto v00world = frame00.toWorld(v00local);
 
+	// Transforming to local space and then back should yield the same vector
+	EXPECT_TRUE(v00world == v00);
 }
