@@ -9,4 +9,4 @@ transport from an ideal point light source.
 
 ## ajax-ambient
 
-This image was generated using the ambient occlusion algorithm.
+This image was generated using the ambient occlusion algorithm. Occlusion was set to be global.

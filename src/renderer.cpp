@@ -194,8 +194,9 @@ void RTX_Renderer::run_parallel() {
 								specter::vec3f normal = mesh.getNormal(normalIndex);
 
 								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
-
+								for (int i = 0; i < samplesPerPixel; ++i) {
+									cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
+								}
 								/*
 								unsigned normalIndex = mesh.getFace(its.f * 3).n;
 								specter::vec3f normal = mesh.getNormal(normalIndex);
