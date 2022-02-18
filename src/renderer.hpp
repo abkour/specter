@@ -12,6 +12,7 @@
 #include <glfw3.h>
 
 #include <tbb/blocked_range.h>
+#include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
 
 namespace specter {
@@ -23,6 +24,8 @@ public:
 	RTX_Renderer(const Scene& scene);
 	
 	void run();
+
+	void run_parallel();
 
 private:
 
