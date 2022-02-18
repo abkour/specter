@@ -28,8 +28,6 @@ public:
 
 	void run();
 
-	void run_parallel();
-
 private:
 
 	Accel accel;

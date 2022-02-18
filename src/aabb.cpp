@@ -142,7 +142,8 @@ bool AxisAlignedBoundingBox::rayIntersect(const Ray& ray, float& nearT, float& f
 
 	for (int i = 0; i < 3; i++) {
 		float origin = ray.o[i];
-		float minVal = min[i], maxVal = max[i];
+		float minVal = min[i];
+		float maxVal = max[i];
 
 		if (ray.d[i] == 0) {
 			if (origin < minVal || origin > maxVal)
