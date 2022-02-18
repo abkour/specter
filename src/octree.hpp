@@ -37,10 +37,10 @@ struct Octree {
 	
 	// traverse the octree. Returns true if the ray intersects geometry in the mesh. 
 	// Additionally, it is guaranteed that the intersection point is the closest intersection point to the ray origin
-	bool traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection);
+	bool traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection) const;
 	
 	// Traverse the octree. Returns true if the ray intersects any geometry in the mesh.
-	bool traverseAny(const Mesh* mesh, const Ray& ray);
+	bool traverseAny(const Mesh* mesh, const Ray& ray) const;
 
 private:
 	
@@ -48,10 +48,10 @@ private:
 	void buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth = 0);
 	
 	// Traverse the octree recursively. This is initially called by the public function traverse()
-	void traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit = false);
+	void traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit = false) const;
 	
 	// Traverse the octree recursively. This is initially called by the public function traverseAny()
-	void traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound);
+	void traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const;
 
 	// Free the octree recursively. This is called by the destructor.
 	void freeOctreeRec(Node* node);

@@ -144,7 +144,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		});
 }
 
-bool Octree::traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection) {
+bool Octree::traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection) const {
 	traverseRec(mesh, root, ray, intersection);
 	return intersection.t != std::numeric_limits<float>::max();
 }
@@ -168,7 +168,7 @@ static float nLeafsVisited = 0;
 // The ray then recursively travels through the sub-regions in ascending order with respect to the intersection distance.
 // If any intersection with a triangle is found on leaf encounter, it is guaranteed to be the closest triangle,
 // and further processing can stop.
-void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) {
+void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) const {
 	if (node == nullptr) {
 		return;
 	}
@@ -243,13 +243,13 @@ void Octree::dbg_print() {
 	std::cout << "average number of indices: " << avgNumIndices / nLeafsVisited << '\n';
 }
 
-bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) {
+bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) const {
 	bool intersectionFound = false;
 	traverseAnyRec(mesh, root, ray, intersectionFound);
 	return intersectionFound;
 }
 
-void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) {
+void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const {
 	if (node == nullptr) {
 		return;
 	}
