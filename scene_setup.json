@@ -4,7 +4,7 @@
         "method": "normals"
     },
     "light": {
-        "type": "point",
+        "type": "ambient",
         "energy": [75000, 75000, 75000],
         "position": [-70, 3, 1]
     },
