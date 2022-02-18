@@ -1,6 +1,6 @@
 {
     "light": {
-        "type": "ambient",
+        "type": "point",
         "energy": [50000, 50000, 50000],
         "position": [-70, 3, 1]
     },
@@ -8,7 +8,7 @@
         "position": [-39.8512, 19.539, 14.1864],
         "target": [-39.06999, 19.470637, 13.565886],
         "fov": 90,
-        "samples": 1
+        "samples": 4
     },
     "resolution": [1920, 1080],
     "path": "C://Users//flora//rsc//assets//ajax//ajax.obj"

@@ -37,6 +37,9 @@ private:
 	Window window;
 
 	Light* light;
+
+	int samplesPerPixel;
+
 };
 
 }

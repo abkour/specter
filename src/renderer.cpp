@@ -31,6 +31,7 @@ RTX_Renderer::RTX_Renderer(const Scene& scene) {
 
 	camera.setResolution(scene.screenResolution);
 	camera.initializeVariables(scene.cameraPosition, scene.cameraTarget, scene.cameraFov, scene.samplesPerPixel);
+	samplesPerPixel = scene.samplesPerPixel;
 
 	mesh.open_read(scene.meshPath.c_str());
 	
@@ -169,10 +170,7 @@ void RTX_Renderer::run_parallel() {
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
-	unsigned nSamplesPerPixel = 1;
-	unsigned nSamplesPerDirection = 1;
-	unsigned nHits = 0;
-
+	unsigned nSamplesPerDirection = std::sqrt(samplesPerPixel);
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, camera.getResolution().y, 0, camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
@@ -208,7 +206,7 @@ void RTX_Renderer::run_parallel() {
 					}
 
 					const std::size_t index = y * camera.getResolution().x + x;
-					cumulativeColor /= static_cast<float>(nSamplesPerPixel);
+					cumulativeColor /= static_cast<float>(samplesPerPixel);
 					frame[index] = cumulativeColor;
 				}
 			}
