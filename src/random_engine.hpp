@@ -4,7 +4,7 @@
 namespace specter {
 
 // This object is used as a wrapper over the pseudo-number generation
-// facilities provided by the C*+ standard.
+// facilities provided by the C++ standard.
 class RandomEngine {
 
 public:
@@ -21,7 +21,7 @@ public:
 		, distribution(low, high)
 	{}
 
-	float get_next() const {
+	float get_next() {
 		return distribution(engine);
 	}
 
@@ -30,9 +30,6 @@ private:
 	std::mt19937 engine;
 
 	std::uniform_real_distribution<float> distribution;
-
-
-
 };
 
 

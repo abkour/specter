@@ -4,7 +4,6 @@
 */
 
 #include "sampler.hpp"
-#include "random_engine.hpp"
 
 namespace specter {
 
@@ -14,7 +13,6 @@ constexpr float PIQuarter = PI / 4.f;
 
 
 Sampler::Sampler() 
-	: randomEngine() 
 {}
 
 vec2f Sampler::sampleConcentricDisk() {
