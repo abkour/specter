@@ -332,6 +332,11 @@ vec3<T> invert(const vec3<T>& v) {
 	return vec3<T>(-v.x, -v.y, -v.z);
 }
 
+template<typename T>
+vec3<T> inverse(const vec3<T>& v) {
+	return vec3<T>(1.f / v.x, 1.f / v.y, 1.f / v.z);
+}
+
 // Reflects vector v around normal n.
 // Caller needs to make sure that n is normalized.
 template<typename T>
