@@ -1,3 +1,8 @@
+/*
+	Global constants and common program functions go here.
+	Keep the included headers to a strict minimum.
+*/
+
 #pragma once
 #include <cstdint>
 

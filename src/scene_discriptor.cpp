@@ -15,7 +15,6 @@ Scene::Scene(const char* filename) : filename(filename) {
 	
 	auto jsonFile = nlohmann::json::parse(fileContents.str());
 
-
 	debugScene = jsonFile["debug"]["value"].get<int>() == 1 ? true : false;
 	auto debugMode_str = jsonFile["debug"]["method"].get<std::string>();
 	auto debugMode_hash = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
