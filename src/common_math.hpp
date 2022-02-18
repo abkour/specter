@@ -5,6 +5,12 @@
 
 namespace specter {
 
+constexpr float Pi = 3.141592653589793;
+constexpr float HalfPi = Pi / 2.f;
+constexpr float QuarterPi = Pi / 4.f;
+constexpr float PiSquared = Pi * Pi;
+constexpr float FourPiSquared = 4.f * Pi * Pi;
+
 // Convert angle in degrees to angle in radians
 float radians(const float angleInDegrees);
 
