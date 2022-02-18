@@ -11,7 +11,7 @@ vec3f AmbientLight::sample_light(const Accel& accel, const vec3f& point, const v
 	
 	Ray shadowRay;
 	shadowRay.d = rayDirection;
-	shadowRay.invd = 1.f / shadowRay.d;
+	shadowRay.invd = inverse(shadowRay.d);
 	shadowRay.o = point;
 	
 	Intersection its;
