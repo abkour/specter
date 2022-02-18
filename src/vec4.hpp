@@ -334,6 +334,11 @@ vec4<T> invert(const vec4<T>& v) {
 }
 
 template<typename T>
+vec4<T> inverse(const vec4<T>& v) {
+	return vec4<T>(1.f / v.x, 1.f / v.y, 1.f / v.z, 1.f / v.w);
+}
+
+template<typename T>
 std::ostream& operator<<(std::ostream& os, const vec4<T>& vec) {
 	return os << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w;
 }
