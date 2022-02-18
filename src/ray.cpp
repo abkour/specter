@@ -5,7 +5,7 @@ namespace specter {
 Ray::Ray(const vec3f& origin, const vec3f& direction)
 	: o(origin)
 	, d(direction)
-	, invd(1.f / direction)
+	, invd(inverse(direction))
 {}
 
 Ray::Ray(const Ray& other)
