@@ -17,11 +17,18 @@ constexpr uint64_t SPECTER_DIRECTIONAL_LIGHT = 2623544947;
 constexpr uint64_t SPECTER_POINT_LIGHT       = 271082479;
 constexpr uint64_t SPECTER_INVALID           = 0;
 
+constexpr uint64_t SPECTER_DEBUG_DISPLAY_NORMALS = 578727905;
+constexpr uint64_t SPECTER_DEBUG_INVALID_MODE = 0;
+
 struct Scene {
 
 	Scene(const char* filename);
 
 	std::string filename;
+
+	// Debug
+	bool debugScene;
+	uint64_t debugMode;
 
 	// Light
 	uint64_t lightType;

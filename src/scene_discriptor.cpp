@@ -15,6 +15,20 @@ Scene::Scene(const char* filename) : filename(filename) {
 	
 	auto jsonFile = nlohmann::json::parse(fileContents.str());
 
+
+	debugScene = jsonFile["debug"]["value"].get<int>() == 1 ? true : false;
+	auto debugMode_str = jsonFile["debug"]["method"].get<std::string>();
+	auto debugMode_hash = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
+
+	switch (debugMode_hash) {
+	case SPECTER_DEBUG_DISPLAY_NORMALS:
+		debugMode = SPECTER_DEBUG_DISPLAY_NORMALS;
+		break;
+	default:
+		debugMode = SPECTER_DEBUG_INVALID_MODE;
+		break;
+	}
+
 	auto lightType_str = jsonFile["light"]["type"].get<std::string>();
 	auto lightType_hash = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
 
