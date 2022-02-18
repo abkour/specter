@@ -1,7 +1,7 @@
 {
     "debug": {
-        "value": 0,
-        "method": ""
+        "value": 1,
+        "method": "normals"
     },
     "light": {
         "type": "point",

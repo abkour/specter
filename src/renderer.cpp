@@ -36,6 +36,12 @@ RTX_Renderer::RTX_Renderer(const Scene& scene) {
 	
 	accel.addMesh(&mesh);
 	accel.build();
+
+	if (scene.debugScene) {
+		debugMode = scene.debugMode;
+	} else {
+		debugMode = SPECTER_DEBUG_INVALID_MODE;
+	}
 }
 
 RTX_Renderer::~RTX_Renderer() {
@@ -188,13 +194,17 @@ void RTX_Renderer::run_parallel() {
 
 							if (accel.traceRay(ray, its)) {
 
-
 								unsigned normalIndex = mesh.getFace(its.f * 3).n;
 								specter::vec3f normal = mesh.getNormal(normalIndex);
 
-								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								for (int i = 0; i < samplesPerPixel; ++i) {
-									cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
+								if (debugMode == SPECTER_DEBUG_DISPLAY_NORMALS) {
+									cumulativeColor += abs(normal);
+								}
+								else {
+									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
+									for (int i = 0; i < samplesPerPixel; ++i) {
+										cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
+									}
 								}
 								/*
 								unsigned normalIndex = mesh.getFace(its.f * 3).n;

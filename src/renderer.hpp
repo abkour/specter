@@ -41,6 +41,7 @@ private:
 
 	int samplesPerPixel;
 
+	uint64_t debugMode;
 };
 
 }
