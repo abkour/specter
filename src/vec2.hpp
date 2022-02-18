@@ -282,6 +282,11 @@ vec2<T> invert(const vec2<T>& v) {
 }
 
 template<typename T>
+vec2<T> inverse(const vec2<T>& v) {
+	return vec2<T>(1.f / v.x, 1.f / v.y);
+}
+
+template<typename T>
 vec2<T>& reflect(const vec2<T>& v, const vec2<T>& n) {
 	return v - 2 * (dot(v, n)) * n;
 }
