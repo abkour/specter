@@ -39,18 +39,6 @@ struct Scene {
 	std::string meshPath;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const Scene& scene) {
-	os << "Printing file descriptor: " << scene.filename << '\n';
-	os << "lightType: " << scene.lightType << '\n';
-	os << "lightEnergy: " << scene.lightEnergy << '\n';
-	os << "lightPosition: " << scene.lightPosition << '\n';
-	os << "cameraPosition: " << scene.cameraPosition << '\n';
-	os << "cameraTarget: " << scene.cameraTarget << '\n';
-	os << "cameraFov: " << scene.cameraFov << '\n';
-	os << "samplesPerPixel: " << scene.samplesPerPixel << '\n';
-	os << "screenResolution: " << scene.screenResolution << '\n';
-	os << "meshPath: " << scene.meshPath << "\n\n";
-	return os;
-}
+std::ostream& operator<<(std::ostream& os, const Scene& scene);
 
 }
