@@ -14,4 +14,9 @@ CoordinateSystem::CoordinateSystem(const vec3f& normal) {
 	yaxis = cross(xaxis, zaxis);
 }
 
+// Transform vector from world space to local space
+vec3f CoordinateSystem::toLocal(const vec3f& v) {
+	return vec3f(dot(v, xaxis), dot(v, yaxis), dot(v, zaxis));
+}
+
 }
