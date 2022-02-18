@@ -23,6 +23,8 @@ public:
 
 	RTX_Renderer(const Scene& scene);
 	
+	~RTX_Renderer();
+
 	void run();
 
 	void run_parallel();
@@ -34,6 +36,7 @@ private:
 	ObjLoader mesh;
 	Window window;
 
+	Light* light;
 };
 
 }

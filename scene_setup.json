@@ -1,6 +1,6 @@
 {
     "light": {
-        "type": "point",
+        "type": "ambient",
         "energy": [50000, 50000, 50000],
         "position": [-70, 3, 1]
     },

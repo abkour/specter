@@ -11,7 +11,7 @@ int main(int argc, const char** argv) {
 		std::cout << "specter 3D rendering engine\n\n";
 		renderRTX(argv[1]);
 	}
-	catch (std::runtime_error& e) {
+	catch (const std::runtime_error& e) {
 		std::cout << e.what();
 	}
 	catch (...) {

@@ -3,16 +3,45 @@
 
 namespace specter {
 
+// This constructor is strongly coupled to the scene descriptor. Maybe transfer the initialization
+// of light objects to the Scene object?
 RTX_Renderer::RTX_Renderer(const Scene& scene) {
 	std::cout << scene << '\n';
 	
+	switch (scene.lightType) {
+	case SPECTER_POINT_LIGHT:
+		light = new PointLight;
+		break;
+	case SPECTER_AMBIENT_LIGHT:
+		throw std::runtime_error("Ambient light is not yet implemented!");
+		break;
+	case SPECTER_AREA_LIGHT:
+		throw std::runtime_error("Area light is not yet implemented!");
+		break;
+	case SPECTER_DIRECTIONAL_LIGHT:
+		throw std::runtime_error("Directional light is not yet implemented!");
+		break;
+	default:
+		throw std::runtime_error("This light source is not yet implemented or doesn't specify a valid light type");
+		break;
+	}
+
+	light->energy = scene.lightEnergy;
+	light->position = scene.lightPosition;
+
+	camera.setResolution(scene.screenResolution);
+	camera.initializeVariables(scene.cameraPosition, scene.cameraTarget, scene.cameraFov, scene.samplesPerPixel);
+
 	mesh.open_read(scene.meshPath.c_str());
 	
 	accel.addMesh(&mesh);
 	accel.build();
+}
 
-	camera.setResolution(scene.screenResolution);
-	camera.initializeVariables(scene.cameraPosition, scene.cameraTarget, scene.cameraFov, scene.samplesPerPixel);
+RTX_Renderer::~RTX_Renderer() {
+	if (light != nullptr) {
+		delete light;
+	}
 }
 
 void RTX_Renderer::run() {
@@ -133,7 +162,6 @@ void RTX_Renderer::run() {
 }
 
 void RTX_Renderer::run_parallel() {
-	const specter::PointLight pointLight(specter::vec3f(-70, 3.f, 1.f), specter::vec3f(50'000));
 
 	std::vector<specter::vec3f> frame;
 	frame.resize(camera.getResolution().x * camera.getResolution().y);
@@ -144,7 +172,6 @@ void RTX_Renderer::run_parallel() {
 	unsigned nSamplesPerPixel = 1;
 	unsigned nSamplesPerDirection = 1;
 	unsigned nHits = 0;
-
 
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, camera.getResolution().y, 0, camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
@@ -168,13 +195,13 @@ void RTX_Renderer::run_parallel() {
 
 								// Cast shadow ray to check for mutual visibility between the surface point and the point light source
 								specter::Ray shadowRay;
-								shadowRay.d = specter::normalize(pointLight.position - intersectionPoint);
+								shadowRay.d = specter::normalize(light->position - intersectionPoint);
 								shadowRay.o = intersectionPoint + normal * 1e-5;	// Avoid self-shadowing
 								shadowRay.invd = 1.f / shadowRay.d;
 
 								specter::Intersection itsShadow;
 								if (!accel.traceRay(shadowRay, itsShadow, true)) {
-									cumulativeColor += pointLight.sample_Light(intersectionPoint, normal);
+									cumulativeColor += light->sample_Light(intersectionPoint, normal);
 								}
 							}
 						}

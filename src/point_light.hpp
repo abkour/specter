@@ -5,6 +5,8 @@ namespace specter {
 
 struct PointLight : public Light {
 
+	PointLight() = default;
+
 	// Initialize a light object in world space
 	PointLight(const vec3f& pos, const vec3f& energy)
 	{
