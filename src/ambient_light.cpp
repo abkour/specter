@@ -13,8 +13,6 @@ vec3f AmbientLight::sample_light(const vec3f& point, const vec3f& normal) {
 
 	float cosAngle = dot(sample, normal);
 
-
-
 }
 
 
