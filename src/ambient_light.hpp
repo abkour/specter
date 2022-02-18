@@ -1,4 +1,5 @@
 #pragma once
+#include "coordinate_system.hpp"
 #include "light.hpp"
 #include "sampler.hpp"
 
