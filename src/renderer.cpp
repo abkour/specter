@@ -1,6 +1,5 @@
 #include "renderer.hpp"
 
-
 namespace specter {
 
 // This constructor is strongly coupled to the scene descriptor. Maybe transfer the initialization

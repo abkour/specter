@@ -1,4 +1,4 @@
-#include "scene_discriptor.hpp"
+#include "scene_descriptor.hpp"
 
 namespace specter {
 

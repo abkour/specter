@@ -5,7 +5,7 @@
 #include "mesh.hpp"
 #include "obj.hpp"
 #include "point_light.hpp"
-#include "scene_discriptor.hpp"
+#include "scene_descriptor.hpp"
 #include "shader.hpp"
 #include "window.hpp"
 
