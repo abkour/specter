@@ -22,7 +22,7 @@ public:
 	void build();
 
 	// Trace ray using the accelerating structure. Returns true if the ray collides with mesh geometry.
-	bool traceRay(const Ray& ray, Intersection& intersection, bool shadowRay = false);
+	bool traceRay(const Ray& ray, Intersection& intersection, bool shadowRay = false) const;
 
 private:
 

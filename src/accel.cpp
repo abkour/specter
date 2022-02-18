@@ -22,7 +22,7 @@ void Accel::build() {
 	std::cout << " Finished in : " << octreeTimer.elapsedTime() << " seconds.\n\n";
 }
 
-bool Accel::traceRay(const Ray& ray, Intersection& intersection, bool shadowRay) {
+bool Accel::traceRay(const Ray& ray, Intersection& intersection, bool shadowRay) const {
 	// Traverse through the octree
 	if (shadowRay) {
 		if (octree.traverseAny(mesh, ray)) {
