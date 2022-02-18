@@ -75,9 +75,31 @@ Scene::Scene(const char* filename) : filename(filename) {
 	meshPath = jsonFile["path"].get<std::string>();
 }
 
-inline std::ostream& operator<<(std::ostream& os, const Scene& scene) {
+static std::string lightTypeToString(const uint64_t lightType) {
+	std::string lightName;
+	switch (lightType) {
+	case SPECTER_AMBIENT_LIGHT:
+		lightName = "Ambient";
+		break;
+	case SPECTER_AREA_LIGHT:
+		lightName = "Area";
+		break;
+	case SPECTER_DIRECTIONAL_LIGHT:
+		lightName = "Directional";
+		break;
+	case SPECTER_POINT_LIGHT:
+		lightName = "Point";
+		break;
+	default:
+		lightName = "Invalid";
+		break;
+	}
+	return lightName;
+}
+
+std::ostream& operator<<(std::ostream& os, const Scene& scene) {
 	os << "Printing file descriptor: " << scene.filename << '\n';
-	os << "lightType: " << scene.lightType << '\n';
+	os << "lightType: " << lightTypeToString(scene.lightType) << '\n';
 	os << "lightEnergy: " << scene.lightEnergy << '\n';
 	os << "lightPosition: " << scene.lightPosition << '\n';
 	os << "cameraPosition: " << scene.cameraPosition << '\n';
