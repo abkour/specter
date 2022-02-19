@@ -58,7 +58,7 @@ void RTX_Renderer::run() {
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
-	//AmbientLight ambientLight;
+	AmbientLight ambientLight;
 
 	unsigned nSamplesPerDirection = std::sqrt(samplesPerPixel);
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, camera.getResolution().y, 0, camera.getResolution().x),
@@ -84,12 +84,12 @@ void RTX_Renderer::run() {
 									cumulativeColor += abs(normal);
 								}
 								else {
-									/*
+									
 									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
 									for (int i = 0; i < samplesPerPixel; ++i) {
 										cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
-									}*/
-
+									}
+									/*
 									unsigned normalIndex = mesh.getFace(its.f * 3).n;
 									specter::vec3f normal = mesh.getNormal(normalIndex);
 
@@ -104,7 +104,7 @@ void RTX_Renderer::run() {
 									specter::Intersection itsShadow;
 									if (!accel.traceRay(shadowRay, itsShadow, true)) {
 										cumulativeColor += light->sample_Light(intersectionPoint, normal);
-									}
+									}*/
 								}
 							}
 						}

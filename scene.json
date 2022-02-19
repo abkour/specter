@@ -4,16 +4,16 @@
         "method": "normals"
     },
     "light": {
-        "type": "ambient",
+        "type": "point",
         "energy": [75000, 75000, 75000],
         "position": [-70, 3, 1]
     },
     "camera": {
-        "position": [-39.8512, 19.539, 14.1864],
-        "target": [-39.06999, 19.470637, 13.565886],
+        "position": [2, 2, 2],
+        "target": [0, 0, 0],
         "fov": 90,
-        "samples": 64
+        "samples": 4
     },
     "resolution": [1920, 1080],
-    "path": "C://Users//flora//rsc//assets//ajax//ajax.obj"
+    "path": "C://Users//flora//rsc//assets//cube//cube.obj"
 }

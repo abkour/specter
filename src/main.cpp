@@ -9,6 +9,7 @@ void renderRTX(const char* scene_descriptor_file);
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
+		std::cout << "Added Git to MSVC!";
 		renderRTX(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
