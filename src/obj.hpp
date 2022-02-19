@@ -13,7 +13,7 @@ struct ObjLoader : Mesh {
 
 	// Initializes the mesh through data in filename.obj. This method does NOT check for validity of the object file.
 	// Invalid object files will lead to undefined program behavior.
-	void open_read(const char* filename);
+	void parse(const char* filename);
 
 };
 

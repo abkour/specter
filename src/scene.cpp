@@ -30,7 +30,7 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	camera.initializeVariables(sceneDescriptor.cameraPosition, sceneDescriptor.cameraTarget, sceneDescriptor.cameraFov, sceneDescriptor.samplesPerPixel);
 
 	// 3. Initialize mesh
-	mesh.open_read(sceneDescriptor.meshPath.c_str());
+	mesh.parse(sceneDescriptor.meshPath.c_str());
 
 	accel.addMesh(&mesh);
 	accel.build();

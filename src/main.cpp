@@ -31,7 +31,7 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 void renderRasterized() {
 	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
 	specter::ObjLoader mesh;
-	mesh.open_read(filename);
+	mesh.parse(filename);
 	const specter::vec2u screen_resolution(1920, 1080);
 	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Rasterizer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);

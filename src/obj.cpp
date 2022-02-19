@@ -70,7 +70,7 @@ protected:
 
 };
 
-void ObjLoader::open_read(const char* filename) {
+void ObjLoader::parse(const char* filename) {
 	std::ifstream objfile(filename, std::ios::binary);
 	if (objfile.fail()) {
 		throw std::runtime_error("Couldn't load file");
