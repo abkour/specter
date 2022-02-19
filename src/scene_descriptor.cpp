@@ -2,7 +2,7 @@
 
 namespace specter {
 
-Scene::Scene(const char* filename) : filename(filename) {
+SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 
 	std::ifstream file(filename);
 	if (file.fail()) {
@@ -97,7 +97,7 @@ static std::string lightTypeToString(const uint64_t lightType) {
 	return lightName;
 }
 
-std::ostream& operator<<(std::ostream& os, const Scene& scene) {
+std::ostream& operator<<(std::ostream& os, const SceneDescriptor& scene) {
 	os << "Printing file descriptor: " << scene.filename << '\n';
 	os << "lightType: " << lightTypeToString(scene.lightType) << '\n';
 	os << "lightEnergy: " << scene.lightEnergy << '\n';

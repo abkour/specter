@@ -4,7 +4,7 @@ namespace specter {
 
 // This constructor is strongly coupled to the scene descriptor. Maybe transfer the initialization
 // of light objects to the Scene object?
-RTX_Renderer::RTX_Renderer(const Scene& scene) {
+RTX_Renderer::RTX_Renderer(const SceneDescriptor& scene) {
 	std::cout << scene << '\n';
 	
 	switch (scene.lightType) {

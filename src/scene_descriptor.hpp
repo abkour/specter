@@ -11,9 +11,9 @@
 
 namespace specter {
 
-struct Scene {
+struct SceneDescriptor {
 
-	Scene(const char* filename);
+	SceneDescriptor(const char* filename);
 
 	std::string filename;
 
@@ -39,6 +39,6 @@ struct Scene {
 	std::string meshPath;
 };
 
-std::ostream& operator<<(std::ostream& os, const Scene& scene);
+std::ostream& operator<<(std::ostream& os, const SceneDescriptor& scene);
 
 }

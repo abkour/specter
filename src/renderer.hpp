@@ -22,7 +22,7 @@ class RTX_Renderer {
 
 public:
 
-	RTX_Renderer(const Scene& scene);
+	RTX_Renderer(const SceneDescriptor& scene);
 	
 	~RTX_Renderer();
 

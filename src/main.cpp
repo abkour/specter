@@ -21,7 +21,7 @@ int main(int argc, const char** argv) {
 }
 
 void renderRTX(const char* scene_descriptor_file) {
-	specter::Scene scene_descriptor(scene_descriptor_file);
+	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
 	specter::RTX_Renderer renderer(scene_descriptor);
 	renderer.run();
 }
