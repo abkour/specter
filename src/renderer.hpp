@@ -1,11 +1,5 @@
 #pragma once
-#include "accel.hpp"
-#include "ambient_light.hpp"
-#include "camera.hpp"
-#include "mesh.hpp"
-#include "obj.hpp"
-#include "point_light.hpp"
-#include "scene_descriptor.hpp"
+#include "scene.hpp"
 #include "shader.hpp"
 #include "window.hpp"
 
@@ -22,7 +16,7 @@ class RTX_Renderer {
 
 public:
 
-	RTX_Renderer(const SceneDescriptor& scene);
+	RTX_Renderer(Scene* scene);
 	
 	~RTX_Renderer();
 
@@ -30,15 +24,9 @@ public:
 
 private:
 
-	Accel accel;
-	Camera camera;
-	ObjLoader mesh;
+	Scene* scene;
+
 	Window window;
-
-	Light* light;
-
-	int samplesPerPixel;
-
 	uint64_t debugMode;
 };
 

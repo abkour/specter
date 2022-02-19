@@ -4,64 +4,26 @@ namespace specter {
 
 // This constructor is strongly coupled to the scene descriptor. Maybe transfer the initialization
 // of light objects to the Scene object?
-RTX_Renderer::RTX_Renderer(const SceneDescriptor& scene) {
-	std::cout << scene << '\n';
-	
-	switch (scene.lightType) {
-	case SPECTER_POINT_LIGHT:
-		light = new PointLight;
-		break;
-	case SPECTER_AMBIENT_LIGHT:
-		throw std::runtime_error("Ambient light is not yet implemented!");
-		break;
-	case SPECTER_AREA_LIGHT:
-		throw std::runtime_error("Area light is not yet implemented!");
-		break;
-	case SPECTER_DIRECTIONAL_LIGHT:
-		throw std::runtime_error("Directional light is not yet implemented!");
-		break;
-	default:
-		throw std::runtime_error("This light source is not yet implemented or doesn't specify a valid light type");
-		break;
-	}
-
-	light->energy = scene.lightEnergy;
-	light->position = scene.lightPosition;
-
-	camera.setResolution(scene.screenResolution);
-	camera.initializeVariables(scene.cameraPosition, scene.cameraTarget, scene.cameraFov, scene.samplesPerPixel);
-	samplesPerPixel = scene.samplesPerPixel;
-
-	mesh.open_read(scene.meshPath.c_str());
-	
-	accel.addMesh(&mesh);
-	accel.build();
-
-	if (scene.debugScene) {
-		debugMode = scene.debugMode;
-	} else {
-		debugMode = SPECTER_DEBUG_INVALID_MODE;
-	}
+RTX_Renderer::RTX_Renderer(Scene* scene) {
+	this->scene = scene;
 }
 
-RTX_Renderer::~RTX_Renderer() {
-	if (light != nullptr) {
-		delete light;
-	}
-}
+RTX_Renderer::~RTX_Renderer() {}
 
 void RTX_Renderer::run() {
 
 	std::vector<specter::vec3f> frame;
-	frame.resize(camera.getResolution().x * camera.getResolution().y);
-
+	//frame.resize(camera.getResolution().x * camera.getResolution().y);
+	frame.resize(0);
+	frame.resize(scene->camera.getResolution().x * scene->camera.getResolution().y);
+	
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
 	AmbientLight ambientLight;
 
-	unsigned nSamplesPerDirection = std::sqrt(samplesPerPixel);
-	tbb::parallel_for(tbb::blocked_range2d<int>(0, camera.getResolution().y, 0, camera.getResolution().x),
+	unsigned nSamplesPerDirection = std::sqrt(4);
+	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
@@ -72,13 +34,13 @@ void RTX_Renderer::run() {
 							const unsigned spx = x * nSamplesPerDirection + 1;
 							const unsigned spy = y * nSamplesPerDirection + 1;
 
-							specter::Ray ray = camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+							specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 							specter::Intersection its;
 
-							if (accel.traceRay(ray, its)) {
+							if (scene->accel.traceRay(ray, its)) {
 
-								unsigned normalIndex = mesh.getFace(its.f * 3).n;
-								specter::vec3f normal = mesh.getNormal(normalIndex);
+								unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
+								specter::vec3f normal = scene->mesh.getNormal(normalIndex);
 
 								if (debugMode == SPECTER_DEBUG_DISPLAY_NORMALS) {
 									cumulativeColor += abs(normal);
@@ -86,8 +48,8 @@ void RTX_Renderer::run() {
 								else {
 									
 									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-									for (int i = 0; i < samplesPerPixel; ++i) {
-										cumulativeColor += ambientLight.sample_light(accel, intersectionPoint, normal);
+									for (int i = 0; i < 4; ++i) {
+										cumulativeColor += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
 									}
 									/*
 									unsigned normalIndex = mesh.getFace(its.f * 3).n;
@@ -110,8 +72,8 @@ void RTX_Renderer::run() {
 						}
 					}
 
-					const std::size_t index = y * camera.getResolution().x + x;
-					cumulativeColor /= static_cast<float>(samplesPerPixel);
+					const std::size_t index = y * scene->camera.getResolution().x + x;
+					cumulativeColor /= static_cast<float>(4);
 					frame[index] = cumulativeColor;
 				}
 			}
@@ -119,9 +81,9 @@ void RTX_Renderer::run() {
 	);
 
 	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
-	accel.dbg_print();
+	scene->accel.dbg_print();
 
-	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
+	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.getResolution().x, scene->camera.getResolution().y), "Specter Raytracer");
 
 	//specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -161,7 +123,7 @@ void RTX_Renderer::run() {
 	GLuint image;
 	glGenTextures(1, &image);
 	glBindTexture(GL_TEXTURE_2D, image);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, camera.getResolution().x, camera.getResolution().y, 0, GL_RGB, GL_FLOAT, frame.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, frame.data());
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
 
