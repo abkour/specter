@@ -29,9 +29,6 @@ protected:
 	vec2u resolution;
 	vec3f eyepos;
 	vec3f shiftx, shifty, topLeftPixel;
-
-
-
 };
 
 }
