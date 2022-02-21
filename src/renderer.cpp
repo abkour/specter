@@ -16,7 +16,7 @@ void RTX_Renderer::run() {
 	
 	specter::Timer rtxtime;
 
-	const int nShadowRays = 4;
+	const int nShadowRays = 32;
 	AmbientLight ambientLight;
 	unsigned nSamplesPerDirection = std::sqrt(1);
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
