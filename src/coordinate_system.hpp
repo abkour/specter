@@ -16,7 +16,7 @@ struct CoordinateSystem {
 	// Transform vector from local space to world space
 	vec3f toWorld(const vec3f& v);
 
-	vec3f xaxis, yaxis, zaxis;
+	vec3f n, nt, nb;
 };
 
 }

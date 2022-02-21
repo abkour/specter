@@ -18,6 +18,7 @@ struct Sampler {
 	vec3f uniformlySampleHemisphere();
 	// Sample the cosine weighted unit sphere
 	vec3f uniformlySampleCosineWeightedHemisphere();
+	vec3f uniformlySampleCosineWeightedHemisphere_v2();
 
 private:
 
