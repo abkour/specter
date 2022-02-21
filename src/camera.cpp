@@ -44,4 +44,8 @@ vec2u Camera::getResolution() const {
 	return resolution;
 }
 
+unsigned Camera::getSamplesPerPixel() const {
+	return nSamplesPerPixel;
+}
+
 }

@@ -24,11 +24,15 @@ struct Camera {
 	vec2u getResolution() const;
 	void setResolution(vec2u newResolution);
 
+	unsigned getSamplesPerPixel() const;
+
 protected:
 
 	vec2u resolution;
 	vec3f eyepos;
 	vec3f shiftx, shifty, topLeftPixel;
+
+	unsigned nSamplesPerPixel;	// This value has to be a square number
 };
 
 }
