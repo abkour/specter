@@ -18,13 +18,13 @@ void RTX_Renderer::run() {
 
 	const int nShadowRays = 32;
 	AmbientLight ambientLight;
-	unsigned nSamplesPerDirection = std::sqrt(4);
+	unsigned nSamplesPerDirection = std::sqrt(scene->camera.getSamplesPerPixel());
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 					specter::vec3f cumulativeColor(0.f);
-					for (int sxoff = 0; sxoff < 4; sxoff++) {
+					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
 						const unsigned syoff = sxoff / nSamplesPerDirection;
@@ -49,7 +49,7 @@ void RTX_Renderer::run() {
 						}
 					}
 					cumulativeColor /= nShadowRays;
-					cumulativeColor /= 4;
+					cumulativeColor /= scene->camera.getSamplesPerPixel();
 					const std::size_t index = y * scene->camera.getResolution().x + x;
 					frame[index] = cumulativeColor;
 				}
