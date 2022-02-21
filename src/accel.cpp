@@ -27,7 +27,7 @@ bool Accel::traceRay(const Ray& ray, Intersection& intersection) const {
 }
 
 bool Accel::traceShadowRay(const Ray& ray) const {
-	return octree.traverseAny_v2(mesh, ray);
+	return octree.traverseAny(mesh, ray);
 }
 
 }
