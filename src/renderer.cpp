@@ -6,23 +6,19 @@ namespace specter {
 // of light objects to the Scene object?
 RTX_Renderer::RTX_Renderer(Scene* scene) {
 	this->scene = scene;
+	frame.resize(product(scene->camera.getResolution()));
 }
 
 RTX_Renderer::~RTX_Renderer() {}
 
 void RTX_Renderer::run() {
-
-	std::vector<specter::vec3f> frame;
-	//frame.resize(camera.getResolution().x * camera.getResolution().y);
-	frame.resize(0);
-	frame.resize(scene->camera.getResolution().x * scene->camera.getResolution().y);
-	
 	std::cout << "Rendering mesh (parallel)...\n";
+	
 	specter::Timer rtxtime;
 
+	const int nShadowRays = 1;
 	AmbientLight ambientLight;
-
-	unsigned nSamplesPerDirection = std::sqrt(4);
+	unsigned nSamplesPerDirection = std::sqrt(1);
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
@@ -46,9 +42,8 @@ void RTX_Renderer::run() {
 									cumulativeColor += abs(normal);
 								}
 								else {
-									
 									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-									for (int i = 0; i < 4; ++i) {
+									for (int i = 0; i < nShadowRays; ++i) {
 										cumulativeColor += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
 									}
 									/*
@@ -71,9 +66,8 @@ void RTX_Renderer::run() {
 							}
 						}
 					}
-
+					cumulativeColor /= nShadowRays;
 					const std::size_t index = y * scene->camera.getResolution().x + x;
-					cumulativeColor /= static_cast<float>(4);
 					frame[index] = cumulativeColor;
 				}
 			}
@@ -84,8 +78,6 @@ void RTX_Renderer::run() {
 	scene->accel.dbg_print();
 
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.getResolution().x, scene->camera.getResolution().y), "Specter Raytracer");
-
-	//specter::Window window(specter::WindowMode::WINDOWED, specter::vec2u(camera.getResolution().x, camera.getResolution().y), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	static float quad[] =

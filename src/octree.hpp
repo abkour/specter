@@ -42,6 +42,9 @@ struct Octree {
 	// Traverse the octree. Returns true if the ray intersects any geometry in the mesh.
 	bool traverseAny(const Mesh* mesh, const Ray& ray) const;
 
+	// Adjusts for the situation where a ray is within a bounding box
+	bool traverseAny_v2(const Mesh* mesh, const Ray& ray) const;
+
 private:
 	
 	// Build the octree recursively. This is initially called by the public function build()
@@ -52,6 +55,9 @@ private:
 	
 	// Traverse the octree recursively. This is initially called by the public function traverseAny()
 	void traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const;
+	
+	// Adjusts for the situation where a ray is within a bounding box
+	void traverseAnyRec_v2(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const;
 
 	// Free the octree recursively. This is called by the destructor.
 	void freeOctreeRec(Node* node);
