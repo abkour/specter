@@ -18,55 +18,38 @@ void RTX_Renderer::run() {
 
 	const int nShadowRays = 32;
 	AmbientLight ambientLight;
-	unsigned nSamplesPerDirection = std::sqrt(1);
+	unsigned nSamplesPerDirection = std::sqrt(4);
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 					specter::vec3f cumulativeColor(0.f);
-					for (int sxoff = 0; sxoff < nSamplesPerDirection; sxoff++) {
-						for (int syoff = 0; syoff < nSamplesPerDirection; syoff++) {
-							const unsigned spi = syoff * nSamplesPerDirection + sxoff;
-							const unsigned spx = x * nSamplesPerDirection + 1;
-							const unsigned spy = y * nSamplesPerDirection + 1;
+					for (int sxoff = 0; sxoff < 4; sxoff++) {
+						const unsigned spx = x * nSamplesPerDirection + 1;
+						const unsigned spy = y * nSamplesPerDirection + 1;
+						const unsigned syoff = sxoff / nSamplesPerDirection;
 
-							specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
-							specter::Intersection its;
+						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+						specter::Intersection its;
 
-							if (scene->accel.traceRay(ray, its)) {
+						if (scene->accel.traceRay(ray, its)) {
 
-								unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
-								specter::vec3f normal = scene->mesh.getNormal(normalIndex);
+							unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
+							specter::vec3f normal = scene->mesh.getNormal(normalIndex);
 
-								if (debugMode == SPECTER_DEBUG_DISPLAY_NORMALS) {
-									cumulativeColor += abs(normal);
-								}
-								else {
-									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-									for (int i = 0; i < nShadowRays; ++i) {
-										cumulativeColor += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
-									}
-									/*
-									unsigned normalIndex = mesh.getFace(its.f * 3).n;
-									specter::vec3f normal = mesh.getNormal(normalIndex);
-
-									const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-
-									// Cast shadow ray to check for mutual visibility between the surface point and the point light source
-									specter::Ray shadowRay;
-									shadowRay.d = specter::normalize(light->position - intersectionPoint);
-									shadowRay.o = intersectionPoint + normal * 1e-5;	// Avoid self-shadowing
-									shadowRay.invd = 1.f / shadowRay.d;
-
-									specter::Intersection itsShadow;
-									if (!accel.traceRay(shadowRay, itsShadow, true)) {
-										cumulativeColor += light->sample_Light(intersectionPoint, normal);
-									}*/
+							if (debugMode == SPECTER_DEBUG_DISPLAY_NORMALS) {
+								cumulativeColor += abs(normal);
+							}
+							else {
+								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
+								for (int i = 0; i < nShadowRays; ++i) {
+									cumulativeColor += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
 								}
 							}
 						}
 					}
 					cumulativeColor /= nShadowRays;
+					cumulativeColor /= 4;
 					const std::size_t index = y * scene->camera.getResolution().x + x;
 					frame[index] = cumulativeColor;
 				}
