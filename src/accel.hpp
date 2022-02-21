@@ -24,6 +24,7 @@ public:
 	// Trace ray using the accelerating structure. Returns true if the ray collides with mesh geometry.
 	bool traceRay(const Ray& ray, Intersection& intersection) const;
 
+	// Trace shadow ray. Returns true if any intersection is found. Returns false otherwise.
 	bool traceShadowRay(const Ray& ray) const;
 
 private:
