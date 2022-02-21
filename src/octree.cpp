@@ -243,18 +243,12 @@ void Octree::dbg_print() {
 	std::cout << "average number of indices: " << avgNumIndices / nLeafsVisited << '\n';
 }
 
+
 bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) const {
 	bool intersectionFound = false;
 	traverseAnyRec(mesh, root, ray, intersectionFound);
 	return intersectionFound;
 }
-
-bool Octree::traverseAny_v2(const Mesh* mesh, const Ray& ray) const {
-	bool intersectionFound = false;
-	traverseAnyRec_v2(mesh, root, ray, intersectionFound);
-	return intersectionFound;
-}
-
 
 void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const {
 	if (node == nullptr) {
@@ -291,56 +285,7 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 			if (node->m_children[i] != nullptr) {
 				float near, far;
 				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
-					// Rays with origins inside the space represented by the octree can 
-					// have intersections with geometry, where the ray parameter is negative.
-					// This occurs, when the ray is colliding with objects that are in opposite 
-					// direction of the ray direction vector. 
-					// We don't want to consider this case at all.
-					if (near > 0.f) {
-						traverseAnyRec(mesh, node->m_children[i], ray, intersectionFound);
-					}
-				}
-			}
-		}
-	}
-}
-
-void Octree::traverseAnyRec_v2(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const {
-	if (node == nullptr) {
-		return;
-	}
-
-	// Any triangle found, therefore further processing can stop.
-	if (intersectionFound) {
-		return;
-	}
-
-	if (node->indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
-			float uu, vv, tt;
-			if (mesh->rayIntersection(ray, node->indices[i], uu, vv, tt)) {
-				// Rays with origins inside the space represented by the octree can 
-				// have intersections with geometry, where the ray parameter is negative.
-				// This occurs, when the ray is colliding with objects that are in opposite 
-				// direction of the ray direction vector. 
-				// We don't want to consider this case at all.
-				if (tt > 0.f) {
-					intersectionFound = true;
-				}
-			}
-		}
-	}
-
-	else {
-		if (node->m_children == nullptr) {
-			return;
-		}
-
-		for (int i = 0; i < nSubRegions; ++i) {
-			if (node->m_children[i] != nullptr) {
-				float near, far;
-				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
-					traverseAnyRec_v2(mesh, node->m_children[i], ray, intersectionFound);
+					traverseAnyRec(mesh, node->m_children[i], ray, intersectionFound);
 				}
 			}
 		}
