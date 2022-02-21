@@ -26,16 +26,3 @@ vec3f CoordinateSystem::toWorld(const vec3f& v) {
 }
 
 }
-
-
-/*
-x * Nx + y * Ny + z * Nz = 0
-
-x * Nx + y * Ny + (z=0) * Nz = 0
-x * Nx + y * Ny = 0
-x * Nx = -y * Ny 
-
-1. x = -Ny and y = Nx
-
-2. x = Ny and y = -Nx
-*/
