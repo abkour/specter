@@ -52,12 +52,6 @@ vec3f Sampler::uniformlySampleHemisphere() {
 
 vec3f Sampler::uniformlySampleCosineWeightedHemisphere() {
 	vec2f d = sampleConcentricDisk();
-	float z = std::sqrt(std::max(0.f, 1 - d.x * d.x - d.y * d.y));
-	return vec3f(d.x, d.y, z);
-}
-
-vec3f Sampler::uniformlySampleCosineWeightedHemisphere_v2() {
-	vec2f d = sampleConcentricDisk();
 	float y = std::sqrt(std::max(0.f, 1 - d.x * d.x - d.y * d.y));
 	return vec3f(d.x, y, d.y);
 }
