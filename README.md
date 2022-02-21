@@ -19,8 +19,6 @@ Module descriptions go here
 
 ## Issues
 
-    - The project has some bad coupling issues. These need to be refactored.
-    - The ambient occlusion solver is not functional.
     - Scene descriptor does not adhere to some specification
 
 ## TODO
@@ -31,3 +29,8 @@ Once the major issues are resolved work on the following features (in no particu
     - Frame to frame updating of image during ray tracing
     - Add GUI
     - Increase test coverage
+
+## Fixed issues
+
+    - [Fixed] The project has some bad coupling issues. These need to be refactored.
+    - [Fixed] The ambient occlusion solver is not functional.
