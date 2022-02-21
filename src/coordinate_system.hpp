@@ -16,6 +16,7 @@ struct CoordinateSystem {
 	// Transform vector from local space to world space
 	vec3f toWorld(const vec3f& v);
 
+	// Normal, normal tangent and normal bitangent vectors
 	vec3f n, nt, nb;
 };
 
