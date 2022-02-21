@@ -44,6 +44,14 @@ vec2u Camera::getResolution() const {
 	return resolution;
 }
 
+void Camera::setSamplesPerPixel(const unsigned samplesPerPixel) {
+	unsigned sqrt_x = sqrtf(samplesPerPixel);
+	if (sqrt_x * sqrt_x != samplesPerPixel) {
+		throw std::runtime_error("Error. Specified number of samples has to be a square number!");
+	}
+	nSamplesPerPixel = samplesPerPixel;
+}
+
 unsigned Camera::getSamplesPerPixel() const {
 	return nSamplesPerPixel;
 }

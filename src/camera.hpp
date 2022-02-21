@@ -24,6 +24,7 @@ struct Camera {
 	vec2u getResolution() const;
 	void setResolution(vec2u newResolution);
 
+	void setSamplesPerPixel(const unsigned samplesPerPixel);
 	unsigned getSamplesPerPixel() const;
 
 protected:
