@@ -4,38 +4,24 @@ namespace specter {
 
 // Computes the coordinate system of a plane given its surface normal.
 CoordinateSystem::CoordinateSystem(const vec3f& normal) {
-	n = normal;
+	zaxis = normal;
 	if (std::abs(normal.x) > std::abs(normal.y)) {
-		nt = vec3f(normal.z, 0.f, -normal.x);
+		yaxis = vec3f(normal.z, 0.f, -normal.x);
 	} else {
-		nt = vec3f(0.f, -normal.z, normal.y);
+		yaxis = vec3f(0.f, normal.z, -normal.y);
 	}
-	nb = cross(n, nt);
+	yaxis = normalize(yaxis);
+	xaxis = cross(yaxis, zaxis);
 }
 
 // Transform vector from world space to local space
 vec3f CoordinateSystem::toLocal(const vec3f& v) {
-	return vec3f(	v.x * nb.x + v.y * n.x + v.z * nt.x,
-					v.x * nb.y + v.y * n.y + v.z * nt.y,
-					v.x * nb.z + v.y * n.z + v.z * nt.z);
+	return vec3f(dot(v, xaxis), dot(v, yaxis), dot(v, zaxis));
 }
 
 // Transform vector from world space to local space
 vec3f CoordinateSystem::toWorld(const vec3f& v) {
-	return v.x * nt + v.y * n + v.z * nb;
+	return v.x * xaxis + v.y * yaxis + v.z * zaxis;
 }
 
 }
-
-
-/*
-x * Nx + y * Ny + z * Nz = 0
-
-x * Nx + y * Ny + (z=0) * Nz = 0
-x * Nx + y * Ny = 0
-x * Nx = -y * Ny 
-
-1. x = -Ny and y = Nx
-
-2. x = Ny and y = -Nx
-*/

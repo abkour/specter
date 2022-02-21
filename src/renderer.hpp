@@ -26,8 +26,6 @@ private:
 
 	Scene* scene;
 
-	std::vector<specter::vec3f> frame;
-
 	Window window;
 	uint64_t debugMode;
 };
