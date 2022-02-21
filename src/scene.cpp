@@ -28,6 +28,7 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	// 2. Initialize camera
 	camera.setResolution(sceneDescriptor.screenResolution);
 	camera.initializeVariables(sceneDescriptor.cameraPosition, sceneDescriptor.cameraTarget, sceneDescriptor.cameraFov, sceneDescriptor.samplesPerPixel);
+	camera.setSamplesPerPixel(sceneDescriptor.samplesPerPixel);
 
 	// 3. Initialize mesh
 	mesh.parse(sceneDescriptor.meshPath.c_str());
