@@ -164,8 +164,6 @@ bool AxisAlignedBoundingBox::rayIntersect(const Ray& ray, float& nearT, float& f
 		}
 	}
 
-	if (nearT < 0.f) return false;
-
 	return true;
 }
 
