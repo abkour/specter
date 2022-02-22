@@ -5,7 +5,7 @@ namespace specter {
 RTX_Renderer::RTX_Renderer(Scene* scene) {
 	this->scene = scene;
 	frame.resize(scene->camera.resx() * scene->camera.resy());
-
+	
 	if (!scene->dynamicFrame) {
 		throw std::runtime_error("static frame rendering is not implemented!");
 	}
@@ -100,7 +100,7 @@ void RTX_Renderer::runDynamic() {
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
-	const int nShadowRays = 128;
+	const int nShadowRays = scene->reflection_rays;
 	AmbientLight ambientLight;
 	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
 
@@ -145,9 +145,10 @@ void RTX_Renderer::runDynamic() {
 					}
 					for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 						specter::vec3f color(0.f);
-						for (int sxoff = 0; sxoff < scene->camera.spp(); sxoff++) {
+						// Compute light per subpixel and average out the results
+						for (int subi = 0; subi < scene->camera.spp(); subi++) {
 							std::size_t index = y * scene->camera.resx() * scene->camera.spp();
-							index += x * scene->camera.spp() + sxoff;
+							index += x * scene->camera.spp() + subi;
 
 							auto its = intersections[index];
 							if (its.isValid()) {
@@ -166,6 +167,7 @@ void RTX_Renderer::runDynamic() {
 				}
 			});
 
+		// Notify the rendering thread, that the contents of the frame buffer need updating.
 		std::unique_lock<std::mutex> lck(updateMtx);
 		updateFrame = true;
 		lck.unlock();
