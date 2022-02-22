@@ -7,6 +7,10 @@ namespace specter {
 RTX_Renderer::RTX_Renderer(Scene* scene) {
 	this->scene = scene;
 	frame.resize(scene->camera.resx() * scene->camera.resy());
+
+	if (!scene->dynamicFrame) {
+		throw std::runtime_error("static frame rendering is not implemented!");
+	}
 }
 
 RTX_Renderer::~RTX_Renderer() {}
