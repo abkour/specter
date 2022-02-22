@@ -15,7 +15,12 @@ RTX_Renderer::RTX_Renderer(Scene* scene) {
 	terminateRendering.store(false);
 }
 
-RTX_Renderer::~RTX_Renderer() {}
+RTX_Renderer::~RTX_Renderer() {
+	// In case the thread was not joined in the run() function, join it here.
+	if (renderThread.joinable()) {
+		renderThread.join();
+	}
+}
 
 void RTX_Renderer::run() {
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "Specter Raytracer");
