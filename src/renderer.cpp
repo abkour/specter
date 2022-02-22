@@ -6,14 +6,14 @@ namespace specter {
 // of light objects to the Scene object?
 RTX_Renderer::RTX_Renderer(Scene* scene) {
 	this->scene = scene;
-	frame.resize(product(scene->camera.getResolution()));
+	frame.resize(scene->camera.resx() * scene->camera.resy());
 }
 
 RTX_Renderer::~RTX_Renderer() {}
 
 void RTX_Renderer::run() {
 
-	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.getResolution().x, scene->camera.getResolution().y), "Specter Raytracer");
+	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	static float quad[] =
@@ -52,7 +52,7 @@ void RTX_Renderer::run() {
 	GLuint image;
 	glGenTextures(1, &image);
 	glBindTexture(GL_TEXTURE_2D, image);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.resx(), scene->camera.resy(), 0, GL_RGB, GL_FLOAT, NULL);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
 
@@ -62,24 +62,24 @@ void RTX_Renderer::run() {
 
 	const int nShadowRays = 128;
 	AmbientLight ambientLight;
-	unsigned nSamplesPerDirection = std::sqrt(scene->camera.getSamplesPerPixel());
+	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
 
 	std::vector<vec3f> temporaryColor;
 	temporaryColor.resize(frame.size());
 
 	std::vector<Intersection> intersections;
-	intersections.resize(frame.size() * scene->camera.getSamplesPerPixel());
+	intersections.resize(frame.size() * scene->camera.spp());
 
 	std::vector<Ray> rays;
-	rays.resize(frame.size() * scene->camera.getSamplesPerPixel());
+	rays.resize(frame.size() * scene->camera.spp());
 
-	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
+	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
-						std::size_t index = y * scene->camera.getResolution().x * scene->camera.getSamplesPerPixel();
-						index += x * scene->camera.getSamplesPerPixel() + sxoff;
+					for (int sxoff = 0; sxoff < scene->camera.spp(); sxoff++) {
+						std::size_t index = y * scene->camera.resx() * scene->camera.spp();
+						index += x * scene->camera.spp() + sxoff;
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
 						const unsigned syoff = sxoff / nSamplesPerDirection;
@@ -99,14 +99,14 @@ void RTX_Renderer::run() {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
+		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 			[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 					specter::vec3f color(0.f);
-					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
-						std::size_t index = y * scene->camera.getResolution().x * scene->camera.getSamplesPerPixel();
-						index += x * scene->camera.getSamplesPerPixel() + sxoff;
+					for (int sxoff = 0; sxoff < scene->camera.spp(); sxoff++) {
+						std::size_t index = y * scene->camera.resx() * scene->camera.spp();
+						index += x * scene->camera.spp() + sxoff;
 
 						auto its = intersections[index];
 						if (its.isValid()) {
@@ -118,14 +118,14 @@ void RTX_Renderer::run() {
 							color += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
 						}
 					}
-					const std::size_t index = y * scene->camera.getResolution().x + x;
-					frame[index] += color / scene->camera.getSamplesPerPixel();
+					const std::size_t index = y * scene->camera.resx() + x;
+					frame[index] += color / scene->camera.spp();
 					temporaryColor[index] = frame[index] / s;
 				}
 			}
 		});
 		// Render the newly created frame
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, temporaryColor.data());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.resx(), scene->camera.resy(), 0, GL_RGB, GL_FLOAT, temporaryColor.data());
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
