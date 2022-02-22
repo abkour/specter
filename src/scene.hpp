@@ -21,6 +21,7 @@ struct Scene {
 	Light* light;
 
 	bool dynamicFrame;
+	int reflection_rays;
 };
 
 }

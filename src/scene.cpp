@@ -39,6 +39,7 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 
 	// 5. Set rendering information
 	dynamicFrame = sceneDescriptor.dynamicFrame;
+	reflection_rays = sceneDescriptor.reflection_rays;
 }
 
 Scene::~Scene() {
