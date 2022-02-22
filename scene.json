@@ -7,7 +7,7 @@
         "type": "point",
         "energy": [75000, 75000, 75000],
         "position": [ -70, 3, 1 ],
-        "reflection_rays":  128
+        "reflection_rays":  64
     },
     "camera": {
         "position": [ -39.8512, 19.539, 14.1864 ],
