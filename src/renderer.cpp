@@ -48,7 +48,7 @@ void RTX_Renderer::run() {
 							}
 						}
 					}
-					cumulativeColor /= nShadowRays;
+					//cumulativeColor /= nShadowRays;
 					cumulativeColor /= scene->camera.getSamplesPerPixel();
 					const std::size_t index = y * scene->camera.getResolution().x + x;
 					frame[index] = cumulativeColor;

@@ -1,6 +1,6 @@
 {
     "debug": {
-        "value": 0,
+        "value": 1,
         "method": "normals"
     },
     "light": {
@@ -12,7 +12,7 @@
         "position": [6, 3, 6],
         "target": [0, 0, 0],
         "fov": 90,
-        "samples": 1
+        "samples": 9
     },
     "resolution": [1920, 1080],
     "path": "C://Users//flora//rsc//assets//boxplane//boxplane.obj"
