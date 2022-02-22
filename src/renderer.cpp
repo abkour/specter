@@ -85,7 +85,6 @@ void RTX_Renderer::run() {
 						const unsigned sxoff = subi % nSamplesPerDirection;
 						const unsigned syoff = subi / nSamplesPerDirection;
 
-						// spx + sxoff is incorrect
 						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
 						specter::Intersection its;
 						intersections[index] = scene->accel.traceRay(ray, its) ? its : Intersection();
