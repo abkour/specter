@@ -15,7 +15,7 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	
 	auto jsonParser = nlohmann::json::parse(fileContents.str());
 
-	debugScene = jsonParser["debug"]["value"].get<int>() == 1 ? true : false;
+	debugScene = jsonParser["debug"]["value"].get<bool>();
 	auto debugMode_str = jsonParser["debug"]["method"].get<std::string>();
 	debugMode = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
 
