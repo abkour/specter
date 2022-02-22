@@ -77,12 +77,13 @@ void RTX_Renderer::run() {
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					for (int sxoff = 0; sxoff < scene->camera.spp(); sxoff++) {
+					for (int subi = 0; subi < scene->camera.spp(); subi++) {
 						std::size_t index = y * scene->camera.resx() * scene->camera.spp();
-						index += x * scene->camera.spp() + sxoff;
+						index += x * scene->camera.spp() + subi;
 						const unsigned spx = x * nSamplesPerDirection + 1;
 						const unsigned spy = y * nSamplesPerDirection + 1;
-						const unsigned syoff = sxoff / nSamplesPerDirection;
+						const unsigned sxoff = subi % nSamplesPerDirection;
+						const unsigned syoff = subi / nSamplesPerDirection;
 
 						// spx + sxoff is incorrect
 						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
