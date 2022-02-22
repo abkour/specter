@@ -12,13 +12,19 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	std::stringstream fileContents;
 	fileContents << file.rdbuf();
 	file.close();
-	
-	auto jsonParser = nlohmann::json::parse(fileContents.str());
 
+	//
+	// 0. Create json parser
+	auto jsonParser = nlohmann::json::parse(fileContents.str());
+	
+	//
+	// 1. Debug field
 	debugScene = jsonParser["debug"]["value"].get<bool>();
 	auto debugMode_str = jsonParser["debug"]["method"].get<std::string>();
 	debugMode = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
-
+	
+	//
+	// 2. Light field
 	auto lightType_str = jsonParser["light"]["type"].get<std::string>();
 	lightType = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
 
@@ -31,6 +37,8 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	jsonParser["light"]["position"].get_to(vec3tmp);
 	std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
 
+	//
+	// 3. Camera field
 	jsonParser["camera"]["position"].get_to(vec3tmp);
 	std::memcpy(&cameraPosition, vec3tmp, sizeof(float) * 3);
 
@@ -41,11 +49,15 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 
 	samplesPerPixel = jsonParser["camera"]["samples"].get<int>();
 	
-	jsonParser["resolution"].get_to(vec2tmp);
+	jsonParser["camera"]["resolution"].get_to(vec2tmp);
 	std::memcpy(&screenResolution, vec2tmp, sizeof(unsigned) * 2);
 
+	//
+	// 4. Mesh field
 	meshPath = jsonParser["path"].get<std::string>();
 
+	//
+	// 5. Misc. field
 	dynamicFrame = jsonParser["dynamicFrame"].get<bool>();
 }
 
