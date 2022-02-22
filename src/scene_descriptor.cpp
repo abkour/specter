@@ -53,7 +53,11 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 		if (lightParser->contains("position")) {
 			jsonParser["light"]["position"].get_to(vec3tmp);
 			std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
-		} 
+		}
+
+		if (lightParser->contains("reflection_rays")) {
+			reflection_rays = jsonParser["light"]["reflection_rays"].get<int>();
+		}
 	}
 
 	//

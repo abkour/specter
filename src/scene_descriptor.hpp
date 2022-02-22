@@ -25,6 +25,7 @@ struct SceneDescriptor {
 	uint64_t lightType;
 	vec3f lightEnergy;
 	vec3f lightPosition;
+	int reflection_rays;
 
 	// Camera
 	vec3f cameraPosition;

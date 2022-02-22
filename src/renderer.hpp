@@ -10,6 +10,10 @@
 #include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
 
+#include <atomic>
+#include <mutex>
+#include <thread>
+
 namespace specter {
 
 class RTX_Renderer {
@@ -24,9 +28,22 @@ public:
 
 private:
 
+	void runDynamic();
+
+	std::mutex updateMtx;
+	bool updateFrame;
+
+	std::atomic<bool> terminateRendering;
+
+	std::thread renderThread;
+
+private:
+
 	Scene* scene;
 
 	std::vector<specter::vec3f> frame;
+
+	GLuint image;
 
 	Window window;
 	uint64_t debugMode;
