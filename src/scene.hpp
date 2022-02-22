@@ -19,6 +19,8 @@ struct Scene {
 	Camera camera;
 	ObjLoader mesh;
 	Light* light;
+
+	bool dynamicFrame;
 };
 
 }

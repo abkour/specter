@@ -45,6 +45,8 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	std::memcpy(&screenResolution, vec2tmp, sizeof(unsigned) * 2);
 
 	meshPath = jsonParser["path"].get<std::string>();
+
+	dynamicFrame = jsonParser["dynamicFrame"].get<bool>();
 }
 
 static std::string lightTypeToString(const uint64_t lightType) {

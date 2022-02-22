@@ -33,8 +33,12 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	// 3. Initialize mesh
 	mesh.parse(sceneDescriptor.meshPath.c_str());
 
+	// Initialize acceleration structure
 	accel.addMesh(&mesh);
 	accel.build();
+
+	// 5. Set rendering information
+	dynamicFrame = sceneDescriptor.dynamicFrame;
 }
 
 Scene::~Scene() {

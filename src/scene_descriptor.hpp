@@ -37,6 +37,9 @@ struct SceneDescriptor {
 
 	// Mesh location
 	std::string meshPath;
+
+	// Rendering
+	bool dynamicFrame;
 };
 
 std::ostream& operator<<(std::ostream& os, const SceneDescriptor& scene);
