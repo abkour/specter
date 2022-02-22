@@ -21,6 +21,7 @@ RTX_Renderer::~RTX_Renderer() {
 }
 
 void RTX_Renderer::run() {
+	// Open the window using GLFW, initialize GLAD and allow user input via mouse and keyboard.
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -36,6 +37,7 @@ void RTX_Renderer::run() {
 	// Run the integrator in a seperate thread
 	renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 
+	// Quad spanning the entire window
 	static float quad[] =
 	{
 		// vertices		// uv
@@ -60,6 +62,7 @@ void RTX_Renderer::run() {
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
 	
+	// Simple pass-through vertex shader that renders a texture onto a quad
 	specter::Shader quadShader =
 	{
 		{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\rtx\\quad.glsl.vs" },
@@ -72,6 +75,7 @@ void RTX_Renderer::run() {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// Check if the frame is out-of-date
 		std::unique_lock<std::mutex> lck(updateMtx);
 		if (updateFrame) {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.resx(), scene->camera.resy(), 0, GL_RGB, GL_FLOAT, frame.data());
@@ -85,27 +89,38 @@ void RTX_Renderer::run() {
 		glfwSwapBuffers(window.getWindow());
 		glfwPollEvents();
 
+		// Close this window and terminate the rendering thread.
 		if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
 			terminateRendering.store(true);
 		}
 	}
 
+	// join the rendering thread
 	if (renderThread.joinable()) {
 		renderThread.join();
 	}
+	
+	// Clean up
+	glDeleteTextures(1, &image);
+	glDeleteVertexArrays(1, &vao);
+	glDeleteBuffers(1, &vbo);
 }
 
 void RTX_Renderer::runDynamic() {
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
-	const int nShadowRays = scene->reflection_rays;
+	// Right now this light is hardcoded until I find a convenient way of 
+	// abstracting away light specific rendering
 	AmbientLight ambientLight;
+
+	const int nShadowRays = scene->reflection_rays;
 	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
 
-	std::vector<vec3f> temporaryColor;
-	temporaryColor.resize(frame.size());
+	// This buffer holds the cumulative color of the AO integrator.
+	std::vector<vec3f> cumulativeColor;
+	cumulativeColor.resize(frame.size());
 
 	std::vector<Intersection> intersections;
 	intersections.resize(frame.size() * scene->camera.spp());
@@ -113,6 +128,8 @@ void RTX_Renderer::runDynamic() {
 	std::vector<Ray> rays;
 	rays.resize(frame.size() * scene->camera.spp());
 
+	// Optimization
+	// Intersections and associated rays need only be computed once, as the camera/scene don't change
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 		[&](const tbb::blocked_range2d<int>& r) {
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
@@ -135,7 +152,10 @@ void RTX_Renderer::runDynamic() {
 		}
 	);
 
-	for (int s = 1; s < nShadowRays; ++s) {
+	// Update the frame every time the AO integrator converges.
+	// To accomplish that, we iterate over the entire frame for each shadow ray.
+	// At the end of each iteration we communicate to the main thread to update the image texture.
+	for (int shadowsCast = 1; shadowsCast < nShadowRays; ++shadowsCast) {
 		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 			[&](const tbb::blocked_range2d<int>& r) {
 				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
@@ -161,8 +181,8 @@ void RTX_Renderer::runDynamic() {
 							}
 						}
 						const std::size_t index = y * scene->camera.resx() + x;
-						temporaryColor[index] += color / scene->camera.spp();
-						frame[index] = temporaryColor[index] / s;
+						cumulativeColor[index] += color / scene->camera.spp();
+						frame[index] = cumulativeColor[index] / shadowsCast;
 					}
 				}
 			});
