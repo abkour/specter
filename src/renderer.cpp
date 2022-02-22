@@ -12,53 +12,6 @@ RTX_Renderer::RTX_Renderer(Scene* scene) {
 RTX_Renderer::~RTX_Renderer() {}
 
 void RTX_Renderer::run() {
-	std::cout << "Rendering mesh (parallel)...\n";
-	
-	specter::Timer rtxtime;
-
-	const int nShadowRays = 32;
-	AmbientLight ambientLight;
-	unsigned nSamplesPerDirection = std::sqrt(scene->camera.getSamplesPerPixel());
-	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
-		[&](const tbb::blocked_range2d<int>& r) {
-			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					specter::vec3f cumulativeColor(0.f);
-					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
-						const unsigned spx = x * nSamplesPerDirection + 1;
-						const unsigned spy = y * nSamplesPerDirection + 1;
-						const unsigned syoff = sxoff / nSamplesPerDirection;
-
-						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
-						specter::Intersection its;
-
-						if (scene->accel.traceRay(ray, its)) {
-
-							unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
-							specter::vec3f normal = scene->mesh.getNormal(normalIndex);
-
-							if (debugMode == SPECTER_DEBUG_DISPLAY_NORMALS) {
-								cumulativeColor += abs(normal);
-							}
-							else {
-								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								for (int i = 0; i < nShadowRays; ++i) {
-									cumulativeColor += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
-								}
-							}
-						}
-					}
-					//cumulativeColor /= nShadowRays;
-					cumulativeColor /= scene->camera.getSamplesPerPixel();
-					const std::size_t index = y * scene->camera.getResolution().x + x;
-					frame[index] = cumulativeColor;
-				}
-			}
-		}
-	);
-
-	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
-	scene->accel.dbg_print();
 
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.getResolution().x, scene->camera.getResolution().y), "Specter Raytracer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -95,12 +48,98 @@ void RTX_Renderer::run() {
 	quadShader.create();
 	quadShader.bind();
 
+	// Set up the RTX texture
 	GLuint image;
 	glGenTextures(1, &image);
 	glBindTexture(GL_TEXTURE_2D, image);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, frame.data());
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, NULL);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
+
+	std::cout << "Rendering mesh (parallel)...\n";
+
+	specter::Timer rtxtime;
+
+	const int nShadowRays = 128;
+	AmbientLight ambientLight;
+	unsigned nSamplesPerDirection = std::sqrt(scene->camera.getSamplesPerPixel());
+
+	std::vector<vec3f> temporaryColor;
+	temporaryColor.resize(frame.size());
+
+	std::vector<Intersection> intersections;
+	intersections.resize(frame.size() * scene->camera.getSamplesPerPixel());
+
+	std::vector<Ray> rays;
+	rays.resize(frame.size() * scene->camera.getSamplesPerPixel());
+
+	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
+		[&](const tbb::blocked_range2d<int>& r) {
+			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
+					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
+						std::size_t index = y * scene->camera.getResolution().x * scene->camera.getSamplesPerPixel();
+						index += x * scene->camera.getSamplesPerPixel() + sxoff;
+						const unsigned spx = x * nSamplesPerDirection + 1;
+						const unsigned spy = y * nSamplesPerDirection + 1;
+						const unsigned syoff = sxoff / nSamplesPerDirection;
+
+						// spx + sxoff is incorrect
+						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+						specter::Intersection its;
+						intersections[index] = scene->accel.traceRay(ray, its) ? its : Intersection();
+						rays[index] = ray;
+					}
+				}
+			}
+		}
+	);
+
+	for (int s = 1; s < nShadowRays; ++s) {
+		glClearColor(0.f, 0.f, 0.f, 0.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.getResolution().y, 0, scene->camera.getResolution().x),
+			[&](const tbb::blocked_range2d<int>& r) {
+			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
+					specter::vec3f color(0.f);
+					for (int sxoff = 0; sxoff < scene->camera.getSamplesPerPixel(); sxoff++) {
+						std::size_t index = y * scene->camera.getResolution().x * scene->camera.getSamplesPerPixel();
+						index += x * scene->camera.getSamplesPerPixel() + sxoff;
+
+						auto its = intersections[index];
+						if (its.isValid()) {
+							unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
+							specter::vec3f normal = scene->mesh.getNormal(normalIndex);
+
+							auto& ray = rays[index];
+							const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
+							color += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
+						}
+					}
+					const std::size_t index = y * scene->camera.getResolution().x + x;
+					frame[index] += color / scene->camera.getSamplesPerPixel();
+					temporaryColor[index] = frame[index] / s;
+				}
+			}
+		});
+		// Render the newly created frame
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.getResolution().x, scene->camera.getResolution().y, 0, GL_RGB, GL_FLOAT, temporaryColor.data());
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		glfwSwapBuffers(window.getWindow());
+		glfwPollEvents();
+
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
+		}
+	}
+	
+	std::cout << "Generating image took: " << rtxtime.elapsedTime() << " seconds.\n";
+	scene->accel.dbg_print();
 
 	while (!glfwWindowShouldClose(window.getWindow())) {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
