@@ -21,11 +21,12 @@ struct Camera {
 	// in world space.
 	Ray getRay(const vec2u& pixelLocation);
 
-	vec2u getResolution() const;
 	void setResolution(vec2u newResolution);
+	unsigned resx() const;
+	unsigned resy() const;
 
 	void setSamplesPerPixel(const unsigned samplesPerPixel);
-	unsigned getSamplesPerPixel() const;
+	unsigned spp() const;
 
 protected:
 
@@ -33,7 +34,7 @@ protected:
 	vec3f eyepos;
 	vec3f shiftx, shifty, topLeftPixel;
 
-	unsigned nSamplesPerPixel;	// This value has to be a square number
+	unsigned samplesPerPixel;	// This value has to be a square number
 };
 
 }

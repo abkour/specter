@@ -40,8 +40,12 @@ void Camera::setResolution(vec2u newResolution) {
 	resolution = newResolution;
 }
 
-vec2u Camera::getResolution() const {
-	return resolution;
+unsigned Camera::resx() const {
+	return resolution.x;
+}
+
+unsigned Camera::resy() const {
+	return resolution.y;
 }
 
 void Camera::setSamplesPerPixel(const unsigned samplesPerPixel) {
@@ -49,11 +53,11 @@ void Camera::setSamplesPerPixel(const unsigned samplesPerPixel) {
 	if (sqrt_x * sqrt_x != samplesPerPixel) {
 		throw std::runtime_error("Error. Specified number of samples has to be a square number!");
 	}
-	nSamplesPerPixel = samplesPerPixel;
+	this->samplesPerPixel = samplesPerPixel;
 }
 
-unsigned Camera::getSamplesPerPixel() const {
-	return nSamplesPerPixel;
+unsigned Camera::spp() const {
+	return samplesPerPixel;
 }
 
 }
