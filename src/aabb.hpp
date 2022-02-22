@@ -36,20 +36,6 @@ struct AxisAlignedBoundingBox {
 	// Returns true if the ray collides with the bounding box along it's travelling direction
 	bool rayIntersect(const Ray& ray, float& nearT, float& farT) const;
 
-	// Implements the slab method
-	bool rayIntersects(const Ray& ray) const;
-
-	// Implements the slab method
-	// Near stores parameter t related to the entry intersection point.
-	// Far stores the paramter t related to the exit intersection point.
-	bool rayIntersects(const Ray& ray, float& near, float& far) const;
-
-	// Implements the improved slab method.
-	// Near stores parameter t related to the entry intersection point.
-	// Far stores the paramter t related to the exit intersection point.
-	// Additionally, it is assumed that ray.o is outside the bounding box. The algorithm is ill behaving otherwise.
-	bool rayIntersectsOptimistic(const Ray& ray, float& near, float& far) const;
-
 	// Return the surface area of the bounding box
 	float surfaceArea() const;
 	// Return the volume of the bounding box
