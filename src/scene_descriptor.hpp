@@ -40,6 +40,7 @@ struct SceneDescriptor {
 
 	// Rendering
 	bool dynamicFrame;
+
 };
 
 std::ostream& operator<<(std::ostream& os, const SceneDescriptor& scene);

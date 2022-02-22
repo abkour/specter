@@ -17,48 +17,88 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	// 0. Create json parser
 	auto jsonParser = nlohmann::json::parse(fileContents.str());
 	
-	//
-	// 1. Debug field
-	debugScene = jsonParser["debug"]["value"].get<bool>();
-	auto debugMode_str = jsonParser["debug"]["method"].get<std::string>();
-	debugMode = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
-	
-	//
-	// 2. Light field
-	auto lightType_str = jsonParser["light"]["type"].get<std::string>();
-	lightType = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
-
 	unsigned vec2tmp[2];
 	float vec3tmp[3];
 
-	jsonParser["light"]["energy"].get_to(vec3tmp);
-	std::memcpy(&lightEnergy, vec3tmp, sizeof(float) * 3);
+	//
+	// 1. Debug field
+	if (jsonParser.contains("debug")) {
+		auto debugParser = jsonParser.find("debug");
 
-	jsonParser["light"]["position"].get_to(vec3tmp);
-	std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
+		if (debugParser->contains("value")) {
+			debugScene = jsonParser["debug"]["value"].get<bool>();
+		} 
+
+		if (debugParser->contains("method")) {
+			auto debugMode_str = jsonParser["debug"]["method"].get<std::string>();
+			debugMode = specter::djb2_hash(reinterpret_cast<unsigned char*>(&debugMode_str[0]));
+		}
+	}
+	
+	//
+	// 2. Light field
+	if (jsonParser.contains("light")) {
+		auto lightParser = jsonParser.find("light");
+
+		if (lightParser->contains("type")) {
+			auto lightType_str = jsonParser["light"]["type"].get<std::string>();
+			lightType = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
+		}
+
+		if (lightParser->contains("energy")) {
+			jsonParser["light"]["energy"].get_to(vec3tmp);
+			std::memcpy(&lightEnergy, vec3tmp, sizeof(float) * 3);
+		} 
+
+		if (lightParser->contains("position")) {
+			jsonParser["light"]["position"].get_to(vec3tmp);
+			std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
+		} 
+	}
 
 	//
 	// 3. Camera field
-	jsonParser["camera"]["position"].get_to(vec3tmp);
-	std::memcpy(&cameraPosition, vec3tmp, sizeof(float) * 3);
+	if (jsonParser.contains("camera")) {
+		auto cameraParser = jsonParser.find("camera");
 
-	jsonParser["camera"]["target"].get_to(vec3tmp);
-	std::memcpy(&cameraTarget, vec3tmp, sizeof(float) * 3);
+		if (cameraParser->contains("position")) {
+			jsonParser["camera"]["position"].get_to(vec3tmp);
+			std::memcpy(&cameraPosition, vec3tmp, sizeof(float) * 3);
+		}
 
-	cameraFov = jsonParser["camera"]["fov"].get<float>();
+		if (cameraParser->contains("target")) {
+			jsonParser["camera"]["target"].get_to(vec3tmp);
+			std::memcpy(&cameraTarget, vec3tmp, sizeof(float) * 3);
+		}
 
-	samplesPerPixel = jsonParser["camera"]["samples"].get<int>();
-	
-	jsonParser["camera"]["resolution"].get_to(vec2tmp);
-	std::memcpy(&screenResolution, vec2tmp, sizeof(unsigned) * 2);
+		if (cameraParser->contains("fov")) {
+			cameraFov = jsonParser["camera"]["fov"].get<float>();
+		}
+
+		if (cameraParser->contains("samples")) {
+			samplesPerPixel = jsonParser["camera"]["samples"].get<int>();
+		}
+
+		if (cameraParser->contains("resolution")) {
+			jsonParser["camera"]["resolution"].get_to(vec2tmp);
+			std::memcpy(&screenResolution, vec2tmp, sizeof(unsigned) * 2);
+		}
+	}
 
 	//
 	// 4. Mesh field
-	meshPath = jsonParser["path"].get<std::string>();
+	if (jsonParser.contains("path")) {
+		auto meshParser = jsonParser.find("path");
+		meshPath = jsonParser["path"].get<std::string>();
+	}
 
 	//
 	// 5. Misc. field
-	dynamicFrame = jsonParser["dynamicFrame"].get<bool>();
+	if (jsonParser.contains("dynamicFrame")) {
+		// Just a place holder for now
+		auto plhPraser = jsonParser.find("dynamicFrame");
+		dynamicFrame = jsonParser["dynamicFrame"].get<bool>();
+	}
 }
 
 static std::string lightTypeToString(const uint64_t lightType) {
