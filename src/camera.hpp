@@ -25,7 +25,7 @@ struct Camera {
 	unsigned resx() const;
 	unsigned resy() const;
 
-	void setSamplesPerPixel(const unsigned samplesPerPixel);
+	void setSpp(const unsigned samplesPerPixel);
 	unsigned spp() const;
 
 protected:

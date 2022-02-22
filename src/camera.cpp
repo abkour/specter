@@ -48,7 +48,7 @@ unsigned Camera::resy() const {
 	return resolution.y;
 }
 
-void Camera::setSamplesPerPixel(const unsigned samplesPerPixel) {
+void Camera::setSpp(const unsigned samplesPerPixel) {
 	unsigned sqrt_x = sqrtf(samplesPerPixel);
 	if (sqrt_x * sqrt_x != samplesPerPixel) {
 		throw std::runtime_error("Error. Specified number of samples has to be a square number!");
