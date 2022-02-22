@@ -25,6 +25,10 @@ struct Intersection {
 	vec2f uv;
 	unsigned f;
 	float t = std::numeric_limits<float>::max();
+
+	bool isValid() const {
+		return t != std::numeric_limits<float>::max();
+	}
 };
 
 // This will be constructed by different file loaders. For now only the .obj loader is implemented.
