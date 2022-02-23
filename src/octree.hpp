@@ -11,18 +11,6 @@
 
 namespace specter {
 
-// Represents a single node in the octree data structure
-// If the node is a leaf node, indices pointer should not be nullptr
-struct Node {
-	AxisAlignedBoundingBox bbox;	// Bounding box of the subdivided space
-
-	Node** m_children = nullptr;	// Pointer to the children nodes
-	uint32_t* indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
-	// Specifies the number of indices in the indices array, if it exists, otherwise specifies number of triangle indices
-	// used during octree constructuin
-	uint32_t nIndices;
-};
-
 struct Octree {
 	
 	// RAII -> set root to nullptr
@@ -42,6 +30,19 @@ struct Octree {
 	// Traverse the octree. Returns true if the ray intersects any geometry in the mesh.
 	bool traverseAny(const Mesh* mesh, const Ray& ray) const;
 
+private:
+
+	// Represents a single node in the octree data structure
+	// If the node is a leaf node, indices pointer should not be nullptr
+	struct Node {
+		AxisAlignedBoundingBox bbox;	// Bounding box of the subdivided space
+
+		Node** m_children = nullptr;	// Pointer to the children nodes
+		uint32_t* indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
+		// Specifies the number of indices in the indices array, if it exists, otherwise specifies number of triangle indices
+		// used during octree constructuin
+		uint32_t nIndices;
+	};
 
 private:
 	
