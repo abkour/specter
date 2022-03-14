@@ -1,0 +1,41 @@
+#version 460 core
+layout(local_size_x = 1024) in;
+
+uniform int nPixels;
+
+layout(std430, binding = 0) buffer gammaCompressedRGB 
+{
+    uint pixelsRGB[];
+};
+
+layout(std430, binding = 1) buffer grayscale
+{
+    uint pixelsGray[];
+};
+
+void main() {
+    if(int(gl_GlobalInvocationID.x) > nPixels) return;
+
+    int i = int(gl_GlobalInvocationID.x);
+    
+    vec3 inputColor = vec3( (pixelsRGB[i] & 0x000000FF) >> 0, 
+                            (pixelsRGB[i] & 0x0000FF00) >> 8, 
+                            (pixelsRGB[i] & 0x00FF0000) >> 16);
+    
+    vec3 normColor = inputColor * 0.00392156862;
+    vec3 gcColor = vec3(0.f);
+    for(int i = 0; i < 3; ++i) {
+        gcColor[i] = normColor[i] <= 0.04045 ? normColor[i] * 0.0773993808 : pow((normColor[i] + 0.055) * 0.94786729, 2.4);
+    }
+
+    float c_linear = 0.2126 * gcColor.r + 0.7152 * gcColor.g + 0.0722 * gcColor.b;
+    float c_srgb = c_linear <= 0.0031308 ? 12.92 * c_linear : pow(1.055 * c_linear, 0.41666666f) - 0.055;
+    uint grayPixel = uint(c_srgb * 255.f);
+
+    uint r = grayPixel << 0;
+    uint g = grayPixel << 8;
+    uint b = grayPixel << 16;
+    uint a = 255 << 24;
+
+    pixelsGray[i] = r + g + b + a;
+}
