@@ -1,4 +1,4 @@
-#include "grayscale_filter.hpp"
+#include "filters.hpp"
 
 namespace specter {
 
@@ -17,7 +17,7 @@ void grayscale_filter(unsigned char* output, const unsigned char* input, const v
 
 	specter::Shader grayscaleShader =
 	{
-		{ GL_COMPUTE_SHADER, "C:\\Users\\flora\\source\\repos\\specter\\shaders\\gaussian_filter.glsl.comp" }
+		{ GL_COMPUTE_SHADER, "C:\\Users\\flora\\source\\repos\\specter\\shaders\\grayscale_filter.glsl.comp" }
 	};
 	grayscaleShader.create();
 	grayscaleShader.bind();
