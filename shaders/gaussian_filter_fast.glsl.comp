@@ -23,14 +23,9 @@ void main() {
                             (pixelsRGB[i] & 0x00FF0000) >> 16);
     
     vec3 normColor = inputColor * 0.00392156862;
-    vec3 gcColor = vec3(0.f);
-    for(int i = 0; i < 3; ++i) {
-        gcColor[i] = normColor[i] <= 0.04045 ? normColor[i] * 0.0773993808 : pow((normColor[i] + 0.055) * 0.94786729, 2.4);
-    }
+    float luminance = 0.299 * normColor.r + 0.587 * normColor.g + 0.114 * normColor.b;
 
-    float c_linear = 0.2126 * gcColor.r + 0.7152 * gcColor.g + 0.0722 * gcColor.b;
-    float c_srgb = c_linear <= 0.0031308 ? 12.92 * c_linear : pow(1.055 * c_linear, 0.41666666f) - 0.055;
-    uint grayPixel = uint(c_srgb * 255.f);
+    uint grayPixel = uint(luminance * 255.f);
 
     uint r = grayPixel << 0;
     uint g = grayPixel << 8;
