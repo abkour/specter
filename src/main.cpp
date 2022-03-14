@@ -1,15 +1,25 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "../ext/stb_image.h"
+#pragma warning(disable:4996)
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../ext/stb_image_write.h"
+
 #include "view.hpp"
 #include "renderer.hpp"
 
 #include "misc.hpp"
 
+#include "grayscale_filter.hpp"
+
+void testFilters();
 void renderRasterized();
 void renderRTX(const char* scene_descriptor_file);
 
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		renderRTX(argv[1]);
+		testFilters();
+		//renderRTX(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
 		std::cout << e.what();
@@ -143,4 +153,32 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
 		return specter::MovementDirection::Right;
 	}
 	return specter::MovementDirection::None;
+}
+
+void testFilters() {
+	specter::vec2u screen_resolution(1920, 1080);
+	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Filter test");
+
+	int width, height, nrChannels;
+	unsigned char* data = stbi_load("C:\\Users\\flora\\source\\repos\\specter\\results\\dev\\random.png", &width, &height, &nrChannels, 4);
+	if (data) {
+		unsigned char* output_image = new unsigned char[width * height * 4];
+		specter::grayscale_filter(output_image, data, specter::vec2u(width, height));
+		for (int i = 0; i < 4; ++i) {
+			std::cout << (unsigned int)output_image[i * 4] << '\n';
+			std::cout << (unsigned int)output_image[i * 4 + 1] << '\n';
+			std::cout << (unsigned int)output_image[i * 4 + 2] << '\n';
+			std::cout << (unsigned int)output_image[i * 4 + 3] << '\n';
+		}
+		stbi_write_png(	"C:\\Users\\flora\\source\\repos\\specter\\results\\dev\\gray_random.png", 
+						width, 
+						height,
+						4,
+						output_image, 
+						width * 4);
+		delete[] output_image;
+	} else {
+		std::cout << "Failed reading data!\n";
+	}
+	stbi_image_free(data);
 }
