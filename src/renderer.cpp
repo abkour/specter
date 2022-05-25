@@ -23,12 +23,21 @@ RTX_Renderer::~RTX_Renderer() {
 void RTX_Renderer::run() {
 	// Open the window using GLFW, initialize GLAD and allow user input via mouse and keyboard.
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "Specter Raytracer");
+	window.enableCursorZoom();
+	//window.enableKeyStateCallback();
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	// Set up the RTX texture
 	glGenTextures(1, &image);
 	glBindTexture(GL_TEXTURE_2D, image);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, scene->camera.resx(), scene->camera.resy(), 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	const float borderColor[] = { 0.f, 0.f, 0.f, 0.f };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
 
@@ -37,17 +46,26 @@ void RTX_Renderer::run() {
 	// Run the integrator in a seperate thread
 	renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 
-	// Quad spanning the entire window
-	static float quad[] =
+	static float quadvertices[] =
 	{
-		// vertices		// uv
-		-1.f, -1.f,		0.f, 0.f,
-		1.f, -1.f,		1.f, 0.f,
-		1.f, 1.f,		1.f, 1.f,
+		-1.f, -1.f,
+		1.f, -1.f,
+		1.f, 1.f,
+		-1.f, -1.f,
+		1.f, 1.f,
+		-1.f, 1.f
+	};
 
-		-1.f, -1.f,		0.f, 0.f,
-		1.f, 1.f,		1.f, 1.f,
-		-1.f, 1.f,		0.f, 1.f
+	
+	static float quadTextureCoordinates[] =
+	{
+		0.f, 0.f,
+		1.f, 0.f,
+		1.f, 1.f,
+
+		0.f, 0.f,
+		1.f, 1.f,
+		0.f, 1.f
 	};
 
 	GLuint vao, vbo;
@@ -55,12 +73,14 @@ void RTX_Renderer::run() {
 	glGenBuffers(1, &vbo);
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadvertices) + sizeof(quadTextureCoordinates), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(quadvertices), quadvertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(quadvertices), sizeof(quadTextureCoordinates), quadTextureCoordinates);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(0));
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), reinterpret_cast<void*>(0));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), reinterpret_cast<void*>(sizeof(quadvertices)));
 	
 	// Simple pass-through vertex shader that renders a texture onto a quad
 	specter::Shader quadShader =
@@ -70,10 +90,74 @@ void RTX_Renderer::run() {
 	};
 	quadShader.create();
 	quadShader.bind();
+	
+	specter::vec2f texCoordBottomLeft(0.f, 0.f);
+	specter::vec2 texCoordTopRight(1.f, 1.f);
+
+	float currentCameraZoom = window.getCursorZoom();
+	auto zoomFunction = [](float zoomFactor) { return zoomFactor >= 50 ? 0.5f : (zoomFactor < 0.f ) ? 0.f : zoomFactor / 100.f; };
+
+	specter::vec2f pictureMovementDirection(0.f, 0.f);
+
+	float deltatime = 0.f;
+	float lasttime = 0.f;
 
 	while (!glfwWindowShouldClose(window.getWindow())) {
 		glClearColor(0.f, 0.f, 0.f, 0.f);
 		glClear(GL_COLOR_BUFFER_BIT);
+		
+		deltatime = glfwGetTime() - lasttime;
+		lasttime += deltatime;
+		std::cout << "deltatime: " << deltatime << '\n';
+
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
+			pictureMovementDirection.y = 1.f;
+		}
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_S) == GLFW_PRESS) {
+			pictureMovementDirection.y = -1.f;
+		}
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
+			pictureMovementDirection.x = -1.f;
+		}
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_D) == GLFW_PRESS) {
+			pictureMovementDirection.x = 1.f;
+		}
+
+		// If keys are released we need to also reset movement direction (velocity)
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_W) == GLFW_RELEASE && glfwGetKey(window.getWindow(), GLFW_KEY_S) == GLFW_RELEASE) {
+			pictureMovementDirection.y = 0.f;
+		}
+		if (glfwGetKey(window.getWindow(), GLFW_KEY_A) == GLFW_RELEASE && glfwGetKey(window.getWindow(), GLFW_KEY_D) == GLFW_RELEASE) {
+			pictureMovementDirection.x = 0.f;
+		}
+
+
+		if (currentCameraZoom != window.getCursorZoom() || pictureMovementDirection != specter::vec2f(0.f, 0.f)) {
+			currentCameraZoom = window.getCursorZoom();
+			const float zoomScale = zoomFunction(currentCameraZoom);
+			
+			const float sFrameTime = deltatime > 0.1f ? 0.1f : deltatime;
+
+			texCoordBottomLeft.x += pictureMovementDirection.x * (0.01f * zoomScale);
+			texCoordBottomLeft.y += pictureMovementDirection.y * (0.01f * zoomScale);
+			texCoordTopRight.x += pictureMovementDirection.x * (0.01f * zoomScale);
+			texCoordTopRight.y += pictureMovementDirection.y * (0.01f * zoomScale);
+
+			// Adjust for the zoom factor
+			float newTextureCoordinates[] =
+			{
+				texCoordBottomLeft.x + zoomScale, texCoordBottomLeft.y + zoomScale,
+				texCoordTopRight.x - zoomScale, texCoordBottomLeft.y + zoomScale,
+				texCoordTopRight.x - zoomScale, texCoordTopRight.y - zoomScale,
+
+				texCoordBottomLeft.x + zoomScale, texCoordBottomLeft.y + zoomScale,
+				texCoordTopRight.x - zoomScale, texCoordTopRight.y - zoomScale,
+				texCoordBottomLeft.x + zoomScale, texCoordTopRight.y - zoomScale
+			};
+
+			glBindBuffer(GL_ARRAY_BUFFER, vbo);
+			glBufferSubData(GL_ARRAY_BUFFER, sizeof(quadvertices), sizeof(quadTextureCoordinates), newTextureCoordinates);
+		}
 
 		// Check if the frame is out-of-date
 		std::unique_lock<std::mutex> lck(updateMtx);

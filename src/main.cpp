@@ -9,7 +9,7 @@
 
 #include "misc.hpp"
 
-#include "grayscale_filter.hpp"
+#include "filters.hpp"
 
 void testFilters();
 void renderRasterized();
@@ -18,8 +18,8 @@ void renderRTX(const char* scene_descriptor_file);
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		testFilters();
-		//renderRTX(argv[1]);
+		//testFilters();
+		renderRTX(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
 		std::cout << e.what();
@@ -163,13 +163,9 @@ void testFilters() {
 	unsigned char* data = stbi_load("C:\\Users\\flora\\source\\repos\\specter\\results\\dev\\random.png", &width, &height, &nrChannels, 4);
 	if (data) {
 		unsigned char* output_image = new unsigned char[width * height * 4];
+		specter::Timer filtertime;
 		specter::grayscale_filter(output_image, data, specter::vec2u(width, height));
-		for (int i = 0; i < 4; ++i) {
-			std::cout << (unsigned int)output_image[i * 4] << '\n';
-			std::cout << (unsigned int)output_image[i * 4 + 1] << '\n';
-			std::cout << (unsigned int)output_image[i * 4 + 2] << '\n';
-			std::cout << (unsigned int)output_image[i * 4 + 3] << '\n';
-		}
+		std::cout << "FIltering took: " << filtertime.elapsedTime() << '\n';
 		stbi_write_png(	"C:\\Users\\flora\\source\\repos\\specter\\results\\dev\\gray_random.png", 
 						width, 
 						height,

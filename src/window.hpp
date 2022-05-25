@@ -26,6 +26,14 @@ struct Window {
 	// Enable the cursor in the window
 	void enableCursorCallback() const;
 
+	// Enable the use of the mouse wheel to "zoom" the cursor in or out
+	void enableCursorZoom() const;
+
+	// Enable tracking of key states
+	void enableKeyStateCallback() const;
+
+	float getCursorZoom() const;
+
 	// Get the relative distance the cursor moved in the x direction, since the last call of this function
 	float getXoffset() const;
 	
