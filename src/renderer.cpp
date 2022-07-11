@@ -197,7 +197,8 @@ void RTX_Renderer::runDynamic() {
 
 	// Right now this light is hardcoded until I find a convenient way of 
 	// abstracting away light specific rendering
-	AmbientLight ambientLight;
+
+	std::shared_ptr<Light> light = scene->light;
 
 	const int nShadowRays = scene->reflection_rays;
 	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
@@ -261,7 +262,7 @@ void RTX_Renderer::runDynamic() {
 
 								auto& ray = rays[index];
 								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								color += ambientLight.sample_light(scene->accel, intersectionPoint, normal);
+								color += light->sample_light(scene->accel, intersectionPoint, normal);
 							}
 						}
 						const std::size_t index = y * scene->camera.resx() + x;

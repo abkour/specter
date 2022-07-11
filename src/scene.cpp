@@ -4,11 +4,10 @@
 namespace specter {
 
 Scene::Scene(SceneDescriptor& sceneDescriptor) {
-
 	// 1. Initialize Light
 	switch (sceneDescriptor.lightType) {
 	case SPECTER_AMBIENT_LIGHT:
-		throw std::runtime_error("Ambient light is not yet supported!");
+		light = std::make_shared<AmbientLight>(sceneDescriptor.lightSRGB);
 		break;
 	case SPECTER_AREA_LIGHT:
 		throw std::runtime_error("Area light is not yet supported!");
@@ -18,7 +17,8 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 		break;
 	case SPECTER_POINT_LIGHT:
 		// Make point light
-		light = new PointLight(sceneDescriptor.lightPosition, sceneDescriptor.lightEnergy);
+		throw std::runtime_error("Point light not yet supported!");
+		//light = new PointLight(sceneDescriptor.lightPosition, sceneDescriptor.lightEnergy);
 		break;
 	default:
 		throw std::runtime_error("Light descriptor in scene file doesn't specify a valid light type!");
@@ -42,8 +42,6 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	reflection_rays = sceneDescriptor.reflection_rays;
 }
 
-Scene::~Scene() {
-	delete light;
-}
+Scene::~Scene() {}
 
 }

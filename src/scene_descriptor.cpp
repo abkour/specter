@@ -45,18 +45,21 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 			lightType = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
 		}
 
-		if (lightParser->contains("energy")) {
-			jsonParser["light"]["energy"].get_to(vec3tmp);
-			std::memcpy(&lightEnergy, vec3tmp, sizeof(float) * 3);
-		} 
-
-		if (lightParser->contains("position")) {
-			jsonParser["light"]["position"].get_to(vec3tmp);
-			std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
-		}
-
-		if (lightParser->contains("reflection_rays")) {
-			reflection_rays = jsonParser["light"]["reflection_rays"].get<int>();
+		if (lightType == SPECTER_AMBIENT_LIGHT) {
+			if (lightParser->contains("srgb")) {
+				uint8_t u8x3[3];
+				jsonParser["light"]["srgb"].get_to(u8x3);
+				std::memcpy(&lightSRGB, u8x3, sizeof(uint8_t) * 3);
+				std::cout << u8x3[0] << ", " << u8x3[1] <<  ", " << u8x3[2] << '\n';
+			}
+			if (lightParser->contains("reflection_rays")) {
+				reflection_rays = jsonParser["light"]["reflection_rays"].get<int>();
+			}
+		} else {
+			if (lightParser->contains("position")) {
+				jsonParser["light"]["position"].get_to(vec3tmp);
+				std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
+			}
 		}
 	}
 

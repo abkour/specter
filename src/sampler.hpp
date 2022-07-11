@@ -8,7 +8,7 @@ namespace specter {
 struct Sampler {
 
 	// Default construct the random engine
-	Sampler();
+	Sampler() = default;
 
 	// Sample the concentric disk
 	vec2f sampleConcentricDisk();

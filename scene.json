@@ -4,9 +4,8 @@
         "method": "normals"
     },
     "light": {
-        "type": "point",
-        "energy": [75000, 75000, 75000],
-        "position": [ -70, 3, 1 ],
+        "type": "ambient",
+        "srgb": [255, 190, 40],
         "reflection_rays":  64
     },
     "camera": {

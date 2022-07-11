@@ -354,6 +354,11 @@ vec3<T> orientNormal(const vec3<T>& normal, const vec3<T>& vector) {
 	return dot(normal, vector) < 0.f ? -normal : normal;
 }
 
+inline bool is_inaccurately_zero(const vec3<float>& v) {
+	float e = 1e-8;
+	return fabs(v.x) < e && fabs(v.y) < e && fabs(v.z) < e;
+}
+
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const vec3<T>& v) {
 	return os << v.x << ", " << v.y << ", " << v.z;

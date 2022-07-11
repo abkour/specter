@@ -3,7 +3,9 @@
 
 namespace specter {
 
-struct PointLight : public Light {
+class PointLight : public Light {
+
+public:
 
 	PointLight() = default;
 
@@ -15,6 +17,11 @@ struct PointLight : public Light {
 	}
 
 	vec3f sample_Light(const vec3f& point, const vec3f& normal) const;
+
+protected:
+
+	vec3f position;
+	vec3f energy;
 };
 
 }

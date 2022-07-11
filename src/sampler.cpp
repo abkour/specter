@@ -11,10 +11,6 @@ constexpr float PI = 3.14159265359;
 constexpr float PIHalf = PI / 2.f;
 constexpr float PIQuarter = PI / 4.f;
 
-
-Sampler::Sampler() 
-{}
-
 vec2f Sampler::sampleConcentricDisk() {
 
 	const vec2f p(randomEngine.get_next(), randomEngine.get_next());
