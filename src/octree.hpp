@@ -30,6 +30,10 @@ struct Octree {
 	// Traverse the octree. Returns true if the ray intersects any geometry in the mesh.
 	bool traverseAny(const Mesh* mesh, const Ray& ray) const;
 
+	// Traverse the octree. Returns true if ray intersects geometry for t < t_max.
+	// Returns false otherwise.
+	bool traverseAnyTmax(const Mesh* mesh, const Ray& ray, const float t_max) const;
+
 private:
 
 	// Represents a single node in the octree data structure
@@ -38,7 +42,7 @@ private:
 		AxisAlignedBoundingBox bbox;	// Bounding box of the subdivided space
 
 		Node** m_children = nullptr;	// Pointer to the children nodes
-		uint32_t* indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
+		uint32_t* tri_indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
 		// Specifies the number of indices in the indices array, if it exists, otherwise specifies number of triangle indices
 		// used during octree constructuin
 		uint32_t nIndices;
@@ -54,6 +58,9 @@ private:
 	
 	// Traverse the octree recursively. This is initially called by the public function traverseAny()
 	void traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const;
+
+	// Traverse the octree recursively. This is initially called by the public function traverseAnyTmax()
+	void traverseAnyTmaxRec(const Mesh* mesh, Node* node, const Ray& ray, const float t_max, bool& intersectionFound) const;
 
 	// Free the octree recursively. This is called by the destructor.
 	void freeOctreeRec(Node* node);

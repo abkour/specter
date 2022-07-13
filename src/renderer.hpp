@@ -1,4 +1,5 @@
 #pragma once
+#include "intersection.hpp"
 #include "scene.hpp"
 #include "shader.hpp"
 #include "window.hpp"
@@ -29,6 +30,10 @@ public:
 private:
 
 	void runDynamic();
+
+	// This is function in development.
+	void dev_runDynamic();
+	vec3f dev_pixel_color(const Ray& ray, int reflectionDepth);
 
 	std::mutex updateMtx;
 	bool updateFrame;

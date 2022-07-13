@@ -1,9 +1,11 @@
 #pragma once
 #include "aabb.hpp"
+#include "intersection.hpp"
 #include "ray.hpp"
 #include "simd_math.hpp"
 #include "vec2.hpp"
 #include "vec3.hpp"
+#include "material.hpp"
 
 #include <fstream>
 #include <vector>
@@ -18,18 +20,6 @@ struct FaceElement {
 };
 
 std::ostream& operator<<(std::ostream& os, const FaceElement& face);
-
-// Represents an intersection and its corresponding triangle index.
-// Also contains coefficient t for ray r(t) := o + t * d
-struct Intersection {
-	vec2f uv;
-	unsigned f;
-	float t = std::numeric_limits<float>::max();
-
-	bool isValid() const {
-		return t != std::numeric_limits<float>::max();
-	}
-};
 
 // This will be constructed by different file loaders. For now only the .obj loader is implemented.
 struct Mesh {
@@ -65,6 +55,14 @@ struct Mesh {
 	// Get number of vertices in mesh
 	std::size_t getVertexCount() const;
 
+	std::shared_ptr<Material> GetMaterial() const {
+		return material;
+	}
+
+	void dev_SetMaterial(std::shared_ptr<Material> pMaterial) {
+		material = pMaterial;
+	}
+
 	// Compute the bounding box encompassing the mesh
 	AxisAlignedBoundingBox computeBoundingBox() const;
 
@@ -79,6 +77,8 @@ protected:
 	std::vector<vec2f> textureCoordinates;
 
 	std::vector<FaceElement> faces;
+
+	std::shared_ptr<Material> material;
 };
 
 }

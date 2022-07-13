@@ -16,7 +16,7 @@ public:
 		this->energy = energy;
 	}
 
-	vec3f sample_Light(const vec3f& point, const vec3f& normal) const;
+	vec3f sample_light(const Accel& accel, const vec3f& point, const vec3f& normal) override;
 
 protected:
 

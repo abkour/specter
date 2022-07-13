@@ -45,6 +45,8 @@ void RTX_Renderer::run() {
 	//
 	// Run the integrator in a seperate thread
 	renderThread = std::thread(&RTX_Renderer::runDynamic, this);
+	//renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
+
 
 	static float quadvertices[] =
 	{
@@ -195,11 +197,6 @@ void RTX_Renderer::runDynamic() {
 	std::cout << "Rendering mesh (parallel)...\n";
 	specter::Timer rtxtime;
 
-	// Right now this light is hardcoded until I find a convenient way of 
-	// abstracting away light specific rendering
-
-	std::shared_ptr<Light> light = scene->light;
-
 	const int nShadowRays = scene->reflection_rays;
 	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
 
@@ -237,14 +234,14 @@ void RTX_Renderer::runDynamic() {
 		}
 	);
 
-	// Update the frame every time the AO integrator converges.
+	// Update the frame every time the integrator converges.
 	// To accomplish that, we iterate over the entire frame for each shadow ray.
 	// At the end of each iteration we communicate to the main thread to update the image texture.
 	for (int shadowsCast = 1; shadowsCast < nShadowRays; ++shadowsCast) {
 		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 			[&](const tbb::blocked_range2d<int>& r) {
 				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-					// If window closes rendering should close as well.
+					// If window closes rendering should stop as well.
 					if (terminateRendering.load()) {
 						return;
 					}
@@ -262,7 +259,7 @@ void RTX_Renderer::runDynamic() {
 
 								auto& ray = rays[index];
 								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								color += light->sample_light(scene->accel, intersectionPoint, normal);
+								color += scene->light->sample_light(scene->accel, intersectionPoint, normal);
 							}
 						}
 						const std::size_t index = y * scene->camera.resx() + x;
@@ -277,6 +274,54 @@ void RTX_Renderer::runDynamic() {
 		updateFrame = true;
 		lck.unlock();
 	}
+}
+
+vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
+	
+	if (reflectionDepth <= 0) {
+		return vec3f(0.f);
+	}
+
+	Intersection its;
+	its.mat_ptr = scene->mesh.GetMaterial();
+
+	if (!scene->accel.traceRay(ray, its)) {
+		return vec3(0.f);
+	} else {
+		//return abs(its.n);
+		return scene->light->sample_light(scene->accel, its.p, its.n) * 0.3f;
+	}
+	
+	Ray scattered;
+	vec3f attenuation;
+	if (!its.mat_ptr->scatter(ray, its, scattered, attenuation)) {
+		return vec3f(0.f);
+	}
+	
+	return attenuation * dev_pixel_color(scattered, reflectionDepth - 1);
+}
+
+void RTX_Renderer::dev_runDynamic() {
+	std::cout << "[DEV] Rendering mesh (parallel)...\n";
+
+	unsigned reflectionDepth = 4;
+	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
+		[&](tbb::blocked_range2d<int> r) 
+		{
+			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+				if (terminateRendering.load()) return;
+				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
+					specter::Ray ray = scene->camera.getRay(specter::vec2u(x, y));
+					const std::size_t index = y * scene->camera.resx() + x;
+					frame[index] = dev_pixel_color(ray, reflectionDepth);
+				}
+			}
+		});
+
+		// Notify the rendering thread, that the contents of the frame buffer need updating.
+		std::unique_lock<std::mutex> lck(updateMtx);
+		updateFrame = true;
+		lck.unlock();
 }
 
 }

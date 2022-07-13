@@ -27,6 +27,8 @@ public:
 	// Trace shadow ray. Returns true if any intersection is found. Returns false otherwise.
 	bool traceShadowRay(const Ray& ray) const;
 
+	bool traceShadowRayTmax(const Ray& ray, const float t_max) const;
+
 private:
 
 	Mesh* mesh = nullptr;

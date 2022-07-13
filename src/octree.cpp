@@ -97,8 +97,8 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 	}
 
 	if (node->nIndices <= 10 || depth > maxDepth) {
-		node->indices = new uint32_t[node->nIndices];
-		std::memcpy(node->indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
+		node->tri_indices = new uint32_t[node->nIndices];
+		std::memcpy(node->tri_indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
 		return;
 	}
 
@@ -178,15 +178,26 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 		return;
 	}
 
-	if (node->indices != nullptr) {
+	if (node->tri_indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
 			float u, v, t = std::numeric_limits<float>::max();
-			if (mesh->rayIntersection(ray, node->indices[i], u, v, t)) {
+			if (mesh->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
 				if (intersection.t > t) {
 					// Success, closest triangle found. Any further processing can stop.
+					const unsigned i0 = mesh->getFace(node->tri_indices[i] * 3).p;
+					const unsigned i1 = mesh->getFace(node->tri_indices[i] * 3 + 1).p;
+					const unsigned i2 = mesh->getFace(node->tri_indices[i] * 3 + 2).p;
+					const vec3f& v0 = mesh->getVertex(i0);
+					const vec3f& v1 = mesh->getVertex(i1);
+					const vec3f& v2 = mesh->getVertex(i2);
+					const vec3f e0 = v1 - v0;
+					const vec3f e1 = v2 - v0;
+					intersection.n = normalize(cross(e0, e1));
 					intersection.t = t;
-					intersection.uv = vec2f(u, v);
-					intersection.f = node->indices[i];
+					intersection.u = u;
+					intersection.v = v;
+					intersection.f = node->tri_indices[i];
+					intersection.p = ray.o + t * ray.d;
 				}
 			}
 		}
@@ -260,10 +271,10 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 		return;
 	}
 
-	if (node->indices != nullptr) {
+	if (node->tri_indices != nullptr) {
 		for (int i = 0; i < node->nIndices; ++i) {
 			float uu, vv, tt;
-			if (mesh->rayIntersection(ray, node->indices[i], uu, vv, tt)) {
+			if (mesh->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
 				// Rays with origins inside the space represented by the octree can 
 				// have intersections with geometry, where the ray parameter is negative.
 				// This occurs, when the ray is colliding with objects that are in opposite 
@@ -292,6 +303,55 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 	}
 }
 
+bool Octree::traverseAnyTmax(const Mesh* mesh, const Ray& ray, const float t_max) const {
+	bool intersectionFound = false;
+	traverseAnyTmaxRec(mesh, root, ray, t_max, intersectionFound);
+	return intersectionFound;
+}
+
+void Octree::traverseAnyTmaxRec(const Mesh* mesh, Node* node, const Ray& ray, const float t_max, bool &intersectionFound) const {
+	if (node == nullptr) {
+		return;
+	}
+
+	// Any triangle found, therefore further processing can stop.
+	if (intersectionFound) {
+		return;
+	}
+
+	if (node->tri_indices != nullptr) {
+		for (int i = 0; i < node->nIndices; ++i) {
+			float uu, vv, tt;
+			if (mesh->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
+				// Rays with origins inside the space represented by the octree can 
+				// have intersections with geometry, where the ray parameter is negative.
+				// This occurs, when the ray is colliding with objects that are in opposite 
+				// direction of the ray direction vector. 
+				// We don't want to consider this case at all.
+				if (tt > 0.f && tt < t_max) {
+					intersectionFound = true;
+				}
+			}
+		}
+	}
+
+	else {
+		if (node->m_children == nullptr) {
+			return;
+		}
+
+		for (int i = 0; i < nSubRegions; ++i) {
+			if (node->m_children[i] != nullptr) {
+				float near, far;
+				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
+					traverseAnyTmaxRec(mesh, node->m_children[i], ray, t_max, intersectionFound);
+				}
+			}
+		}
+	}
+}
+
+
 void Octree::freeOctreeRec(Node* node) {
 	if (node == nullptr) {
 		std::cout << "This is null!\n";
@@ -306,7 +366,7 @@ void Octree::freeOctreeRec(Node* node) {
 		}
 		delete node->m_children;
 	}
-	delete node->indices;
+	delete node->tri_indices;
 	delete node;
 }
 

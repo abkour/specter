@@ -1,8 +1,8 @@
 #define STB_IMAGE_IMPLEMENTATION
-#include "../ext/stb_image.h"
+#include "stb_image.h"
 #pragma warning(disable:4996)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../ext/stb_image_write.h"
+#include "stb_image_write.h"
 
 #include "view.hpp"
 #include "renderer.hpp"
@@ -12,7 +12,7 @@
 #include "filters.hpp"
 
 void testFilters();
-void renderRasterized();
+void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
 int main(int argc, const char** argv) {
@@ -20,6 +20,7 @@ int main(int argc, const char** argv) {
 		std::cout << "specter 3D rendering engine\n\n";
 		//testFilters();
 		renderRTX(argv[1]);
+		//renderRasterized(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
 		std::cout << e.what();
@@ -38,10 +39,10 @@ void renderRTX(const char* scene_descriptor_file) {
 
 static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
-void renderRasterized() {
-	static const char* filename = "C:\\Users\\flora\\rsc\\assets\\ajax\\ajax.obj";
+void renderRasterized(const char* scene_descriptor_file) {
+	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
 	specter::ObjLoader mesh;
-	mesh.parse(filename);
+	mesh.parse(scene_descriptor.meshPath.c_str());
 	const specter::vec2u screen_resolution(1920, 1080);
 	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Rasterizer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -91,6 +92,8 @@ void renderRasterized() {
 	float lasttime = 0.f;
 
 	bool key_c_hit = false;
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	while (!glfwWindowShouldClose(window.getWindow())) {
 		glClearColor(0.f, 0.f, 0.f, 0.f);

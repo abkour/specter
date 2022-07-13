@@ -1,5 +1,5 @@
 #pragma once
-#include "hit_record.hpp"
+#include "intersection.hpp"
 #include "ray.hpp"
 #include "texture.hpp"
 #include <memory>
@@ -10,9 +10,9 @@ class Material {
 
 public:
 
-	Material();
+	Material() = default;
 
-	virtual bool scatter(const Ray& r_in, const HitRecord& hit_record, Ray& r_out, vec3f& attenuation) const;
+	virtual bool scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const = 0;
 
 };
 

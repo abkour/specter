@@ -1,0 +1,4 @@
+AmbientLight
+	"type": "ambient",
+	"srgb": [0, 255, 255],
+	"reflection_rays":  64

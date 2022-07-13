@@ -23,9 +23,17 @@ struct SceneDescriptor {
 
 	// Light
 	uint64_t lightType;
+	
+	// Point light specific
 	vec3f lightEnergy;
-	vec3<uint8_t> lightSRGB;
 	vec3f lightPosition;
+
+	// Ambient light specific
+	vec3<uint8_t> lightSRGB;
+	
+	// Area light specific
+	vec3f area_p0, area_p1, area_p2, area_p3;
+
 	int reflection_rays;
 
 	// Camera

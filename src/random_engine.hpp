@@ -6,6 +6,8 @@ namespace specter {
 
 // This object is used as a wrapper over the pseudo-number generation
 // facilities provided by the C++ standard.
+// It cannot be made const, because the internal state of the 
+// random engine changes when a number is generated
 class RandomEngine {
 
 public:

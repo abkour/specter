@@ -16,7 +16,7 @@ public:
 		: albedo(pAlbedo) 
 	{}
 
-	virtual bool scatter(const Ray& r_in, const HitRecord& hit_record, Ray& r_out, vec3f& attenuation) const override;
+	virtual bool scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const override;
 
 protected:
 

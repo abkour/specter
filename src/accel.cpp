@@ -30,4 +30,9 @@ bool Accel::traceShadowRay(const Ray& ray) const {
 	return octree.traverseAny(mesh, ray);
 }
 
+bool Accel::traceShadowRayTmax(const Ray& ray, const float t_max) const {
+	return octree.traverseAnyTmax(mesh, ray, t_max);
+}
+
+
 }
