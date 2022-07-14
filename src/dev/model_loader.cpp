@@ -149,7 +149,7 @@ void Model::parse(const char* filename) {
 						sMaterialNames.emplace_back(mtlname);
 					} else if (prefix == "Kd") {
 						vec3f rgb;
-						lineStream >> rgb.x; lineStream >> rgb.y; lineStream >> rgb.z;
+						lineStream >> rgb.x >> rgb.y >> rgb.z;
 						materials.emplace_back(std::make_shared<Lambertian>(rgb));
 						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
 					}
@@ -171,21 +171,21 @@ void Model::parse(const char* filename) {
 			sMeshIndexTables.emplace_back();
 		} else if (prefix == "v") {
 			specter::vec3f v;
-			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			lineStream >> v.x >> v.y >> v.z;
 			vertices.push_back(v);
 			sMeshSize.vsize++;
 		} else if (prefix == "vt") {
 			// Some object files don't contain texture coordinates. In that case, face processing needs to be adjusted.
 			uvPresent = true;
 			specter::vec2f v;
-			lineStream >> v.x; lineStream >> v.y;
+			lineStream >> v.x >> v.y;
 			uvs.push_back(v);
 			sMeshSize.tsize++;
 		} else if (prefix == "vn") {
 			// Some object files don't contain vertex normals. In that case, face processing needs to be adjusted.
 			normalsPresent = true;
 			specter::vec3f v;
-			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			lineStream >> v.x >> v.y >> v.z;
 			normals.push_back(v);
 			sMeshSize.nsize++;
 		} else if (prefix == "f") {
@@ -230,17 +230,17 @@ void Model::parse(const char* filename) {
 			sMeshSize = MeshAttributeSizes();
 		} else if (prefix == "v") {
 			specter::vec3f v;
-			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			lineStream >> v.x >> v.y >> v.z;
 			vertices.push_back(v);
 			sMeshSize.vsize++;
 		} else if (prefix == "vt") {
 			specter::vec2f v;
-			lineStream >> v.x; lineStream >> v.y;
+			lineStream >> v.x >> v.y;
 			uvs.push_back(v);
 			sMeshSize.tsize++;
 		} else if (prefix == "vn") {
 			specter::vec3f v;
-			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
+			lineStream >> v.x >> v.y >> v.z;
 			normals.push_back(v);
 			sMeshSize.nsize++;
 		} else if (prefix == "f") {
