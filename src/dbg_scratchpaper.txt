@@ -2,3 +2,28 @@ AmbientLight
 	"type": "ambient",
 	"srgb": [0, 255, 255],
 	"reflection_rays":  64
+
+{
+  "debug": {
+    "value": false,
+    "method": "normals"
+  },
+  "light": {
+    "type": "area",
+    "energy": [ 50000, 0, 0 ],
+    "pos0": [ -0.884011, 5.319334, -2.517968 ],
+    "pos1": [ -0.884011, 5.318497, -3.567968 ],
+    "pos2": [ 0.415989, 5.318497, -3.567968 ],
+    "pos3": [ 0.415989, 5.319334, -2.517968 ],
+    "reflection_rays": 64
+  },
+  "camera": {
+    "position": [ -0.466595, 2.68807, 8.2255 ],
+    "target": [ -0.420, 2.631, 7.22 ],
+    "resolution": [ 1920, 1080 ],
+    "fov": 90,
+    "samples": 1
+  },
+  "path": "C://Users//flora//rsc//assets//cornell_no_ceiling//cornell.obj",
+  "dynamicFrame": true
+}

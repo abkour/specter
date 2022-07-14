@@ -75,16 +75,17 @@ Octree::~Octree() {
 	freeOctreeRec(root);
 }
 
-void Octree::build(Mesh* mesh) {
+void Octree::build(std::shared_ptr<Model>& model) {
 	root = new Node;
-	root->nIndices = mesh->getTriangleCount();
-	root->bbox = mesh->computeBoundingBox();
+	// This creates an invalid bbox that is then corrected in the loop
+	root->bbox = model->computeBoundingBox();
+	root->nTriangles = model->GetFaceCount() / 3;
 
-	std::vector<uint32_t> initialIndexList(mesh->getTriangleCount());
+	std::vector<uint32_t> initialIndexList(root->nTriangles);
 	std::iota(initialIndexList.begin(), initialIndexList.end(), 0);
 
-	maxDepth = log8(mesh->getTriangleCount());
-	buildRec(root, mesh->getVertices(), mesh->getFaces(), initialIndexList.data(), 0);
+	maxDepth = log8(root->nTriangles);
+	buildRec(root, model->GetVertices(), model->GetFaces(), initialIndexList.data(), 0);
 }
 
 void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth) {
@@ -92,13 +93,13 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		throw std::runtime_error("Node is nullptr!");
 	}
 
-	if (node->nIndices == 0) {
+	if (node->nTriangles == 0) {
 		return;
 	}
 
-	if (node->nIndices <= 10 || depth > maxDepth) {
-		node->tri_indices = new uint32_t[node->nIndices];
-		std::memcpy(node->tri_indices, trianglePositions, sizeof(uint32_t) * node->nIndices);
+	if (node->nTriangles <= 10 || depth > maxDepth) {
+		node->tri_indices = new uint32_t[node->nTriangles];
+		std::memcpy(node->tri_indices, trianglePositions, sizeof(uint32_t) * node->nTriangles);
 		return;
 	}
 
@@ -108,7 +109,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 	}
 
 	std::vector<std::vector<uint32_t>> subRegionTriangleCounts(nSubRegions);
-	for (int i = 0; i < node->nIndices; i++) {
+	for (int i = 0; i < node->nTriangles; i++) {
 		uint32_t i0 = faces[trianglePositions[i] * 3 + 0].p;
 		uint32_t i1 = faces[trianglePositions[i] * 3 + 1].p;
 		uint32_t i2 = faces[trianglePositions[i] * 3 + 2].p;
@@ -133,19 +134,19 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 					node->m_children[i] = new Node;
 					node->m_children[i]->bbox.min = subRegions[i].min;
 					node->m_children[i]->bbox.max = subRegions[i].max;
-					node->m_children[i]->nIndices = subRegionTriangleCounts[i].size();
+					node->m_children[i]->nTriangles = subRegionTriangleCounts[i].size();
 					buildRec(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
 				}
 				else {
 					node->m_children[i] = nullptr;
-					node->nIndices = std::numeric_limits<unsigned int>::max();
+					node->nTriangles = std::numeric_limits<unsigned int>::max();
 				}
 			}
 		});
 }
 
-bool Octree::traverse(const Mesh* mesh, const Ray& ray, Intersection& intersection) const {
-	traverseRec(mesh, root, ray, intersection);
+bool Octree::traverse(const Model* model, const Ray& ray, Intersection& intersection) const {
+	traverseRec(model, root, ray, intersection);
 	return intersection.t != std::numeric_limits<float>::max();
 }
 
@@ -168,7 +169,7 @@ static float nLeafsVisited = 0;
 // The ray then recursively travels through the sub-regions in ascending order with respect to the intersection distance.
 // If any intersection with a triangle is found on leaf encounter, it is guaranteed to be the closest triangle,
 // and further processing can stop.
-void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) const {
+void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) const {
 	if (node == nullptr) {
 		return;
 	}
@@ -179,17 +180,17 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 	}
 
 	if (node->tri_indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
+		for (int i = 0; i < node->nTriangles; ++i) {
 			float u, v, t = std::numeric_limits<float>::max();
-			if (mesh->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
+			if (model->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
 				if (intersection.t > t) {
 					// Success, closest triangle found. Any further processing can stop.
-					const unsigned i0 = mesh->getFace(node->tri_indices[i] * 3).p;
-					const unsigned i1 = mesh->getFace(node->tri_indices[i] * 3 + 1).p;
-					const unsigned i2 = mesh->getFace(node->tri_indices[i] * 3 + 2).p;
-					const vec3f& v0 = mesh->getVertex(i0);
-					const vec3f& v1 = mesh->getVertex(i1);
-					const vec3f& v2 = mesh->getVertex(i2);
+					const unsigned i0 = model->GetFace(node->tri_indices[i] * 3).p;
+					const unsigned i1 = model->GetFace(node->tri_indices[i] * 3 + 1).p;
+					const unsigned i2 = model->GetFace(node->tri_indices[i] * 3 + 2).p;
+					const vec3f& v0 = model->GetVertex(i0);
+					const vec3f& v1 = model->GetVertex(i1);
+					const vec3f& v2 = model->GetVertex(i2);
 					const vec3f e0 = v1 - v0;
 					const vec3f e1 = v2 - v0;
 					intersection.n = normalize(cross(e0, e1));
@@ -201,7 +202,7 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 				}
 			}
 		}
-		avgNumIndices += node->nIndices;
+		avgNumIndices += node->nTriangles;
 		nLeafsVisited += 1.f;
 	}
 
@@ -233,14 +234,13 @@ void Octree::traverseRec(const Mesh* mesh, Node* node, const Ray& ray, Intersect
 					// to find the closest triangle. This is an extremely rare edge case, but for correctness sake it needs to 
 					// be handled.
 					if (distanceToBoxes[i].distance == distanceToBoxes[i + 1].distance) {
-						traverseRec(mesh, node->m_children[distanceToBoxes[i + 0].index], ray, intersection, false);
-						traverseRec(mesh, node->m_children[distanceToBoxes[i + 1].index], ray, intersection, true);	// Prevent early termination
+						traverseRec(model, node->m_children[distanceToBoxes[i + 0].index], ray, intersection, false);
+						traverseRec(model, node->m_children[distanceToBoxes[i + 1].index], ray, intersection, true);	// Prevent early termination
 					} else {
-						traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, intersection);
+						traverseRec(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
 					}
-				}
-				else {
-					traverseRec(mesh, node->m_children[distanceToBoxes[i].index], ray, intersection);
+				} else {
+					traverseRec(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
 				}
 			} else {
 				// We can stop now, since subsequent distances will be MAX_FLOAT as well.
@@ -254,14 +254,13 @@ void Octree::dbg_print() {
 	std::cout << "average number of indices: " << avgNumIndices / nLeafsVisited << '\n';
 }
 
-
-bool Octree::traverseAny(const Mesh* mesh, const Ray& ray) const {
+bool Octree::traverseAny(const Model* model, const Ray& ray) const {
 	bool intersectionFound = false;
-	traverseAnyRec(mesh, root, ray, intersectionFound);
+	traverseAnyRec(model, root, ray, intersectionFound);
 	return intersectionFound;
 }
 
-void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& intersectionFound) const {
+void Octree::traverseAnyRec(const Model* model, Node* node, const Ray& ray, bool& intersectionFound) const {
 	if (node == nullptr) {
 		return;
 	}
@@ -272,9 +271,9 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 	}
 
 	if (node->tri_indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
+		for (int i = 0; i < node->nTriangles; ++i) {
 			float uu, vv, tt;
-			if (mesh->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
+			if (model->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
 				// Rays with origins inside the space represented by the octree can 
 				// have intersections with geometry, where the ray parameter is negative.
 				// This occurs, when the ray is colliding with objects that are in opposite 
@@ -296,20 +295,20 @@ void Octree::traverseAnyRec(const Mesh* mesh, Node* node, const Ray& ray, bool& 
 			if (node->m_children[i] != nullptr) {
 				float near, far;
 				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
-					traverseAnyRec(mesh, node->m_children[i], ray, intersectionFound);
+					traverseAnyRec(model, node->m_children[i], ray, intersectionFound);
 				}
 			}
 		}
 	}
 }
 
-bool Octree::traverseAnyTmax(const Mesh* mesh, const Ray& ray, const float t_max) const {
+bool Octree::traverseAnyTmax(const Model* model, const Ray& ray, const float t_max) const {
 	bool intersectionFound = false;
-	traverseAnyTmaxRec(mesh, root, ray, t_max, intersectionFound);
+	traverseAnyTmaxRec(model, root, ray, t_max, intersectionFound);
 	return intersectionFound;
 }
 
-void Octree::traverseAnyTmaxRec(const Mesh* mesh, Node* node, const Ray& ray, const float t_max, bool &intersectionFound) const {
+void Octree::traverseAnyTmaxRec(const Model* model, Node* node, const Ray& ray, const float t_max, bool& intersectionFound) const {
 	if (node == nullptr) {
 		return;
 	}
@@ -320,9 +319,9 @@ void Octree::traverseAnyTmaxRec(const Mesh* mesh, Node* node, const Ray& ray, co
 	}
 
 	if (node->tri_indices != nullptr) {
-		for (int i = 0; i < node->nIndices; ++i) {
+		for (int i = 0; i < node->nTriangles; ++i) {
 			float uu, vv, tt;
-			if (mesh->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
+			if (model->rayIntersection(ray, node->tri_indices[i], uu, vv, tt)) {
 				// Rays with origins inside the space represented by the octree can 
 				// have intersections with geometry, where the ray parameter is negative.
 				// This occurs, when the ray is colliding with objects that are in opposite 
@@ -344,13 +343,12 @@ void Octree::traverseAnyTmaxRec(const Mesh* mesh, Node* node, const Ray& ray, co
 			if (node->m_children[i] != nullptr) {
 				float near, far;
 				if (node->m_children[i]->bbox.rayIntersect(ray, near, far)) {
-					traverseAnyTmaxRec(mesh, node->m_children[i], ray, t_max, intersectionFound);
+					traverseAnyTmaxRec(model, node->m_children[i], ray, t_max, intersectionFound);
 				}
 			}
 		}
 	}
 }
-
 
 void Octree::freeOctreeRec(Node* node) {
 	if (node == nullptr) {

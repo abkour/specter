@@ -105,4 +105,10 @@ std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb) {
 }
 
 
+AxisAlignedBoundingBox combine(const AxisAlignedBoundingBox& box0, const AxisAlignedBoundingBox& box1) {
+	return AxisAlignedBoundingBox(	minComponent(box0.min, box1.min),
+									maxComponent(box0.max, box1.max));
+}
+
+
 }

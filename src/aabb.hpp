@@ -42,10 +42,12 @@ struct AxisAlignedBoundingBox {
 	float volume() const;
 	// Return the center of the bounding box
 	vec3f center() const;
-
+	
 	vec3f min, max;
 };
 
 std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb);
+
+AxisAlignedBoundingBox combine(const AxisAlignedBoundingBox& box0, const AxisAlignedBoundingBox& box1);
 
 }

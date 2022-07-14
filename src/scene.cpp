@@ -32,13 +32,13 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	camera.initializeVariables(sceneDescriptor.cameraPosition, sceneDescriptor.cameraTarget, sceneDescriptor.cameraFov, sceneDescriptor.samplesPerPixel);
 	camera.setSpp(sceneDescriptor.samplesPerPixel);
 
-	// 3. Initialize mesh
-	mesh.parse(sceneDescriptor.meshPath.c_str());
-	auto lambertian_mat = std::make_shared<Lambertian>(vec3f(0.3f, 0.2f, 0.1f));
-	mesh.dev_SetMaterial(lambertian_mat);
+	// 3. Initialize model
+	model = std::make_shared<Model>();
+	model->parse(sceneDescriptor.meshPath.c_str());
 
 	// 4. Initialize acceleration structure
-	accel.addMesh(&mesh);
+	//accel.addMesh(&mesh);
+	accel.addModel(model);
 	accel.build();
 
 	// 5. Set rendering information

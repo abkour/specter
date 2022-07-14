@@ -44,8 +44,8 @@ void RTX_Renderer::run() {
 	//
 	//
 	// Run the integrator in a seperate thread
-	renderThread = std::thread(&RTX_Renderer::runDynamic, this);
-	//renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
+	//renderThread = std::thread(&RTX_Renderer::runDynamic, this);
+	renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
 
 
 	static float quadvertices[] =
@@ -254,8 +254,8 @@ void RTX_Renderer::runDynamic() {
 
 							auto its = intersections[index];
 							if (its.isValid()) {
-								unsigned normalIndex = scene->mesh.getFace(its.f * 3).n;
-								specter::vec3f normal = scene->mesh.getNormal(normalIndex);
+								unsigned normalIndex = scene->model->GetFace(its.f * 3).n;
+								specter::vec3f normal = scene->model->GetNormal(normalIndex);
 
 								auto& ray = rays[index];
 								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
@@ -283,12 +283,12 @@ vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
 	}
 
 	Intersection its;
-	its.mat_ptr = scene->mesh.GetMaterial();
+	//its.mat_ptr = scene->mesh[0].GetMaterial();
 
 	if (!scene->accel.traceRay(ray, its)) {
 		return vec3(0.f);
 	} else {
-		//return abs(its.n);
+		return abs(its.n);
 		return scene->light->sample_light(scene->accel, its.p, its.n) * 0.3f;
 	}
 	

@@ -14,9 +14,9 @@ public:
 
 	void dbg_print();
 
-	// Adds mesh to the accelerating structure. 
+	// Adds model to the accelerating structure. 
 	// At the moment only one mesh is supported
-	void addMesh(Mesh* newMesh);
+	void addModel(std::shared_ptr<Model>& model);
 	
 	// Construct the underlying accelerating structure object.
 	void build();
@@ -31,8 +31,7 @@ public:
 
 private:
 
-	Mesh* mesh = nullptr;
-
+	std::shared_ptr<Model> model;
 	Octree octree;
 };
 

@@ -8,30 +8,27 @@ void Accel::dbg_print() {
 	octree.dbg_print();
 }
 
-void Accel::addMesh(Mesh* newMesh) {
-	if (mesh) {
-		throw std::runtime_error("Only one mesh is supported");
-	}
-	mesh = newMesh;
+void Accel::addModel(std::shared_ptr<Model>& model) {
+	this->model = model;
 }
 
 void Accel::build() {
 	std::cout << "Building octree...";
 	specter::Timer octreeTimer;
-	octree.build(mesh);
+	octree.build(model);	
 	std::cout << " Finished in : " << octreeTimer.elapsedTime() << " seconds.\n\n";
 }
 
 bool Accel::traceRay(const Ray& ray, Intersection& intersection) const {
-	return octree.traverse(mesh, ray, intersection);
+	return octree.traverse(model.get(), ray, intersection);
 }
 
 bool Accel::traceShadowRay(const Ray& ray) const {
-	return octree.traverseAny(mesh, ray);
+	return octree.traverseAny(model.get(), ray);
 }
 
 bool Accel::traceShadowRayTmax(const Ray& ray, const float t_max) const {
-	return octree.traverseAnyTmax(mesh, ray, t_max);
+	return octree.traverseAnyTmax(model.get(), ray, t_max);
 }
 
 

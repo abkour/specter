@@ -41,8 +41,8 @@ static specter::MovementDirection getMovementDirection(GLFWwindow* window);
 
 void renderRasterized(const char* scene_descriptor_file) {
 	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
-	specter::ObjLoader mesh;
-	mesh.parse(scene_descriptor.meshPath.c_str());
+	specter::Scene scene(scene_descriptor);
+	
 	const specter::vec2u screen_resolution(1920, 1080);
 	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Rasterizer");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -50,10 +50,14 @@ void renderRasterized(const char* scene_descriptor_file) {
 	glfwSwapInterval(0);
 	glEnable(GL_DEPTH_TEST);
 
-	auto indices = mesh.getFaces();
-	auto vertices = mesh.getVertices();
-	auto nIndices = mesh.getTriangleCount() * 3;
-	auto nVertices = mesh.getVertexCount();
+	auto indices = scene.model->GetFaces();
+	auto vertices = scene.model->GetVertices();
+	auto nIndices = scene.model->GetFaceCount();
+	auto nVertices = scene.model->GetVertexCount();
+
+	for (int i = 0; i < scene.model->GetNumberOfMeshes(); ++i) {
+		std::cout << "Mesh: " << scene.model->GetMeshName(i) << '\n';
+	}
 
 	std::vector<unsigned> vertexIndices;
 	vertexIndices.resize(nIndices);
@@ -108,7 +112,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 
 		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_RELEASE && key_c_hit) {
 			std::cout << "pos: " << view.getPosition() << '\n';
-			std::cout << "dir: " << view.getDirection() << '\n';
+			std::cout << "target: " << view.getPosition() + view.getDirection() << '\n';
 			key_c_hit = false;
 		}
 
