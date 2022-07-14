@@ -1,6 +1,7 @@
 #pragma once
 #include "../aabb.hpp"
 #include "../material.hpp"
+#include "../material_lambertian.hpp"
 #include "../ray.hpp"
 #include "../timer.hpp"
 
@@ -86,6 +87,11 @@ public:
 
 	FaceElement GetFace(const uint32_t face_index) const {
 		return faces[face_index];
+	}
+
+	std::shared_ptr<Material> GetMaterial(const uint32_t mesh_index) const {
+		uint32_t mat_index = mesh_indices[mesh_index].m;
+		return materials[mat_index];
 	}
 
 	specter::vec3f& GetVertices(const uint32_t mesh_index) {
@@ -198,6 +204,16 @@ public:
 		return nMeshes;
 	}
 
+	uint32_t GetMeshIndexFromFace(uint32_t face_index) const {
+		face_index *= 3;
+		for (int i = 0; i < nMeshes; ++i) {
+			if (face_index < mesh_indices[i].f + mesh_attribute_sizes[i].fsize) {
+				return i;
+			}
+		}
+		return std::numeric_limits<uint32_t>::infinity();
+	}
+
 	// Implements the möller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 	bool rayIntersection(const specter::Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
@@ -240,8 +256,8 @@ protected:
 	std::vector<specter::vec3f> vertices;
 	std::vector<specter::vec3f> normals;
 	std::vector<specter::vec2f> uvs;
-	std::vector<std::shared_ptr<specter::Material>> materials;
 	std::vector<FaceElement> faces;
+	std::vector<std::shared_ptr<specter::Material>> materials;
 
 	specter::AxisAlignedBoundingBox bbox;
 };

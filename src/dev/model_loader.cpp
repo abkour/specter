@@ -74,12 +74,11 @@ void Model::parse(const char* filename) {
 
 	std::cout << "Loading file " << filename << " ...\n";
 
-	std::vector<specter::vec3f> sVertices;
-	std::vector<specter::vec3f> sNormals;
-	std::vector<specter::vec2f> sTextureCoordinates;
 	std::vector<MeshAttributeSizes> sMeshSizes;
 	std::vector<MeshIndexTable> sMeshIndexTables;
 	std::vector<std::string> sMeshNames;
+	std::vector<std::string> sMaterialNames;
+	std::vector<std::pair<std::string, uint32_t>> mtl_map;
 
 	auto addMAS = [](MeshAttributeSizes& dst, const MeshAttributeSizes& src)
 	{
@@ -97,6 +96,18 @@ void Model::parse(const char* filename) {
 		dst.n = src.nsize;
 		dst.t = src.tsize;
 		dst.v = src.vsize;
+	};
+
+	auto GetPathWithoutFile = [](const std::string& path)
+	{
+		auto delpos = path.find_last_of("/");
+		return path.substr(0, delpos + 1);
+	};
+
+
+	auto GetMtllibPath = [GetPathWithoutFile](const std::string& path, const std::string& libname) 
+	{
+		return GetPathWithoutFile(path) + libname;
 	};
 
 	bool normalsPresent = false;
@@ -118,32 +129,64 @@ void Model::parse(const char* filename) {
 
 		lineStream >> prefix;
 
-		if (prefix == "o") {
+		if (prefix == "mtllib") {
+			std::string libname;
+			lineStream >> libname;
+			{
+				std::string libpath = GetMtllibPath(filename, libname);
+				std::ifstream libfile(libpath.c_str(), std::ios::binary);
+				if (libfile.fail()) {
+					std::cout << "Error!\n";
+				}
+				std::string line;
+				while (std::getline(libfile, line)) {
+					std::istringstream lineStream(line);
+					std::string prefix;
+					lineStream >> prefix;
+					if (prefix == "newmtl") {
+						std::string mtlname;
+						lineStream >> mtlname;
+						sMaterialNames.emplace_back(mtlname);
+					} else if (prefix == "Kd") {
+						vec3f rgb;
+						lineStream >> rgb.x; lineStream >> rgb.y; lineStream >> rgb.z;
+						materials.emplace_back(std::make_shared<Lambertian>(rgb));
+						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
+					}
+				}
+			}
+		} else if (prefix == "usemtl") {
+			std::string mtl_name;
+			lineStream >> mtl_name;
+			for (const auto& kv : mtl_map) {
+				if (mtl_name == kv.first) {
+					sMeshIndexTables.back().m = kv.second;
+				}
+			}
+		} else if (prefix == "o") {
 			std::string name;
 			lineStream >> name;
-
 			sMeshNames.emplace_back(std::move(name));
 			sMeshSizes.emplace_back();
 			sMeshIndexTables.emplace_back();
-			
 		} else if (prefix == "v") {
 			specter::vec3f v;
 			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
-			sVertices.push_back(v);
+			vertices.push_back(v);
 			sMeshSize.vsize++;
 		} else if (prefix == "vt") {
 			// Some object files don't contain texture coordinates. In that case, face processing needs to be adjusted.
 			uvPresent = true;
 			specter::vec2f v;
 			lineStream >> v.x; lineStream >> v.y;
-			sTextureCoordinates.push_back(v);
+			uvs.push_back(v);
 			sMeshSize.tsize++;
 		} else if (prefix == "vn") {
 			// Some object files don't contain vertex normals. In that case, face processing needs to be adjusted.
 			normalsPresent = true;
 			specter::vec3f v;
 			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
-			sNormals.push_back(v);
+			normals.push_back(v);
 			sMeshSize.nsize++;
 		} else if (prefix == "f") {
 			if (uvPresent && normalsPresent) cList = ComponentList::ALL_COMPONENTS;
@@ -159,7 +202,15 @@ void Model::parse(const char* filename) {
 		std::string prefix;
 
 		lineStream >> prefix;
-		if (prefix == "o") {
+		if (prefix == "usemtl") {
+			std::string mtl_name;
+			lineStream >> mtl_name;
+			for (const auto& kv : mtl_map) {
+				if (mtl_name == kv.first) {
+					sMeshIndexTables.back().m = kv.second;
+				}
+			}
+		} else if (prefix == "o") {
 			std::string name;
 			lineStream >> name;
 			
@@ -180,17 +231,17 @@ void Model::parse(const char* filename) {
 		} else if (prefix == "v") {
 			specter::vec3f v;
 			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
-			sVertices.push_back(v);
+			vertices.push_back(v);
 			sMeshSize.vsize++;
 		} else if (prefix == "vt") {
 			specter::vec2f v;
 			lineStream >> v.x; lineStream >> v.y;
-			sTextureCoordinates.push_back(v);
+			uvs.push_back(v);
 			sMeshSize.tsize++;
 		} else if (prefix == "vn") {
 			specter::vec3f v;
 			lineStream >> v.x; lineStream >> v.y; lineStream >> v.z;
-			sNormals.push_back(v);
+			normals.push_back(v);
 			sMeshSize.nsize++;
 		} else if (prefix == "f") {
 			std::vector<std::string> lines;
@@ -290,14 +341,19 @@ void Model::parse(const char* filename) {
 
 	objfile.close();
 
+	std::cout << "Material names\n";
+	for (int i = 0; i < sMaterialNames.size(); ++i) {
+		std::cout << i << ": " << sMaterialNames[i] << '\n';
+	}
+
 	// Update the "MeshAttributeSize" for the last mesh. This has to be done, because 
 	// the stream ends before encountering another line with prefix "o". Therefore, 
 	// the last mesh's attribute sizes are not updated
 	addMAS(sMeshSizes.back(), sMeshSize);
 
-	vertices = std::move(sVertices);
-	normals = std::move(sNormals);
-	uvs = std::move(sTextureCoordinates);
+	vertices.shrink_to_fit();
+	normals.shrink_to_fit();
+	uvs.shrink_to_fit();
 	faces.shrink_to_fit();
 
 	mesh_attribute_sizes = std::move(sMeshSizes);

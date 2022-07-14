@@ -3,7 +3,6 @@
 #include "ambient_light.hpp"
 #include "camera.hpp"
 #include "dev/model.hpp"
-#include "obj.hpp"
 #include "point_light.hpp"
 #include "scene_descriptor.hpp"
 

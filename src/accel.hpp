@@ -1,5 +1,4 @@
 #pragma once
-#include "mesh.hpp"
 #include "octree.hpp"
 #include "ray.hpp"
 

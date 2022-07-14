@@ -199,6 +199,8 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 					intersection.v = v;
 					intersection.f = node->tri_indices[i];
 					intersection.p = ray.o + t * ray.d;
+					auto meshIndex = model->GetMeshIndexFromFace(node->tri_indices[i]);
+					intersection.mat_ptr = model->GetMaterial(meshIndex);
 				}
 			}
 		}

@@ -283,12 +283,20 @@ vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
 	}
 
 	Intersection its;
-	//its.mat_ptr = scene->mesh[0].GetMaterial();
 
 	if (!scene->accel.traceRay(ray, its)) {
 		return vec3(0.f);
 	} else {
-		return abs(its.n);
+		//return abs(its.n);
+		
+		Ray scattered;
+		vec3f attenuation;
+		if (its.mat_ptr->scatter(ray, its, scattered, attenuation)) {
+			return attenuation;
+		} else {
+			return vec3f(0.f);
+		}
+		
 		return scene->light->sample_light(scene->accel, its.p, its.n) * 0.3f;
 	}
 	
