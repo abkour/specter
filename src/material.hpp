@@ -12,8 +12,15 @@ public:
 
 	Material() = default;
 
-	virtual bool scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const = 0;
+	virtual vec3f GetAlbedo() const {
+		return vec3f(0.f);
+	}
 
+	virtual vec3f emitted(const float u, const float v, const vec3f& p) {
+		return vec3f(0.f);
+	}
+
+	virtual bool scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const = 0;
 };
 
 }

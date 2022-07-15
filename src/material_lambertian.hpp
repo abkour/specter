@@ -16,6 +16,10 @@ public:
 		: albedo(pAlbedo) 
 	{}
 
+	vec3f GetAlbedo() const override {
+		return albedo->value(0, 0, vec3f(0.f));
+	}
+
 	virtual bool scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const override;
 
 protected:

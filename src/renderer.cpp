@@ -46,6 +46,7 @@ void RTX_Renderer::run() {
 	// Run the integrator in a seperate thread
 	//renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 	renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
+	//renderThread = std::thread(&RTX_Renderer::dev_runDynamicST, this);
 
 
 	static float quadvertices[] =
@@ -110,7 +111,6 @@ void RTX_Renderer::run() {
 		
 		deltatime = glfwGetTime() - lasttime;
 		lasttime += deltatime;
-		std::cout << "deltatime: " << deltatime << '\n';
 
 		if (glfwGetKey(window.getWindow(), GLFW_KEY_W) == GLFW_PRESS) {
 			pictureMovementDirection.y = 1.f;
@@ -224,7 +224,7 @@ void RTX_Renderer::runDynamic() {
 						const unsigned sxoff = subi % nSamplesPerDirection;
 						const unsigned syoff = subi / nSamplesPerDirection;
 
-						specter::Ray ray = scene->camera.getRay(specter::vec2u(spx + sxoff, spy + syoff));
+						specter::Ray ray = scene->camera.getRay(specter::vec2f(spx + sxoff, spy + syoff));
 						specter::Intersection its;
 						intersections[index] = scene->accel.traceRay(ray, its) ? its : Intersection();
 						rays[index] = ray;
@@ -259,7 +259,7 @@ void RTX_Renderer::runDynamic() {
 
 								auto& ray = rays[index];
 								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								color += scene->light->sample_light(scene->accel, intersectionPoint, normal);
+								//color += scene->light->sample_light(scene->accel, intersectionPoint, normal);
 							}
 						}
 						const std::size_t index = y * scene->camera.resx() + x;
@@ -277,59 +277,79 @@ void RTX_Renderer::runDynamic() {
 }
 
 vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
-	
 	if (reflectionDepth <= 0) {
 		return vec3f(0.f);
 	}
 
 	Intersection its;
-
 	if (!scene->accel.traceRay(ray, its)) {
-		return vec3(0.f);
-	} else {
-		//return abs(its.n);
-		
-		Ray scattered;
-		vec3f attenuation;
-		if (its.mat_ptr->scatter(ray, its, scattered, attenuation)) {
-			return attenuation;
-		} else {
-			return vec3f(0.f);
-		}
-		
-		return scene->light->sample_light(scene->accel, its.p, its.n) * 0.3f;
-	}
-	
+		return vec3f(0.f);
+	} 
+
 	Ray scattered;
 	vec3f attenuation;
+	vec3f emitted = its.mat_ptr->emitted(its.u, its.v, its.p);
 	if (!its.mat_ptr->scatter(ray, its, scattered, attenuation)) {
-		return vec3f(0.f);
+		return emitted;
 	}
-	
-	return attenuation * dev_pixel_color(scattered, reflectionDepth - 1);
+
+	return emitted + attenuation * dev_pixel_color(scattered, reflectionDepth - 1);
+}
+
+void RTX_Renderer::dev_runDynamicST() {
+	std::cout << "[DEV] Rendering mesh (parallel)...\n";
+
+	unsigned reflectionDepth = 4;
+	for (int y = 0; y < scene->camera.resy(); ++y) {
+		if (terminateRendering.load()) return;
+		for (int x = 0; x < scene->camera.resx(); ++x) {
+			specter::Ray ray = scene->camera.getRay(specter::vec2f(x, y));
+			const std::size_t index = y * scene->camera.resx() + x;
+			frame[index] = dev_pixel_color(ray, reflectionDepth);
+		}
+	}
+
+	// Notify the rendering thread, that the contents of the frame buffer need updating.
+	std::unique_lock<std::mutex> lck(updateMtx);
+	updateFrame = true;
+	lck.unlock();
 }
 
 void RTX_Renderer::dev_runDynamic() {
 	std::cout << "[DEV] Rendering mesh (parallel)...\n";
 
-	unsigned reflectionDepth = 4;
+	//glEnable(GL_FRAMEBUFFER_SRGB);
+
+	unsigned int spp = 512;
+
+	unsigned reflectionDepth = 16;
 	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 		[&](tbb::blocked_range2d<int> r) 
 		{
 			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
 				if (terminateRendering.load()) return;
 				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					specter::Ray ray = scene->camera.getRay(specter::vec2u(x, y));
+					vec3f color(0.f);
+					for (int k = 0; k < spp; ++k) {
+						vec2f off = RandomEngine::get_random_float();
+						specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
+						color += dev_pixel_color(ray, reflectionDepth);
+					}
 					const std::size_t index = y * scene->camera.resx() + x;
-					frame[index] = dev_pixel_color(ray, reflectionDepth);
+					//frame[index] = color / (float)spp;
+					frame[index].x = std::sqrt(color.x / (float)spp);
+					frame[index].y = std::sqrt(color.y / (float)spp);
+					frame[index].z = std::sqrt(color.z / (float)spp);
 				}
 			}
 		});
 
-		// Notify the rendering thread, that the contents of the frame buffer need updating.
-		std::unique_lock<std::mutex> lck(updateMtx);
-		updateFrame = true;
-		lck.unlock();
+	std::cout << "[DEV] Finshed rendering!\n";
+
+	// Notify the rendering thread, that the contents of the frame buffer need updating.
+	std::unique_lock<std::mutex> lck(updateMtx);
+	updateFrame = true;
+	lck.unlock();
 }
 
 }

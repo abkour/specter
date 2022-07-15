@@ -7,6 +7,7 @@ namespace specter {
 
 Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	// 1. Initialize Light
+	/*
 	switch (sceneDescriptor.lightType) {
 	case SPECTER_AMBIENT_LIGHT:
 		light = std::make_shared<AmbientLight>(sceneDescriptor.lightSRGB);
@@ -25,7 +26,7 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	default:
 		throw std::runtime_error("Light descriptor in scene file doesn't specify a valid light type!");
 		break;
-	}
+	}*/
 	
 	// 2. Initialize camera
 	camera.setResolution(sceneDescriptor.screenResolution);

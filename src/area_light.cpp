@@ -2,7 +2,8 @@
 
 namespace specter {
 
-vec3f AreaLight::sample_light(const Accel& accel, const vec3f& point, const vec3f& normal) {
+/*
+vec3f AreaLight::scatter(const Accel& accel, const vec3f& point, const vec3f& normal) {
 	// We need to perform multiple shadow queries on the area light source.
 	// For now, we are doing a fixed number of queries, but this number can
 	// be adjusted based on the surface area of the light source (larger areas
@@ -19,7 +20,5 @@ vec3f AreaLight::sample_light(const Accel& accel, const vec3f& point, const vec3
 	float tmax = (area_center.x - shadowRay.o.x) / sdir.x;
 
 	return accel.traceShadowRayTmax(shadowRay, tmax) ? vec3f(0.f) : vec3f(1.f);
-}
-
-
+}*/
 }

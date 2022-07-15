@@ -20,7 +20,7 @@ vec3f CoordinateSystem::toLocal(const vec3f& v) {
 					v.x * nb.z + v.y * n.z + v.z * nt.z);
 }
 
-// Transform vector from world space to local space
+// Transform vector from local space to world space
 vec3f CoordinateSystem::toWorld(const vec3f& v) {
 	return v.x * nt + v.y * n + v.z * nb;
 }

@@ -19,7 +19,7 @@ struct Camera {
 
 	// Compute a ray originating from the eye position towards the pixelLocation
 	// in world space.
-	Ray getRay(const vec2u& pixelLocation);
+	Ray getRay(const vec2f& pixelLocation);
 
 	void setResolution(vec2u newResolution);
 	unsigned resx() const;

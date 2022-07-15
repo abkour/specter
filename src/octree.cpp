@@ -183,8 +183,7 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 		for (int i = 0; i < node->nTriangles; ++i) {
 			float u, v, t = std::numeric_limits<float>::max();
 			if (model->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
-				if (intersection.t > t) {
-					// Success, closest triangle found. Any further processing can stop.
+				if (intersection.t > t && t > 0.f) {
 					const unsigned i0 = model->GetFace(node->tri_indices[i] * 3).p;
 					const unsigned i1 = model->GetFace(node->tri_indices[i] * 3 + 1).p;
 					const unsigned i2 = model->GetFace(node->tri_indices[i] * 3 + 2).p;
@@ -193,7 +192,8 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 					const vec3f& v2 = model->GetVertex(i2);
 					const vec3f e0 = v1 - v0;
 					const vec3f e1 = v2 - v0;
-					intersection.n = normalize(cross(e0, e1));
+					//intersection.n = normalize(cross(e0, e1));
+					intersection.n = model->GetNormal(model->GetFace(node->tri_indices[i] * 3).n);
 					intersection.t = t;
 					intersection.u = u;
 					intersection.v = v;
@@ -228,9 +228,9 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 		// Sort sub-regions according to the intersection distance, in order 
 		// to perform a sorted descend.
 		std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
-
+		
 		for (int i = 0; i < nSubRegions; ++i) {
-			if (distanceToBoxes[i].distance > 0.f && distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
+			if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
 				if (i != nSubRegions - 1) {
 					// If a ray hits two bounding boxes at the same point, we have to traverse through both of them
 					// to find the closest triangle. This is an extremely rare edge case, but for correctness sake it needs to 

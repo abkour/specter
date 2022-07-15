@@ -1,4 +1,5 @@
 #include "model.hpp"
+#include "../area_light.hpp"
 #include "../vec2.hpp"
 #include <fstream>
 
@@ -51,7 +52,7 @@ protected:
 				tokens.push_back(line.substr(stringOffset, line.size() - stringOffset));
 				return tokens;
 			} else {
-				tokens.push_back(line.substr(stringOffset, substrLength - stringOffset));
+			tokens.push_back(line.substr(stringOffset, substrLength - stringOffset));
 			}
 			// Delimeter characters can occur as strings. To get to the next substring 
 			// we need to bridge the sequence of delimeter characters.
@@ -105,7 +106,7 @@ void Model::parse(const char* filename) {
 	};
 
 
-	auto GetMtllibPath = [GetPathWithoutFile](const std::string& path, const std::string& libname) 
+	auto GetMtllibPath = [GetPathWithoutFile](const std::string& path, const std::string& libname)
 	{
 		return GetPathWithoutFile(path) + libname;
 	};
@@ -150,7 +151,11 @@ void Model::parse(const char* filename) {
 					} else if (prefix == "Kd") {
 						vec3f rgb;
 						lineStream >> rgb.x >> rgb.y >> rgb.z;
-						materials.emplace_back(std::make_shared<Lambertian>(rgb));
+						if(sMaterialNames.back().find("Light") == std::string::npos) {
+							materials.emplace_back(std::make_shared<Lambertian>(rgb));
+						} else {
+							materials.emplace_back(std::make_shared<AreaLight>(rgb));
+						}
 						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
 					}
 				}

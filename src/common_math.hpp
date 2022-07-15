@@ -1,5 +1,5 @@
 /*
-	Any non-vector, non-matrix operations go in this file.
+	Any non-vector, non-matrix definitions/operations go in this file.
 */
 #pragma once
 

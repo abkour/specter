@@ -57,14 +57,15 @@ bool AxisAlignedBoundingBox::overlapsEdgeInclusive(const AxisAlignedBoundingBox&
 }
 
 bool AxisAlignedBoundingBox::rayIntersect(const Ray& ray, float& nearT, float& farT) const {
-	nearT = -std::numeric_limits<float>::infinity();
-	farT = std::numeric_limits<float>::infinity();
+	nearT = std::numeric_limits<float>::min();
+	farT = std::numeric_limits<float>::max();
 
 	for (int i = 0; i < 3; i++) {
 		float origin = ray.o[i];
 		float minVal = min[i];
 		float maxVal = max[i];
 
+		// If the ray is parallel to the bounding box, return early.
 		if (ray.d[i] == 0) {
 			if (origin < minVal || origin > maxVal)
 				return false;

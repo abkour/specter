@@ -30,9 +30,9 @@ void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float
 	topLeftPixel = t_norm - (right_norm * gx) - (up_norm * gy);
 }
 
-Ray Camera::getRay(const vec2u& pixelLocation) {
+Ray Camera::getRay(const vec2f& pixelLocation) {
 	vec3f origin = eyepos;
-	vec3f direction = topLeftPixel + (shiftx * (pixelLocation.x - 1)) + (shifty * (pixelLocation.y - 1));
+	vec3f direction = topLeftPixel + (shiftx * (pixelLocation.x - 1.f)) + (shifty * (pixelLocation.y - 1.f));
 	return Ray(origin, normalize(direction));
 }
 

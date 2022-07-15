@@ -19,7 +19,6 @@ struct Scene {
 
 	Accel accel;
 	Camera camera;
-	std::shared_ptr<Light> light;
 
 	bool dynamicFrame;
 	int reflection_rays;

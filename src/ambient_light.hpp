@@ -28,7 +28,6 @@ public:
 protected:
 	
 	vec3f ambient_color;
-	Sampler sampler;
 };
 
 }

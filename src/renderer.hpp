@@ -33,6 +33,7 @@ private:
 
 	// This is function in development.
 	void dev_runDynamic();
+	void dev_runDynamicST();
 	vec3f dev_pixel_color(const Ray& ray, int reflectionDepth);
 
 	std::mutex updateMtx;
