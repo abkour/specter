@@ -1,0 +1,24 @@
+{
+  "debug": {
+    "value": false,
+    "method": "normals"
+  },
+  "light": {
+    "type": "area",
+    "energy": [ 50000, 0, 0 ],
+    "pos0": [ -0.884011, 5.319334, -2.517968 ],
+    "pos1": [ -0.884011, 5.318497, -3.567968 ],
+    "pos2": [ 0.415989, 5.318497, -3.567968 ],
+    "pos3": [ 0.415989, 5.319334, -2.517968 ],
+    "reflection_rays": 64
+  },
+  "camera": {
+    "position": [ -0.379127, 2.02557, 5.50757 ],
+    "target": [ -0.779588, 2.26207, -2.03284 ],
+    "resolution": [ 1920, 1080 ],
+    "fov": 90,
+    "samples": 1
+  },
+  "path": "C://Users//flora//rsc//assets//scene//cornell-adj.scene",
+  "dynamicFrame": true
+}
