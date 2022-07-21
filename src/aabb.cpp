@@ -2,7 +2,7 @@
 
 namespace specter {
 
-AxisAlignedBoundingBox::AxisAlignedBoundingBox() 
+AxisAlignedBoundingBox::AxisAlignedBoundingBox()
 	: min(vec3f(0.f))
 	, max(vec3f(0.f))
 {}
@@ -49,43 +49,11 @@ bool AxisAlignedBoundingBox::containsEdgeInclusive(const vec3f& point) const {
 }
 
 bool AxisAlignedBoundingBox::overlaps(const AxisAlignedBoundingBox& other) const {
-	return min < other.max && max > other.min;
+	return min < other.max&& max > other.min;
 }
 
 bool AxisAlignedBoundingBox::overlapsEdgeInclusive(const AxisAlignedBoundingBox& other) const {
 	return min <= other.max && max >= other.min;
-}
-
-bool AxisAlignedBoundingBox::rayIntersect(const Ray& ray, float& nearT, float& farT) const {
-	nearT = std::numeric_limits<float>::min();
-	farT = std::numeric_limits<float>::max();
-
-	for (int i = 0; i < 3; i++) {
-		float origin = ray.o[i];
-		float minVal = min[i];
-		float maxVal = max[i];
-
-		// If the ray is parallel to the bounding box, return early.
-		if (ray.d[i] == 0) {
-			if (origin < minVal || origin > maxVal)
-				return false;
-		}
-		else {
-			float t1 = (minVal - origin) * ray.invd[i];
-			float t2 = (maxVal - origin) * ray.invd[i];
-
-			if (t1 > t2)
-				std::swap(t1, t2);
-
-			nearT = std::max(t1, nearT);
-			farT = std::min(t2, farT);
-
-			if (!(nearT <= farT))
-				return false;
-		}
-	}
-
-	return true;
 }
 
 vec3f AxisAlignedBoundingBox::center() const {
@@ -107,9 +75,14 @@ std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb) {
 
 
 AxisAlignedBoundingBox combine(const AxisAlignedBoundingBox& box0, const AxisAlignedBoundingBox& box1) {
-	return AxisAlignedBoundingBox(	minComponent(box0.min, box1.min),
-									maxComponent(box0.max, box1.max));
+	return AxisAlignedBoundingBox(minComponent(box0.min, box1.min),
+		maxComponent(box0.max, box1.max));
 }
 
+#include <immintrin.h>
+
+void manyAABBRayIntersect(const AxisAlignedBoundingBox* bboxes, Ray& ray, float* nearT, const int count) {
+
+}
 
 }

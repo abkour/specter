@@ -15,22 +15,12 @@ void testFilters();
 void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
+#include <bitset>
+#include <xmmintrin.h>
+
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		
-		specter::AxisAlignedBoundingBox aabb(specter::vec3f(0.f), specter::vec3f(1.f));
-		specter::Ray ray(specter::vec3f(0.5, 0.5f, 0.6f), specter::normalize(specter::vec3f(0.f, 0.f, 1.f)));
-
-		float tnear = 0.f, tmax = 0.f;
-		if (aabb.rayIntersect(ray, tnear, tmax)) {
-			std::cout << "Intersection with\n";
-			std::cout << "Tnear: " << tnear << "\nTmax: " << tmax << '\n';
-		} else {
-			std::cout << "No intersection";
-		}
-
-		//testFilters();
 		renderRTX(argv[1]);
 		//renderRasterized(argv[1]);
 	}
@@ -102,7 +92,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 	specter::vec3f eyeDir(0.f);
 	specter::View view(eyePos, eyeDir);
 
-	specter::mat4f proj = specter::perspective(specter::radians(45.f), 1.f, 0.1, 100.f);
+	specter::mat4f proj = specter::perspective(specter::radians(45.f), 1920.f / 1080.f, 0.1, 100.f);
 
 	float deltatime = 0.f;
 	float lasttime = 0.f;
@@ -137,7 +127,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 
 		auto movementDirection = getMovementDirection(window.getWindow());
 		if (movementDirection != specter::MovementDirection::None) {
-			view.move(movementDirection, deltatime * 10.f);
+			view.move(movementDirection, deltatime);
 		}
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "proj"), 1, GL_FALSE, &proj[0][0]);

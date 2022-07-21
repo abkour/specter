@@ -26,8 +26,8 @@ struct vec3 {
 	bool operator>(const vec3<T>& other) const;
 
 	vec3<T> operator+(const vec3<T>& other) const;
-	vec3<T> operator-(const vec3<T>& other) const;
-	vec3<T> operator*(const vec3<T>& other) const;
+	inline vec3<T> operator-(const vec3<T>& other) const;
+	inline vec3<T> operator*(const vec3<T>& other) const;
 	vec3<T> operator/(const vec3<T>& other) const;
 
 	vec3<T>& operator+=(const vec3<T>& other);
@@ -274,13 +274,23 @@ vec3<T> maxComponent(const vec3<T>& v0, const vec3<T>& v1) {
 }
 
 template<typename T>
-T minComponent(const vec3<T>& v) {
+inline T minComponent(const vec3<T>& v) {
 	return std::min(std::min(v.x, v.y), v.z);
 }
 
 template<typename T>
-T maxComponent(const vec3<T>& v) {
+inline T maxComponent(const vec3<T>& v) {
 	return std::max(std::max(v.x, v.y), v.z);
+}
+
+template<typename T>
+inline vec3<T> minv(const vec3<T>& v0, const vec3<T>& v1) {
+	return vec3<T>(std::min(v0.x, v1.x), std::min(v0.y, v1.y), std::min(v0.z, v1.z));
+}
+
+template<typename T>
+inline vec3<T> maxv(const vec3<T>& v0, const vec3<T>& v1) {
+	return vec3<T>(std::max(v0.x, v1.x), std::max(v0.y, v1.y), std::max(v0.z, v1.z));
 }
 
 template<typename T>

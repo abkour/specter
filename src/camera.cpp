@@ -25,8 +25,8 @@ void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float
 	
 	float samplesPerDirection = std::sqrt(nSamples);
 
-	shiftx = right_norm * ((2 * gx) / (((float)resolution.x - 1) * samplesPerDirection));
-	shifty = up_norm * ((2 * gy) / (((float)resolution.y - 1) * samplesPerDirection));
+	shiftx = right_norm * ((2 * gx) / (((float)resolution.x - 1)));
+	shifty = up_norm * ((2 * gy) / (((float)resolution.y - 1)));
 	topLeftPixel = t_norm - (right_norm * gx) - (up_norm * gy);
 }
 
@@ -49,10 +49,6 @@ unsigned Camera::resy() const {
 }
 
 void Camera::setSpp(const unsigned samplesPerPixel) {
-	unsigned sqrt_x = sqrtf(samplesPerPixel);
-	if (sqrt_x * sqrt_x != samplesPerPixel) {
-		throw std::runtime_error("Error. Specified number of samples has to be a square number!");
-	}
 	this->samplesPerPixel = samplesPerPixel;
 }
 

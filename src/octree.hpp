@@ -13,12 +13,12 @@ namespace specter {
 
 struct Octree {
 	
+	using layerIndex = int;
+	
 	// RAII -> set root to nullptr
 	Octree();
 	// RAII -> delete octree
 	~Octree();
-
-	static void dbg_print();
 
 	void build(std::shared_ptr<Model>& model);
 
@@ -33,13 +33,17 @@ struct Octree {
 	// Returns false otherwise.
 	bool traverseAnyTmax(const Model* mesh, const Ray& ray, const float t_max) const;
 
+	std::pair<layerIndex, int> GetMaxBreadth() const;
+	unsigned GetMaxDepth() const;
+
+	void printNodesPerLayer() const;
+
 private:
 
 	// Represents a single node in the octree data structure
 	// If the node is a leaf node, indices pointer should not be nullptr
 	struct Node {
-		AxisAlignedBoundingBox bbox;	// Bounding box of the subdivided space
-
+		sAABB* subboxes = nullptr;
 		Node** m_children = nullptr;	// Pointer to the children nodes
 		uint32_t* tri_indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
 		// Specifies the number of indices in the indices array, if it exists, otherwise specifies number of triangle indices
@@ -49,12 +53,21 @@ private:
 
 private:
 	
+	void MaxBreadthTraversal(Node* node, unsigned layer, unsigned* breadth) const;
+	unsigned MaxDepthTraversal(Node* node, unsigned maxDepth) const;
+
+private:
+
 	// Build the octree recursively. This is initially called by the public function build()
 	void buildRec(Node* node, const vec3f* vertices, const FaceElement* faces, const uint32_t* trianglePositions, int depth = 0);
 
 	// Traverse the octree recursively. This is initially called by the public function traverse()
 	void traverseRec(const Model* model, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit = false) const;
 	
+	void traverseEdge(const Model* model, Node* node, const Ray& ray, Intersection& its);
+
+	void computeTriangleIntersections(const Model* model, Node* node, const Ray& ray, Intersection& its) const;
+
 	// Traverse the octree recursively. This is initially called by the public function traverseAny()
 	void traverseAnyRec(const Model* model, Node* node, const Ray& ray, bool& intersectionFound) const;
 

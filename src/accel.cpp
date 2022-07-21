@@ -4,10 +4,6 @@
 
 namespace specter {
 
-void Accel::dbg_print() {
-	octree.dbg_print();
-}
-
 void Accel::addModel(std::shared_ptr<Model>& model) {
 	this->model = model;
 }

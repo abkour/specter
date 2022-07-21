@@ -11,8 +11,6 @@ class Accel {
 
 public:
 
-	void dbg_print();
-
 	// Adds model to the accelerating structure. 
 	// At the moment only one mesh is supported
 	void addModel(std::shared_ptr<Model>& model);
@@ -27,6 +25,10 @@ public:
 	bool traceShadowRay(const Ray& ray) const;
 
 	bool traceShadowRayTmax(const Ray& ray, const float t_max) const;
+
+	Octree& GetOctree() {
+		return octree;
+	}
 
 private:
 
