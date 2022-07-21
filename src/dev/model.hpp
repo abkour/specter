@@ -2,6 +2,7 @@
 #include "../aabb.hpp"
 #include "../material.hpp"
 #include "../material_lambertian.hpp"
+#include "../material_metal.hpp"
 #include "../ray.hpp"
 #include "../timer.hpp"
 

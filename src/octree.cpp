@@ -478,22 +478,23 @@ unsigned Octree::MaxDepthTraversal(Node* node, unsigned maxDepth) const {
 }
 
 void Octree::freeOctreeRec(Node* node) {
-	if (node == nullptr) {
-		std::cout << "This is null!\n";
-		return;
-	}
-
+	if (node == nullptr) return;
 	if (node->m_children != nullptr) {
-		for (int i = 0; i < 8; ++i) {
+		for (int i = 0; i < nSubRegions; ++i) {
 			if (node->m_children[i] != nullptr) {
 				freeOctreeRec(node->m_children[i]);
 			}
 		}
-		delete node->subboxes;
 		delete node->m_children;
+	} else {
+		if (node->tri_indices != nullptr) {
+			delete node->tri_indices;
+		}
+		if (node->subboxes != nullptr) {
+			delete node->subboxes;
+		}
+		delete node;
 	}
-	delete node->tri_indices;
-	delete node;
 }
 
 }

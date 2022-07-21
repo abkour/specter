@@ -67,6 +67,12 @@ protected:
 
 };
 
+enum class MaterialType : uint8_t {
+	Diffuse,
+	Metal,
+	Dielectric
+};
+
 void Model::parse(const char* filename) {
 	std::ifstream objfile(filename, std::ios::binary);
 	if (objfile.fail()) {
@@ -140,15 +146,22 @@ void Model::parse(const char* filename) {
 					std::cout << "Error!\n";
 				}
 				std::string line;
+				std::string mtlname;
+				MaterialType mtltype;
 				while (std::getline(libfile, line)) {
 					std::istringstream lineStream(line);
 					std::string prefix;
 					lineStream >> prefix;
 					if (prefix == "newmtl") {
-						std::string mtlname;
+						mtlname.clear();
 						lineStream >> mtlname;
+						if (mtlname.find("Metal") == std::string::npos) {
+							mtltype = MaterialType::Diffuse;
+						} else {
+							mtltype = MaterialType::Metal;
+						}
 						sMaterialNames.emplace_back(mtlname);
-					} else if (prefix == "Kd") {
+					} else if (prefix == "Kd" && mtltype == MaterialType::Diffuse) {
 						vec3f rgb;
 						lineStream >> rgb.x >> rgb.y >> rgb.z;
 						if(sMaterialNames.back().find("Light") == std::string::npos) {
@@ -156,6 +169,11 @@ void Model::parse(const char* filename) {
 						} else {
 							materials.emplace_back(std::make_shared<AreaLight>(rgb));
 						}
+						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
+					} else if (prefix == "Ks" && mtltype == MaterialType::Metal) {
+						vec3f rgb;
+						lineStream >> rgb.x >> rgb.y >> rgb.z;
+						materials.emplace_back(std::make_shared<Metal>(rgb));
 						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
 					}
 				}
