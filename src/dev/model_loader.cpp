@@ -3,6 +3,37 @@
 #include "../vec2.hpp"
 #include <fstream>
 
+namespace helper {
+
+std::string GetPathWithoutFile(const std::string& path) {
+	auto delim_pos = path.find_last_of("/");
+	return path.substr(0, delim_pos + 1);
+}
+
+std::string GetMtllibPath(const std::string& path, const std::string& libname) {
+	return GetPathWithoutFile(path) + libname;
+}
+
+static std::string ParseMtllibSuffix(std::istringstream& isstr, const char* filename) {
+	std::string libname;
+	isstr >> libname;
+	return GetMtllibPath(filename, libname);
+}
+
+static specter::vec2f ParseVec2(std::istringstream& isstr) {
+	specter::vec2f v;
+	isstr >> v.x >> v.y;
+	return v;
+}
+
+static specter::vec3f ParseVec3(std::istringstream& isstr) {
+	specter::vec3f v;
+	isstr >> v.x >> v.y >> v.z;
+	return v;
+}
+
+}
+
 namespace specter {
 
 enum class ComponentList {
@@ -52,7 +83,7 @@ protected:
 				tokens.push_back(line.substr(stringOffset, line.size() - stringOffset));
 				return tokens;
 			} else {
-			tokens.push_back(line.substr(stringOffset, substrLength - stringOffset));
+				tokens.push_back(line.substr(stringOffset, substrLength - stringOffset));
 			}
 			// Delimeter characters can occur as strings. To get to the next substring 
 			// we need to bridge the sequence of delimeter characters.
@@ -67,12 +98,6 @@ protected:
 
 };
 
-enum class MaterialType : uint8_t {
-	Diffuse,
-	Metal,
-	Dielectric
-};
-
 void Model::parse(const char* filename) {
 	std::ifstream objfile(filename, std::ios::binary);
 	if (objfile.fail()) {
@@ -83,38 +108,14 @@ void Model::parse(const char* filename) {
 
 	std::vector<MeshAttributeSizes> sMeshSizes;
 	std::vector<MeshIndexTable> sMeshIndexTables;
-	std::vector<std::string> sMeshNames;
-	std::vector<std::string> sMaterialNames;
-	std::vector<std::pair<std::string, uint32_t>> mtl_map;
+	MaterialMap mtl_map;
 
-	auto addMAS = [](MeshAttributeSizes& dst, const MeshAttributeSizes& src)
-	{
+	auto addMAS = [](MeshAttributeSizes& dst, const MeshAttributeSizes& src) {
 		dst.fsize += src.fsize;
-		dst.msize += src.msize;
-		dst.nsize += src.nsize;
-		dst.tsize += src.tsize;
-		dst.vsize += src.vsize;
 	};
 
-	auto assignMIT = [](MeshIndexTable& dst, const MeshAttributeSizes& src)
-	{
+	auto assignMIT = [](MeshIndexTable& dst, const MeshAttributeSizes& src) {
 		dst.f = src.fsize;
-		dst.m = src.msize;
-		dst.n = src.nsize;
-		dst.t = src.tsize;
-		dst.v = src.vsize;
-	};
-
-	auto GetPathWithoutFile = [](const std::string& path)
-	{
-		auto delpos = path.find_last_of("/");
-		return path.substr(0, delpos + 1);
-	};
-
-
-	auto GetMtllibPath = [GetPathWithoutFile](const std::string& path, const std::string& libname)
-	{
-		return GetPathWithoutFile(path) + libname;
 	};
 
 	bool normalsPresent = false;
@@ -132,85 +133,35 @@ void Model::parse(const char* filename) {
 	while (std::getline(objfile, line)) {
 
 		std::istringstream lineStream(line);
+		
 		std::string prefix;
-
 		lineStream >> prefix;
 
 		if (prefix == "mtllib") {
-			std::string libname;
-			lineStream >> libname;
-			{
-				std::string libpath = GetMtllibPath(filename, libname);
-				std::ifstream libfile(libpath.c_str(), std::ios::binary);
-				if (libfile.fail()) {
-					std::cout << "Error!\n";
-				}
-				std::string line;
-				std::string mtlname;
-				MaterialType mtltype;
-				while (std::getline(libfile, line)) {
-					std::istringstream lineStream(line);
-					std::string prefix;
-					lineStream >> prefix;
-					if (prefix == "newmtl") {
-						mtlname.clear();
-						lineStream >> mtlname;
-						if (mtlname.find("Metal") == std::string::npos) {
-							mtltype = MaterialType::Diffuse;
-						} else {
-							mtltype = MaterialType::Metal;
-						}
-						sMaterialNames.emplace_back(mtlname);
-					} else if (prefix == "Kd" && mtltype == MaterialType::Diffuse) {
-						vec3f rgb;
-						lineStream >> rgb.x >> rgb.y >> rgb.z;
-						if(sMaterialNames.back().find("Light") == std::string::npos) {
-							materials.emplace_back(std::make_shared<Lambertian>(rgb));
-						} else {
-							materials.emplace_back(std::make_shared<AreaLight>(rgb));
-						}
-						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
-					} else if (prefix == "Ks" && mtltype == MaterialType::Metal) {
-						vec3f rgb;
-						lineStream >> rgb.x >> rgb.y >> rgb.z;
-						materials.emplace_back(std::make_shared<Metal>(rgb));
-						mtl_map.emplace_back(sMaterialNames.back(), mtl_map.size());
-					}
-				}
-			}
+			auto libpath = helper::ParseMtllibSuffix(lineStream, filename);
+			parseMaterialLibrary(libpath.c_str(), mtl_map);
 		} else if (prefix == "usemtl") {
 			std::string mtl_name;
 			lineStream >> mtl_name;
+			
+			sMeshSizes.emplace_back();
+			sMeshIndexTables.emplace_back();
+
 			for (const auto& kv : mtl_map) {
 				if (mtl_name == kv.first) {
 					sMeshIndexTables.back().m = kv.second;
 				}
 			}
-		} else if (prefix == "o") {
-			std::string name;
-			lineStream >> name;
-			sMeshNames.emplace_back(std::move(name));
-			sMeshSizes.emplace_back();
-			sMeshIndexTables.emplace_back();
 		} else if (prefix == "v") {
-			specter::vec3f v;
-			lineStream >> v.x >> v.y >> v.z;
-			vertices.push_back(v);
-			sMeshSize.vsize++;
+			vertices.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "vt") {
 			// Some object files don't contain texture coordinates. In that case, face processing needs to be adjusted.
 			uvPresent = true;
-			specter::vec2f v;
-			lineStream >> v.x >> v.y;
-			uvs.push_back(v);
-			sMeshSize.tsize++;
+			uvs.push_back(helper::ParseVec2(lineStream));
 		} else if (prefix == "vn") {
 			// Some object files don't contain vertex normals. In that case, face processing needs to be adjusted.
 			normalsPresent = true;
-			specter::vec3f v;
-			lineStream >> v.x >> v.y >> v.z;
-			normals.push_back(v);
-			sMeshSize.nsize++;
+			normals.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "f") {
 			if (uvPresent && normalsPresent) cList = ComponentList::ALL_COMPONENTS;
 			if (uvPresent && !normalsPresent) cList = ComponentList::NORMALS_MISSING;
@@ -228,22 +179,19 @@ void Model::parse(const char* filename) {
 		if (prefix == "usemtl") {
 			std::string mtl_name;
 			lineStream >> mtl_name;
-			for (const auto& kv : mtl_map) {
-				if (mtl_name == kv.first) {
-					sMeshIndexTables.back().m = kv.second;
-				}
-			}
-		} else if (prefix == "o") {
-			std::string name;
-			lineStream >> name;
 			
 			// Add the size of the mesh to the MeshAttributeSizes object
 			addMAS(sMeshSizes.back(), sMeshSize);
 
 			// Add an additional mesh for processing
-			sMeshNames.emplace_back(std::move(name));
 			sMeshSizes.emplace_back();
 			sMeshIndexTables.emplace_back();
+			
+			for (const auto& kv : mtl_map) {
+				if (mtl_name == kv.first) {
+					sMeshIndexTables.back().m = kv.second;
+				}
+			}
 
 			// Update the aggregate size of the model
 			addMAS(sAggregateSize, sMeshSize);
@@ -252,20 +200,11 @@ void Model::parse(const char* filename) {
 
 			sMeshSize = MeshAttributeSizes();
 		} else if (prefix == "v") {
-			specter::vec3f v;
-			lineStream >> v.x >> v.y >> v.z;
-			vertices.push_back(v);
-			sMeshSize.vsize++;
+			vertices.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "vt") {
-			specter::vec2f v;
-			lineStream >> v.x >> v.y;
-			uvs.push_back(v);
-			sMeshSize.tsize++;
+			uvs.push_back(helper::ParseVec2(lineStream));
 		} else if (prefix == "vn") {
-			specter::vec3f v;
-			lineStream >> v.x >> v.y >> v.z;
-			normals.push_back(v);
-			sMeshSize.nsize++;
+			normals.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "f") {
 			std::vector<std::string> lines;
 			// wavefront obj files are allowed to have faces defined as triangle fans. 
@@ -364,11 +303,6 @@ void Model::parse(const char* filename) {
 
 	objfile.close();
 
-	std::cout << "Material names\n";
-	for (int i = 0; i < sMaterialNames.size(); ++i) {
-		std::cout << i << ": " << sMaterialNames[i] << '\n';
-	}
-
 	// Update the "MeshAttributeSize" for the last mesh. This has to be done, because 
 	// the stream ends before encountering another line with prefix "o". Therefore, 
 	// the last mesh's attribute sizes are not updated
@@ -381,7 +315,6 @@ void Model::parse(const char* filename) {
 
 	mesh_attribute_sizes = std::move(sMeshSizes);
 	mesh_indices = std::move(sMeshIndexTables);
-	mesh_names = std::move(sMeshNames);
 	nMeshes = mesh_attribute_sizes.size();
 
 	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\t\t(Triangles: " << faces.size() / 3 << ", Vertices: " << vertices.size() << ")\n";
@@ -396,6 +329,44 @@ void Model::parse(const char* filename) {
 		std::cout << "Note: Normals and UV coordinates missing!\n";
 	default:
 		break;
+	}
+}
+
+void Model::parseMaterialLibrary(const char* filename, MaterialMap& mtl_map) {
+	std::ifstream libfile(filename, std::ios::binary);
+	if (libfile.fail()) {
+		std::cout << "Error!\n";
+	}
+	std::string line;
+	std::string mtlname;
+	MaterialType mtltype;
+	while (std::getline(libfile, line)) {
+		std::istringstream lineStream(line);
+		std::string prefix;
+		lineStream >> prefix;
+		if (prefix == "newmtl") {
+			mtlname.clear();
+			lineStream >> mtlname;
+			if (mtlname.find("Metal") != std::string::npos) {
+				mtltype = MaterialType::Metal;
+			} else {
+				mtltype = MaterialType::Dielectric;
+			}
+		} else if (prefix == "Kd" && mtltype == MaterialType::Dielectric) {
+			vec3f rgb;
+			lineStream >> rgb.x >> rgb.y >> rgb.z;
+			if (mtlname.find("Light") == std::string::npos) {
+				materials.emplace_back(std::make_shared<Lambertian>(rgb));
+			} else {
+				materials.emplace_back(std::make_shared<AreaLight>(rgb));
+			}
+			mtl_map.emplace_back(mtlname, mtl_map.size());
+		} else if (prefix == "Ks" && mtltype == MaterialType::Metal) {
+			vec3f rgb;
+			lineStream >> rgb.x >> rgb.y >> rgb.z;
+			materials.emplace_back(std::make_shared<Metal>(rgb));
+			mtl_map.emplace_back(mtlname, mtl_map.size());
+		}
 	}
 }
 

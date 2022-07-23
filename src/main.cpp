@@ -57,10 +57,6 @@ void renderRasterized(const char* scene_descriptor_file) {
 	auto nIndices = scene.model->GetFaceCount();
 	auto nVertices = scene.model->GetVertexCount();
 
-	for (int i = 0; i < scene.model->GetNumberOfMeshes(); ++i) {
-		std::cout << "Mesh: " << scene.model->GetMeshName(i) << '\n';
-	}
-
 	std::vector<unsigned> vertexIndices;
 	vertexIndices.resize(nIndices);
 	for (int i = 0; i < vertexIndices.size(); ++i) {

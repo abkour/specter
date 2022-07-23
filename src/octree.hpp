@@ -43,12 +43,37 @@ private:
 	// Represents a single node in the octree data structure
 	// If the node is a leaf node, indices pointer should not be nullptr
 	struct Node {
+		
+		void CreateValidNode(const sAABB* superRegion, int superRegionIdx, const std::size_t TriangleSize);
+
+		void CreateInvalidNode() {
+			this->nTriangles = 0;
+		}
+
+		bool IsValid() const {
+			return nTriangles != 0;
+		}
+		
+		bool IsInterior() const {
+			return subboxes != nullptr && m_children != nullptr;
+		}
+		
+		bool IsLeaf() const { 
+			return tri_indices != nullptr;
+		}
+
+		bool HasChildren() const {
+			return m_children != nullptr;
+		}
+		
 		sAABB* subboxes = nullptr;
-		Node** m_children = nullptr;	// Pointer to the children nodes
-		uint32_t* tri_indices = nullptr;	// Pointer to the indices. This is nullptr for interior nodes
+		// Pointer to the children nodes. This is nullptr for leaf nodes.
+		Node* m_children = nullptr;
+		// Pointer to the indices. This is nullptr for interior nodes
+		uint32_t* tri_indices = nullptr;
 		// Specifies the number of indices in the indices array, if it exists, otherwise specifies number of triangle indices
 		// used during octree constructuin
-		uint32_t nTriangles;
+		uint32_t nTriangles = 0;
 	};
 
 private:

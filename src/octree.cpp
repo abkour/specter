@@ -2,10 +2,10 @@
 
 #include <numeric>	// For std::iota
 
-namespace specter {
-
 #define nMaxRayAABBIntersections (4)
 #define nSubRegions (8)
+
+namespace specter {
 
 static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	vec3f minResult;
@@ -131,6 +131,14 @@ static void constructSubRegion(const sAABB* superRegion, int i, sAABB* minorRegi
 	minorRegion->maxz[k] = subregion.max.z;
 }
 
+void Octree::Node::CreateValidNode(const sAABB* superRegion, int superRegionIdx, const std::size_t TriangleSize) {
+	nTriangles = TriangleSize;
+	subboxes = new sAABB;
+	for (int k = 0; k < nSubRegions; ++k) {
+		constructSubRegion(superRegion, superRegionIdx, subboxes, k);
+	}
+}
+
 Octree::Octree() {
 	root = nullptr;
 }
@@ -141,8 +149,7 @@ Octree::~Octree() {
 
 void Octree::build(std::shared_ptr<Model>& model) {
 	root = new Node;
-	// This creates an invalid bbox that is then corrected in the loop
-	
+
 	AxisAlignedBoundingBox modelbox = model->computeBoundingBox();
 	
 	root->nTriangles = model->GetFaceCount() / 3;
@@ -163,12 +170,21 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		return;
 	}
 
+	// This is the termination condition for the recursive building function.
+	// The node->tri_indices array is now no longer nullptr. This fact, is used
+	// to identify that a node is a leaf node.
 	if (node->nTriangles <= 10 || depth > maxDepth) {
 		node->tri_indices = new uint32_t[node->nTriangles];
 		std::memcpy(node->tri_indices, trianglePositions, sizeof(uint32_t) * node->nTriangles);
 		return;
 	}
 
+	// Determine the number of triangles that are within a subregion and 
+	// store the result inside of the array. We compute the minimal bounding box 
+	// of the triangle and test for overlap with the bounding box of 
+	// the subregion to determine whether it belongs to the subregion or not.
+	// Note, triangles that span multiple subregions belong to all of those
+	// subregions.
 	std::vector<std::vector<uint32_t>> subRegionTriangleCounts(nSubRegions);
 	for (int i = 0; i < node->nTriangles; i++) {
 		uint32_t i0 = faces[trianglePositions[i] * 3 + 0].p;
@@ -186,19 +202,13 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 		}
 	}
 
-	node->m_children = new Node*[nSubRegions];
-	for (int i = 0; i < 8; ++i) {
+	node->m_children = new Node[nSubRegions];
+	for (int i = 0; i < nSubRegions; ++i) {
 		if (subRegionTriangleCounts[i].size() != 0) {
-			node->m_children[i] = new Node;
-			node->m_children[i]->subboxes = new sAABB;
-			for (int k = 0; k < 8; ++k) {
-				constructSubRegion(node->subboxes, i, node->m_children[i]->subboxes, k);
-			}
-			node->m_children[i]->nTriangles = subRegionTriangleCounts[i].size();
-			buildRec(node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
+			node->m_children[i].CreateValidNode(node->subboxes, i, subRegionTriangleCounts[i].size());
+			buildRec(&node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
 		} else {
-			node->m_children[i] = nullptr;
-			node->nTriangles = std::numeric_limits<unsigned int>::max();
+			node->m_children[i].CreateInvalidNode();
 		}
 	}
 }
@@ -212,9 +222,13 @@ struct IndexDistancePair {
 	int index;
 	float distance = std::numeric_limits<float>::max();
 
-friend bool operator<(const IndexDistancePair& p0, const IndexDistancePair& p1) {
-	return p0.distance < p1.distance;
-}
+	bool isValid() const {
+		return distance != std::numeric_limits<float>::max();
+	}
+
+	friend bool operator<(const IndexDistancePair& p0, const IndexDistancePair& p1) {
+		return p0.distance < p1.distance;
+	}
 };
 
 // Implements insertion sort to sort the array
@@ -245,8 +259,8 @@ static void sortIDP_swap(IndexDistancePair* ptr, const uint32_t num)
 void Octree::computeTriangleIntersections(const Model* model, Node* node, const Ray& ray, Intersection& its) const {
 	float u, v, t = std::numeric_limits<float>::max();
 	for (int i = 0; i < node->nTriangles; ++i) {
-		uint32_t triIndex = node->tri_indices[i];
-		if (model->rayIntersection(ray, triIndex, u, v, t)) {
+		uint32_t triangleIndex = node->tri_indices[i];
+		if (model->rayIntersection(ray, triangleIndex, u, v, t)) {
 			if (its.t > t && t > 0.f) {
 				its.n = model->GetNormal(model->GetFace(node->tri_indices[i] * 3).n);
 				its.t = t;
@@ -263,16 +277,16 @@ void Octree::computeTriangleIntersections(const Model* model, Node* node, const 
 
 void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) const {
 	IndexDistancePair distanceToBoxes[nSubRegions];
-	alignas(32) float nearT[8];
-	alignas(32) float farT[8];
-	for (int i = 0; i < 8; ++i) {
+	alignas(32) float nearT[nSubRegions];
+	alignas(32) float farT[nSubRegions];
+	for (int i = 0; i < nSubRegions; ++i) {
 		nearT[i] = std::numeric_limits<float>::min();
 		farT[i] = std::numeric_limits<float>::max();
 	}
 
 	node->subboxes->rayIntersect(ray, nearT, farT);
 
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i < nSubRegions; ++i) {
 		if (nearT[i] <= farT[i]) {
 			distanceToBoxes[i].distance = nearT[i];
 			distanceToBoxes[i].index = i;
@@ -284,12 +298,7 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 	std::sort(std::begin(distanceToBoxes), std::end(distanceToBoxes));
 
 	for (int i = 0; i < nMaxRayAABBIntersections; ++i) {
-		if (distanceToBoxes[i].distance != std::numeric_limits<float>::max()) {
-
-			if (node->m_children[distanceToBoxes[i].index] == nullptr) {
-				continue;
-			}
-
+		if (distanceToBoxes[i].isValid()) {
 			// In case a ray intersects two bounding boxes at the same point, the ray will 
 			// only exit one of the boxes. We can find that out by repeating the 
 			// intersection test on either of the boxes and reading the far value.
@@ -299,27 +308,24 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 			if (distanceToBoxes[i].distance == distanceToBoxes[i + 1].distance) {
 				float near, far;
 				node->subboxes->rayIntersect(ray, near, far, i);
-				if (far != std::numeric_limits<float>::max()) {
-					if (node->m_children[distanceToBoxes[i].index]->tri_indices != nullptr) {
-						computeTriangleIntersections(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
-					} else {
-						traverseRec(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
-					}
+				int j = i;
+				if (far == std::numeric_limits<float>::max()) {
+					++j;
+				}
+
+				if (node->m_children[distanceToBoxes[j].index].IsInterior()) {
+					traverseRec(model, &node->m_children[distanceToBoxes[j].index], ray, intersection);
 				} else {
-					if (node->m_children[distanceToBoxes[i + 1].index]->tri_indices != nullptr) {
-						computeTriangleIntersections(model, node->m_children[distanceToBoxes[i + 1].index], ray, intersection);
-					} else {
-						traverseRec(model, node->m_children[distanceToBoxes[i + 1].index], ray, intersection);
-					}
+					computeTriangleIntersections(model, &node->m_children[distanceToBoxes[j].index], ray, intersection);
 				}
 				// We can skip the bounding box the ray is not entering by incrementing the 
 				// loop counter.
 				++i;
 			} else {
-				if (node->m_children[distanceToBoxes[i].index]->tri_indices != nullptr) {
-					computeTriangleIntersections(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
+				if (node->m_children[distanceToBoxes[i].index].IsInterior()) {
+					traverseRec(model, &node->m_children[distanceToBoxes[i].index], ray, intersection);
 				} else {
-					traverseRec(model, node->m_children[distanceToBoxes[i].index], ray, intersection);
+					computeTriangleIntersections(model, &node->m_children[distanceToBoxes[i].index], ray, intersection);
 				}
 			}
 		} else {
@@ -367,10 +373,10 @@ void Octree::traverseAnyRec(const Model* model, Node* node, const Ray& ray, bool
 		}
 
 		for (int i = 0; i < nSubRegions; ++i) {
-			if (node->m_children[i] != nullptr) {
+			if (!node->m_children[i].IsLeaf()) {
 				float near, far;
 				if (node->subboxes->rayIntersect(ray, near, far, i)) {
-					traverseAnyRec(model, node->m_children[i], ray, intersectionFound);
+					traverseAnyRec(model, &node->m_children[i], ray, intersectionFound);
 				}
 			}
 		}
@@ -415,10 +421,10 @@ void Octree::traverseAnyTmaxRec(const Model* model, Node* node, const Ray& ray, 
 		}
 
 		for (int i = 0; i < nSubRegions; ++i) {
-			if (node->m_children[i] != nullptr) {
+			if (!node->m_children[i].IsLeaf()) {
 				float near, far;
 				if (node->subboxes->rayIntersect(ray, near, far, i)) {
-					traverseAnyTmaxRec(model, node->m_children[i], ray, t_max, intersectionFound);
+					traverseAnyTmaxRec(model, &node->m_children[i], ray, t_max, intersectionFound);
 				}
 			}
 		}
@@ -454,8 +460,8 @@ void Octree::MaxBreadthTraversal(Node* node, unsigned layer, unsigned* breadth) 
 	breadth[layer]++;
 	for (int i = 0; i < nSubRegions; ++i) {
 		if (node->m_children == nullptr) break;
-		if (node->m_children[i] != nullptr) {
-			MaxBreadthTraversal(node->m_children[i], layer + 1, breadth);
+		if (!node->m_children[i].IsLeaf()) {
+			MaxBreadthTraversal(&node->m_children[i], layer + 1, breadth);
 		}
 	}
 }
@@ -470,30 +476,26 @@ unsigned Octree::MaxDepthTraversal(Node* node, unsigned maxDepth) const {
 		if (node->m_children == nullptr) {
 			break;
 		}
-		if (node->m_children[i] != nullptr) {
-			localMaxDepth = std::max(localMaxDepth, MaxDepthTraversal(node->m_children[i], maxDepth + 1));
+		if (!node->m_children[i].IsLeaf()) {
+			localMaxDepth = std::max(localMaxDepth, MaxDepthTraversal(&node->m_children[i], maxDepth + 1));
 		}
 	}
 	return localMaxDepth;
 }
 
 void Octree::freeOctreeRec(Node* node) {
-	if (node == nullptr) return;
-	if (node->m_children != nullptr) {
-		for (int i = 0; i < nSubRegions; ++i) {
-			if (node->m_children[i] != nullptr) {
-				freeOctreeRec(node->m_children[i]);
-			}
-		}
-		delete node->m_children;
+	if (node->IsLeaf()) {
+		delete[] node->tri_indices;
 	} else {
-		if (node->tri_indices != nullptr) {
-			delete node->tri_indices;
-		}
-		if (node->subboxes != nullptr) {
-			delete node->subboxes;
-		}
-		delete node;
+		// Interior node
+		// Traverse down until we meet a leaf node
+		delete[] node->subboxes;
+			for (int i = 0; i < nSubRegions; ++i) {
+				if (node->m_children[i].IsValid()) {
+					freeOctreeRec(&node->m_children[i]);
+				}
+			}
+		delete[] node->m_children;
 	}
 }
 

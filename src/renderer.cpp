@@ -41,19 +41,17 @@ void RTX_Renderer::run() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
 
-	auto octree = scene->accel.GetOctree();
+	auto* octree = scene->accel.GetOctree();
 
 	std::cout << "Octree statistics\n";
-	std::cout << "Max depth: " << octree.GetMaxDepth() << '\n';
-	octree.printNodesPerLayer();
+	std::cout << "Max depth: " << octree->GetMaxDepth() << '\n';
+	octree->printNodesPerLayer();
 
 	//
 	//
 	// Run the integrator in a seperate thread
 	//renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 	renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
-	//renderThread = std::thread(&RTX_Renderer::dev_runDynamicST, this);
-
 
 	static float quadvertices[] =
 	{
@@ -302,76 +300,40 @@ vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
 	return emitted + attenuation * dev_pixel_color(scattered, reflectionDepth - 1);
 }
 
-void RTX_Renderer::dev_runDynamicST() {
-	std::cout << "[DEV] Rendering mesh (scalar)...\n";
-	
-	Timer timer;
-
-	unsigned int spp = 32;
-	unsigned reflectionDepth = 16;
-	for (int y = 0; y < scene->camera.resy(); ++y) {
-		if (terminateRendering.load()) return;
-		for (int x = 0; x < scene->camera.resx(); ++x) {
-			vec3f color(0.f);
-			for (int k = 0; k < spp; ++k) {
-				vec2f off = RandomEngine::get_random_float();
-				specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
-				if (x >= 700 && x <= 900 && y >= 500 && y <= 700) {
-					color = vec3f(1.f);
-				} else {
-					color += dev_pixel_color(ray, reflectionDepth);
-				}
-			}
-			const std::size_t index = y * scene->camera.resx() + x;
-			//frame[index] = color / (float)spp;
-			frame[index].x = std::sqrt(color.x / (float)spp);
-			frame[index].y = std::sqrt(color.y / (float)spp);
-			frame[index].z = std::sqrt(color.z / (float)spp);
-		}
-	}
-
-	std::cout << "[DEV] Finshed rendering!\n";
-	std::cout << "[DEV] Elapsed time: " << timer.elapsedTime() << '\n';
-
-	// Notify the rendering thread, that the contents of the frame buffer need updating.
-	std::unique_lock<std::mutex> lck(updateMtx);
-	updateFrame = true;
-	lck.unlock();
-}
-
 void RTX_Renderer::dev_runDynamic() {
 	std::cout << "[DEV] Rendering mesh (parallel)...\n";
 
+	std::vector<vec3f> cumulativeColor;
+	cumulativeColor.resize(frame.size());
+	
 	Timer timer;
 
-	unsigned int spp = scene->camera.spp();
 	unsigned reflectionDepth = 16;
-	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
-		[&](tbb::blocked_range2d<int> r) {
-			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-				if (terminateRendering.load()) return;
-				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					vec3f color(0.f);
-					for (int k = 0; k < spp; ++k) {
+	for (int k = 0; k < scene->camera.spp(); ++k) {
+		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
+			[&](tbb::blocked_range2d<int> r) {
+				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+					if (terminateRendering.load()) return;
+					for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 						vec2f off = RandomEngine::get_random_float();
 						specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
-						color += dev_pixel_color(ray, reflectionDepth);
+						
+						const std::size_t index = y * scene->camera.resx() + x;
+						cumulativeColor[index] += dev_pixel_color(ray, reflectionDepth);
+						
+						frame[index].x = std::sqrt(cumulativeColor[index].x / ((float)k + 1.f));
+						frame[index].y = std::sqrt(cumulativeColor[index].y / ((float)k + 1.f));
+						frame[index].z = std::sqrt(cumulativeColor[index].z / ((float)k + 1.f));
 					}
-					const std::size_t index = y * scene->camera.resx() + x;
-					frame[index].x = std::sqrt(color.x / (float)spp);
-					frame[index].y = std::sqrt(color.y / (float)spp);
-					frame[index].z = std::sqrt(color.z / (float)spp);
 				}
-			}
-		});
-
+			});
+		// Notify the rendering thread, that the contents of the frame buffer need updating.
+		std::unique_lock<std::mutex> lck(updateMtx);
+		updateFrame = true;
+		lck.unlock();
+	}
 	std::cout << "[DEV] Finshed rendering!\n";
 	std::cout << "[DEV] Elapsed time: " << timer.elapsedTime() << '\n';
-
-	// Notify the rendering thread, that the contents of the frame buffer need updating.
-	std::unique_lock<std::mutex> lck(updateMtx);
-	updateFrame = true;
-	lck.unlock();
 }
 
 }

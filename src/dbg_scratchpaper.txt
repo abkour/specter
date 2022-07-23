@@ -29,3 +29,13 @@ minx: 0x0000115edc1a3380 {-3.51401091, -3.51401091, -3.51401091, -3.51401091, -3
     maxz: 0x0000115edc1a3420 {0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, ...}
 
 Note: The initial subdivision is computed correctly.
+
+
+
+
+
+Good obj files:
+
+    - fireplace_room
+    - conference
+    - 

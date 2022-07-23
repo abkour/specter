@@ -26,8 +26,8 @@ public:
 
 	bool traceShadowRayTmax(const Ray& ray, const float t_max) const;
 
-	Octree& GetOctree() {
-		return octree;
+	Octree* GetOctree() {
+		return &octree;
 	}
 
 private:
