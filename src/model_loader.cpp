@@ -1,6 +1,6 @@
 #include "model.hpp"
-#include "../area_light.hpp"
-#include "../vec2.hpp"
+#include "area_light.hpp"
+#include "vec2.hpp"
 #include <fstream>
 
 namespace helper {
@@ -56,7 +56,7 @@ static specter::vec3f ParseVec3(std::istringstream& isstr) {
 
 namespace specter {
 
-enum class ComponentList {
+enum class ComponentList : uint8_t {
 	ALL_COMPONENTS = 0, UV_MISSING, NORMALS_MISSING, ONLY_POSITIONS
 };
 
@@ -359,7 +359,6 @@ void Model::parseMaterialLibrary(const char* filename, MaterialMap& mtl_map) {
 		std::string prefix;
 		lineStream >> prefix;
 		if (prefix == "newmtl") {
-			mtlname.clear();
 			lineStream >> mtlname;
 			if (mtlname.find("Metal") != std::string::npos) {
 				mtltype = MaterialType::Metal;

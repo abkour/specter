@@ -1,7 +1,7 @@
 #pragma once
 #include "aabb.hpp"
 #include "common_math.hpp"
-#include "dev/model.hpp"
+#include "model.hpp"
 #include "vec3.hpp"
 
 #include <tbb/blocked_range.h>
