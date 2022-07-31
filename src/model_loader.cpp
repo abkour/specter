@@ -3,7 +3,19 @@
 #include "vec2.hpp"
 #include <fstream>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 namespace helper {
+
+bool isEqual(const std::string& s0, const std::string& s1) {
+	return std::equal(	s0.begin(), s0.end(),
+						s1.begin(), s1.end(),
+						[](char a, char b)
+						{
+							return tolower(a) == tolower(b);
+						});
+}
 
 void addMeshAttrSize(specter::MeshAttributeSizes& dst, const specter::MeshAttributeSizes& src) {
 	dst.fsize += src.fsize;
@@ -128,6 +140,7 @@ void Model::parse(const char* filename) {
 
 	bool normalsPresent = false;
 	bool uvPresent = false;
+	bool attrDetermined = false;
 	ComponentList cList = ComponentList::ALL_COMPONENTS;
 
 	MaterialMap mtl_map;
@@ -136,16 +149,16 @@ void Model::parse(const char* filename) {
 
 	specter::Timer timer;
 
-	// Find potentially missing triangle attributes(e.g missing normals) that will change the way 
-	// faces have to be processed.
+	// This loop processes files by reading the 'prefix' of the line (e.g 'vt') 
+	// and processing the 'suffix' (e.g two floats) in the appropriate manner.
+	// Additionally, materials are correctly associated to their respective 
+	// faces.
 	std::string line;
 	while (std::getline(objfile, line)) {
-
 		std::istringstream lineStream(line);
-		
 		std::string prefix;
-		lineStream >> prefix;
 
+		lineStream >> prefix;
 		if (prefix == "mtllib") {
 			auto libpath = helper::ParseMtllibSuffix(lineStream, filename);
 			parseMaterialLibrary(libpath.c_str(), mtl_map);
@@ -153,57 +166,18 @@ void Model::parse(const char* filename) {
 			std::string mtl_name;
 			lineStream >> mtl_name;
 			
-			mesh_attribute_sizes.emplace_back();
-			mesh_indices.emplace_back();
-
-			// Find the material name in the material map and assign the material index 
-			// to the mesh index table.
-			for (const auto& kv : mtl_map) {
-				if (mtl_name == kv.first) {
-					mesh_indices.back().m = kv.second;
-				}
-			}
-		} else if (prefix == "v") {
-			vertices.push_back(helper::ParseVec3(lineStream));
-		} else if (prefix == "vt") {
-			// Some object files don't contain texture coordinates. In that case, face processing needs to be adjusted.
-			uvPresent = true;
-			uvs.push_back(helper::ParseVec2(lineStream));
-		} else if (prefix == "vn") {
-			// Some object files don't contain vertex normals. In that case, face processing needs to be adjusted.
-			normalsPresent = true;
-			normals.push_back(helper::ParseVec3(lineStream));
-		} else if (prefix == "f") {
-			if (uvPresent && normalsPresent) cList = ComponentList::ALL_COMPONENTS;
-			if (uvPresent && !normalsPresent) cList = ComponentList::NORMALS_MISSING;
-			if (!uvPresent && normalsPresent) cList = ComponentList::UV_MISSING;
-			if (!uvPresent && !normalsPresent) cList = ComponentList::ONLY_POSITIONS;
-			// We now know what attributes are missing. Therefore, we can continue with 
-			// the parsing of faces in the following loop.
-			break;
-		}
-	}
-
-	// This loop processes files by reading the 'prefix' of the line (e.g 'vt') 
-	// and processing the 'suffix' (e.g two floats) in the appropriate manner.
-	// Additionally, materials are correctly associated to their respective 
-	// faces.
-	do {
-		std::istringstream lineStream(line);
-		std::string prefix;
-
-		lineStream >> prefix;
-		if (prefix == "usemtl") {
-			std::string mtl_name;
-			lineStream >> mtl_name;
-			
+			meshNames.emplace_back(mtl_name);
 			// Add the size of the mesh to the MeshAttributeSizes object
-			helper::addMeshAttrSize(mesh_attribute_sizes.back(), sMeshSize);
+			if (!mesh_attribute_sizes.empty()) {
+				helper::addMeshAttrSize(mesh_attribute_sizes[mesh_attribute_sizes.size() - 1], sMeshSize);
+				// Update the aggregate size of the model
+				helper::addMeshAttrSize(sAggregateSize, sMeshSize);
+			}
 
 			// Add an additional mesh for processing
 			mesh_attribute_sizes.emplace_back();
 			mesh_indices.emplace_back();
-			
+
 			// Find the material name in the material map and assign the material index 
 			// to the mesh index table.
 			for (const auto& kv : mtl_map) {
@@ -212,19 +186,29 @@ void Model::parse(const char* filename) {
 				}
 			}
 
-			// Update the aggregate size of the model
-			helper::addMeshAttrSize(sAggregateSize, sMeshSize);
 			// Update the offset to the indices of the current mesh.
 			helper::assignMeshIdxTable(mesh_indices.back(), sAggregateSize);
 
 			sMeshSize = MeshAttributeSizes();
 		} else if (prefix == "v") {
+			attrDetermined = false;
 			vertices.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "vt") {
+			uvPresent = true;
 			uvs.push_back(helper::ParseVec2(lineStream));
 		} else if (prefix == "vn") {
+			normalsPresent = true;
 			normals.push_back(helper::ParseVec3(lineStream));
 		} else if (prefix == "f") {
+			if (!attrDetermined) {
+				if (uvPresent && normalsPresent) cList = ComponentList::ALL_COMPONENTS;
+				if (uvPresent && !normalsPresent) cList = ComponentList::NORMALS_MISSING;
+				if (!uvPresent && normalsPresent) cList = ComponentList::UV_MISSING;
+				if (!uvPresent && !normalsPresent) cList = ComponentList::ONLY_POSITIONS;
+				uvPresent = false;
+				normalsPresent = false;
+				attrDetermined = true;
+			}
 			// This vector contains whitespace seperated faces. A face is usually of the form
 			// 'v/vt/vn'. 
 			std::vector<std::string> lines;
@@ -247,6 +231,13 @@ void Model::parse(const char* filename) {
 			faceIndices[0].p = t0.p;
 			faceIndices[1].p = t1.p;
 			faceIndices[2].p = t2.p;
+
+			if (cList == ComponentList::NORMALS_MISSING) {
+				const vec3f e0 = vertices[t1.p] - vertices[t0.p];
+				const vec3f e1 = vertices[t2.p] - vertices[t0.p];
+				normals.emplace_back(normalize(cross(e0, e1)));
+				faceIndices[0].n = faceIndices[1].n = faceIndices[2].n = normals.size() - 1;
+			}
 
 			switch (cList) {
 			case ComponentList::ALL_COMPONENTS:
@@ -299,8 +290,10 @@ void Model::parse(const char* filename) {
 					case ComponentList::NORMALS_MISSING:
 						faceIndices[1].p = tx.p;
 						faceIndices[1].t = tx.t;
+						faceIndices[1].n = faceIndices[0].n;
 						faceIndices[2].p = ty.p;
 						faceIndices[2].t = ty.t;
+						faceIndices[2].n = faceIndices[0].n;
 						break;
 					default:
 						break;
@@ -313,7 +306,7 @@ void Model::parse(const char* filename) {
 			}
 			sMeshSize.fsize += (lines.size() - 2) * 3;
 		}
-	} while (std::getline(objfile, line));
+	}
 
 	objfile.close();
 
@@ -376,7 +369,25 @@ void Model::parseMaterialLibrary(const char* filename, MaterialMap& mtl_map) {
 		} else if (prefix == "Ks" && mtltype == MaterialType::Metal) {
 			materials.emplace_back(std::make_shared<Metal>(helper::ParseVec3(lineStream)));
 			mtl_map.emplace_back(mtlname, mtl_map.size());
+		} else if (prefix == "map_Kd") {
+			std::string texname;
+			lineStream >> texname;
+			std::string texpath = helper::GetPathWithoutFile(filename) + texname;
+			materials.emplace_back(std::make_shared<Lambertian>(texpath.c_str()));
+			mtl_map.emplace_back(mtlname, mtl_map.size());
+		} else if (prefix == "map_Ke") {
+			std::string texname;
+			lineStream >> texname;
+			std::string texpath = helper::GetPathWithoutFile(filename) + texname;
+			materials.emplace_back(std::make_shared<EmissiveMaterial>(texpath.c_str()));
+			mtl_map.emplace_back(mtlname, mtl_map.size());
 		}
+	}
+}
+
+Model::~Model() {
+	for (auto& texture : texture_data) {
+		stbi_image_free(texture);
 	}
 }
 

@@ -306,14 +306,18 @@ void RTX_Renderer::dev_runDynamic() {
 	std::vector<vec3f> cumulativeColor;
 	cumulativeColor.resize(frame.size());
 	
+	bool MAIN_FORCED_EXIT = false;
 	Timer timer;
-
 	unsigned reflectionDepth = 16;
-	for (int k = 0; k < scene->camera.spp(); ++k) {
+	int k = 0;
+	for (; k < scene->camera.spp(); ++k) {
 		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 			[&](tbb::blocked_range2d<int> r) {
 				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-					if (terminateRendering.load()) return;
+					if (terminateRendering.load()) {
+						MAIN_FORCED_EXIT = true;
+						break;
+					}
 					for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
 						vec2f off = RandomEngine::get_random_float();
 						specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
@@ -327,13 +331,29 @@ void RTX_Renderer::dev_runDynamic() {
 					}
 				}
 			});
+		if (MAIN_FORCED_EXIT) {
+			break;
+		}
 		// Notify the rendering thread, that the contents of the frame buffer need updating.
 		std::unique_lock<std::mutex> lck(updateMtx);
 		updateFrame = true;
-		lck.unlock();
 	}
+
+	if (MAIN_FORCED_EXIT) {
+		int nPixelsRendered = 0;
+		for (auto c : cumulativeColor) {
+			if (c != vec3f(0.f)) {
+				nPixelsRendered++;
+			}
+		}
+		std::cout << "N pixels rendered: " << nPixelsRendered << '\n';
+	}
+	
+	auto elapsed_time = timer.elapsedTime();
 	std::cout << "[DEV] Finshed rendering!\n";
-	std::cout << "[DEV] Elapsed time: " << timer.elapsedTime() << '\n';
+	std::cout << "[DEV] Spp computed " << k << "/" << scene->camera.spp() << "\n";
+	std::cout << "[DEV] Elapsed time: " << elapsed_time << '\n';
+	std::cout << "[Dev] Average frame time: " << elapsed_time / k << "\n";
 }
 
 }

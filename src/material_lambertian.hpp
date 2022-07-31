@@ -1,5 +1,6 @@
 #pragma once
 #include "material.hpp"
+#include "texture_image.hpp"
 #include "texture_single_color.hpp"
 
 namespace specter {
@@ -10,6 +11,10 @@ public:
 
 	Lambertian(vec3f pAlbedo) 
 		: albedo(std::make_shared<SingleColor>(pAlbedo)) 
+	{}
+
+	Lambertian(const char* filename)
+		: albedo(std::make_shared<TextureImage>(filename))
 	{}
 
 	Lambertian(std::shared_ptr<Texture>& pAlbedo) 

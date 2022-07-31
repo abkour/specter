@@ -23,8 +23,6 @@ void Camera::initializeVariables(const vec3f& pos, const vec3f& dir, const float
 	const float gx = std::tan(radians(fov / 2.f));
 	const float gy = gx * (((float)resolution.y - 1) / ((float)resolution.x - 1));
 	
-	float samplesPerDirection = std::sqrt(nSamples);
-
 	shiftx = right_norm * ((2 * gx) / (((float)resolution.x - 1)));
 	shifty = up_norm * ((2 * gy) / (((float)resolution.y - 1)));
 	topLeftPixel = t_norm - (right_norm * gx) - (up_norm * gy);

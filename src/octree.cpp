@@ -5,6 +5,14 @@
 #define nMaxRayAABBIntersections (4)
 #define nSubRegions (8)
 
+namespace helper {
+
+specter::vec2f normalizeTiling(const specter::vec2f& uv) {
+	return specter::vec2f(fmod(1000.f + uv.x - 1e-5, 1.f), fmod(1000.f + uv.y - 1e-5, 1.f));
+}
+
+}
+
 namespace specter {
 
 static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
@@ -36,32 +44,32 @@ static void constructSubRegion(const AxisAlignedBoundingBox& superRegion, sAABB*
 		subregion.max = bmin + hd;
 		break;
 	case 1:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1], bmin[2]);
-		subregion.max = vec3f(bmax[0], bmin[1] + hd[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y, bmin.z);
+		subregion.max = vec3f(bmax.x, bmin.y + hd.y, bmin.z + hd.z);
 		break;
 	case 2:
-		subregion.min = vec3f(bmin[0], bmin[1] + hd[1], bmin[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmax[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x, bmin.y + hd.y, bmin.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmax.y, bmin.z + hd.z);
 		break;
 	case 3:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmin[2]);
-		subregion.max = vec3f(bmax[0], bmax[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmin.z);
+		subregion.max = vec3f(bmax.x, bmax.y, bmin.z + hd.z);
 		break;
 	case 4:
-		subregion.min = vec3f(bmin[0], bmin[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmax[2]);
+		subregion.min = vec3f(bmin.x, bmin.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmax.z);
 		break;
 	case 5:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmax[0], bmin[1] + hd[1], bmax[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmax.x, bmin.y + hd.y, bmax.z);
 		break;
 	case 6:
-		subregion.min = vec3f(bmin[0], bmin[1] + hd[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmax[1], bmax[2]);
+		subregion.min = vec3f(bmin.x, bmin.y + hd.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmax.y, bmax.z);
 		break;
 	case 7:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmax[0], bmax[1], bmax[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmax.x, bmax.y, bmax.z);
 		break;
 	default:
 		throw std::runtime_error("Subregion index outside range [0, 7]!");
@@ -82,7 +90,7 @@ static void constructSubRegion(const sAABB* superRegion, int i, sAABB* minorRegi
 	auto bmin = vec3f(superRegion->minx[i], superRegion->miny[i], superRegion->minz[i]);
 	auto bmax = vec3f(superRegion->maxx[i], superRegion->maxy[i], superRegion->maxz[i]);
 
-	vec3f hd = (bmax - bmin) / 2;	// Half-way inbetween min and max
+	vec3f hd = (bmax - bmin) / 2;	// Partitioning point
 	AxisAlignedBoundingBox subregion;
 	switch (k) {
 	case 0:
@@ -90,32 +98,32 @@ static void constructSubRegion(const sAABB* superRegion, int i, sAABB* minorRegi
 		subregion.max = bmin + hd;
 		break;
 	case 1:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1], bmin[2]);
-		subregion.max = vec3f(bmax[0], bmin[1] + hd[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y, bmin.z);
+		subregion.max = vec3f(bmax.x, bmin.y + hd.y, bmin.z + hd.z);
 		break;
 	case 2:
-		subregion.min = vec3f(bmin[0], bmin[1] + hd[1], bmin[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmax[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x, bmin.y + hd.y, bmin.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmax.y, bmin.z + hd.z);
 		break;
 	case 3:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmin[2]);
-		subregion.max = vec3f(bmax[0], bmax[1], bmin[2] + hd[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmin.z);
+		subregion.max = vec3f(bmax.x, bmax.y, bmin.z + hd.z);
 		break;
 	case 4:
-		subregion.min = vec3f(bmin[0], bmin[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmax[2]);
+		subregion.min = vec3f(bmin.x, bmin.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmax.z);
 		break;
 	case 5:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmax[0], bmin[1] + hd[1], bmax[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmax.x, bmin.y + hd.y, bmax.z);
 		break;
 	case 6:
-		subregion.min = vec3f(bmin[0], bmin[1] + hd[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmin[0] + hd[0], bmax[1], bmax[2]);
+		subregion.min = vec3f(bmin.x, bmin.y + hd.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmin.x + hd.x, bmax.y, bmax.z);
 		break;
 	case 7:
-		subregion.min = vec3f(bmin[0] + hd[0], bmin[1] + hd[1], bmin[2] + hd[2]);
-		subregion.max = vec3f(bmax[0], bmax[1], bmax[2]);
+		subregion.min = vec3f(bmin.x + hd.x, bmin.y + hd.y, bmin.z + hd.z);
+		subregion.max = vec3f(bmax.x, bmax.y, bmax.z);
 		break;
 	default:
 		throw std::runtime_error("Subregion index outside range [0, 7]!");
@@ -258,24 +266,42 @@ static void sortIDP_swap(IndexDistancePair* ptr, const uint32_t num)
 
 void Octree::computeTriangleIntersections(const Model* model, Node* node, const Ray& ray, Intersection& its) const {
 	float u, v, t = std::numeric_limits<float>::max();
+	float best_u = t, best_v = t;
+	int best_i = -1;
 	for (int i = 0; i < node->nTriangles; ++i) {
-		uint32_t triangleIndex = node->tri_indices[i];
-		if (model->rayIntersection(ray, triangleIndex, u, v, t)) {
+		if (model->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
 			if (its.t > t && t > 0.f) {
-				its.n = model->GetNormal(model->GetFace(node->tri_indices[i] * 3).n);
 				its.t = t;
-				its.u = u;
-				its.v = v;
-				its.f = node->tri_indices[i];
-				its.p = ray.o + t * ray.d;
-				auto meshIndex = model->GetMeshIndexFromFace(node->tri_indices[i]);
-				its.mat_ptr = model->GetMaterial(meshIndex);
+				best_u = u;
+				best_v = v;
+				best_i = i;
 			}
 		}
+	}
+	if (best_i != -1) {
+		vec2f uv0 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3).t);
+		vec2f uv1 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 1).t);
+		vec2f uv2 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 2).t);
+
+		const float w = 1.f - best_u - best_v;
+		const vec2f uv = w * uv0 + best_u * uv1 + best_v * uv2;
+		auto meshIndex = model->GetMeshIndexFromFace(node->tri_indices[best_i]);
+		its.mat_ptr = model->GetMaterial(meshIndex);
+		its.n = model->GetNormal(model->GetFace(node->tri_indices[best_i] * 3).n);
+		its.u = uv[0];
+		its.v = uv[1];
+		its.f = node->tri_indices[best_i];
+		its.p = ray.o + its.t * ray.d;
+		vec3f np = normalize(its.p);
 	}
 }
 
 void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Intersection& intersection, bool multipleBoxesHit) const {
+	if (node->m_children == nullptr) {
+		computeTriangleIntersections(model, node, ray, intersection);
+		return;
+	}
+	
 	IndexDistancePair distanceToBoxes[nSubRegions];
 	alignas(32) float nearT[nSubRegions];
 	alignas(32) float farT[nSubRegions];

@@ -1,41 +1,35 @@
-AmbientLight
-	"type": "ambient",
-	"srgb": [0, 255, 255],
-	"reflection_rays":  64
+pos: 496.784, 634.733, -84.5234
+target: 496.697, 633.743, -84.6343
 
-Optimization notes:
-SPP: 64
-DEPTH: 16
-
-[DEV] Elapsed time: 15.2279
-[DEV] Elapsed time: 15.3044
-[DEV] Elapsed time: 15.3966
-Avg: 15,309
-
---- Using SoA AABB, computing 8 Ray-AABB intersections at once ---
-14.049
-13.4141
-13.3722
-
-Current BUG:
-Child nodes don't have correct bounding boxes attached to them.
-Bounding boxes all share the same value.
-Output from Immediate Window:
-minx: 0x0000115edc1a3380 {-3.51401091, -3.51401091, -3.51401091, -3.51401091, -3.51401091, -3.51401091, -3.51401091, ...}
-    maxx: 0x0000115edc1a33a0 {-1.87401092, -1.87401092, -1.87401092, -1.87401092, -1.87401092, -1.87401092, -1.87401092, ...}
-    miny: 0x0000115edc1a33c0 {-0.162686005, -0.162686005, -0.162686005, -0.162686005, -0.162686005, -0.162686005, ...}
-    maxy: 0x0000115edc1a33e0 {1.21042669, 1.21042669, 1.21042669, 1.21042669, 1.21042669, 1.21042669, 1.21042669, ...}
-    minz: 0x0000115edc1a3400 {-1.32401526, -1.32401526, -1.32401526, -1.32401526, -1.32401526, -1.32401526, -1.32401526, ...}
-    maxz: 0x0000115edc1a3420 {0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, 0.347968996, ...}
-
-Note: The initial subdivision is computed correctly.
-
-
-
-
+Octree statistics
+Max depth: 7
+Output format: [Layer index, Nodes per layer]
+Layer 0: 1
+Layer 1: 8
+Layer 2: 58
+Layer 3: 324
+Layer 4: 1345
+Layer 5: 5188
+Layer 6: 16831
+[DEV] Rendering mesh (parallel)...
+[DEV] Finshed rendering!
+[DEV] Elapsed time: 2678.21
+~5.2s per frame
 
 Good obj files:
 
     - fireplace_room
     - conference
     - 
+
+vmin: 1.31518, -3.125, -3.125
+vmax: 1.37863, -1.5625, -1.5625
+
+usemtl grey_and_white_room:Painting
+f 16528/16528/80455 16529/16529/80456 16530/16530/80457
+f 16528/16528/80458 16530/16530/80459 16531/16531/80460
+
+p: 1.95731, 0.505227, -1.59072  t: 0.8521, -0.4245
+p: 1.94715, 0.507522, -1.58916  t: 0.8607, -0.3824
+p: 1.94715, 0.505227, -1.59021  t: 0.8549, -0.3797
+p: 1.95731, 0.505227, -1.59072  t: 0.8521, -0.4245

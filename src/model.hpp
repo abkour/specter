@@ -1,6 +1,8 @@
 #pragma once
+
 #include "aabb.hpp"
 #include "material.hpp"
+#include "material_emissive.hpp"
 #include "material_lambertian.hpp"
 #include "material_metal.hpp"
 #include "ray.hpp"
@@ -43,6 +45,8 @@ public:
 	Model() {}
 
 	Model(Model&& other) noexcept {}
+
+	~Model();
 
 	void parse(const char* filename);
 
@@ -89,6 +93,21 @@ public:
 
 	std::shared_ptr<specter::Material>& GetMaterial(const uint32_t i) {
 		return materials[i];
+	}
+
+	int GetMeshIndex(const int face_index) const {
+		for (int i = 0; i < mesh_indices.size(); ++i) {
+			if (	face_index >= mesh_indices[i].f 
+				&&	face_index <= mesh_indices[i].f + mesh_attribute_sizes[i].fsize) 
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	std::string GetMeshName(const int mesh_index) const {
+		return meshNames[mesh_index];
 	}
 
 	FaceElement& GetFaces(const uint32_t mesh_index) {
@@ -192,9 +211,13 @@ protected:
 	std::vector<MeshAttributeSizes> mesh_attribute_sizes;
 	std::vector<MeshIndexTable> mesh_indices;
 
+	std::vector<std::string> meshNames;
 	std::vector<specter::vec3f> vertices;
 	std::vector<specter::vec3f> normals;
+	
 	std::vector<specter::vec2f> uvs;
+	std::vector<unsigned char*> texture_data;
+
 	std::vector<FaceElement> faces;
 	std::vector<std::shared_ptr<specter::Material>> materials;
 

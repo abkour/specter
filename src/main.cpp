@@ -1,8 +1,7 @@
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
 #pragma warning(disable:4996)
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+#include "stb_image.h"
 
 #include "view.hpp"
 #include "renderer.hpp"
@@ -15,13 +14,12 @@ void testFilters();
 void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
-#include <bitset>
-#include <xmmintrin.h>
+#include "dev/cpu_lbvh_helpers.hpp"
 
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		renderRTX(argv[1]);
+		//renderRTX(argv[1]);
 		//renderRasterized(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
@@ -51,17 +49,33 @@ void renderRasterized(const char* scene_descriptor_file) {
 	window.enableCursorCallback();
 	glfwSwapInterval(0);
 	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_CULL_FACE);
+	//	glCullFace(GL_BACK);
 
 	auto indices = scene.model->GetFaces();
 	auto vertices = scene.model->GetVertices();
 	auto nIndices = scene.model->GetFaceCount();
 	auto nVertices = scene.model->GetVertexCount();
-
+	
 	std::vector<unsigned> vertexIndices;
 	vertexIndices.resize(nIndices);
 	for (int i = 0; i < vertexIndices.size(); ++i) {
 		vertexIndices[i] = indices[i].p;
 	}
+
+	std::vector<specter::vec3f> vertex_colors;
+	vertex_colors.resize(nVertices);
+	for (int i = 0; i < nVertices; ++i) {
+		if (i >= 16527 && i <= 16530) {
+			vertex_colors[i] = specter::vec3f(1.f, 0.f, 0.f);
+			std::cout << "p: " << scene.model->GetVertex(i) << '\t';
+			std::cout << "t: " << scene.model->GetUV(i) << '\n';
+		} else {
+			vertex_colors[i] = specter::vec3f(1.f, 1.f, 1.f);
+		}
+	}
+
+	std::cout << "Normal: " << scene.model->GetNormal(16527) << '\n';
 
 	GLuint vao, vbo, ebo;
 	glGenVertexArrays(1, &vao);
@@ -69,12 +83,16 @@ void renderRasterized(const char* scene_descriptor_file) {
 	glGenBuffers(1, &ebo);
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, nVertices * sizeof(specter::vec3f), vertices, GL_STATIC_DRAW);
+	glNamedBufferData(vbo, (vertex_colors.size() + nVertices) * sizeof(specter::vec3f), NULL, GL_STATIC_DRAW);
+	glNamedBufferSubData(vbo, 0, nVertices * sizeof(specter::vec3f), vertices);
+	glNamedBufferSubData(vbo, nVertices * sizeof(specter::vec3f), vertex_colors.size() * sizeof(specter::vec3f), vertex_colors.data());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(unsigned), vertexIndices.data(), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(specter::vec3f), 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(specter::vec3f), reinterpret_cast<void*>(nVertices * sizeof(specter::vec3f)));
 
 	specter::Shader shader
 	{
@@ -88,7 +106,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 	specter::vec3f eyeDir(0.f);
 	specter::View view(eyePos, eyeDir);
 
-	specter::mat4f proj = specter::perspective(specter::radians(45.f), 1920.f / 1080.f, 0.1, 100.f);
+	specter::mat4f proj = specter::perspective(specter::radians(45.f), 1920.f / 1080.f, 0.1, 3000.f);
 
 	float deltatime = 0.f;
 	float lasttime = 0.f;
@@ -123,7 +141,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 
 		auto movementDirection = getMovementDirection(window.getWindow());
 		if (movementDirection != specter::MovementDirection::None) {
-			view.move(movementDirection, deltatime);
+			view.move(movementDirection, deltatime * 2.f);
 		}
 
 		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "proj"), 1, GL_FALSE, &proj[0][0]);
