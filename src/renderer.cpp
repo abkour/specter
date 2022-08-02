@@ -265,6 +265,7 @@ void RTX_Renderer::dev_runDynamic() {
 		updateFrame = true;
 	}
 
+	// Before terminating, tell the user how many pixels have been rendered in this frame.
 	if (MAIN_FORCED_EXIT) {
 		int nPixelsRendered = 0;
 		for (auto c : cumulativeColor) {
@@ -272,7 +273,8 @@ void RTX_Renderer::dev_runDynamic() {
 				nPixelsRendered++;
 			}
 		}
-		std::cout << "N pixels rendered: " << nPixelsRendered << '\n';
+		std::cout << "Premature termination.\nIn this frame " << nPixelsRendered
+			<< "/" << scene->camera.resx() * scene->camera.resy() << " pixels have been rendered\n";
 	}
 	
 	auto elapsed_time = timer.elapsedTime();
