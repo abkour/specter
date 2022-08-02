@@ -46,12 +46,4 @@ unsigned Camera::resy() const {
 	return resolution.y;
 }
 
-void Camera::setSpp(const unsigned samplesPerPixel) {
-	this->samplesPerPixel = samplesPerPixel;
-}
-
-unsigned Camera::spp() const {
-	return samplesPerPixel;
-}
-
 }

@@ -5,7 +5,7 @@
 
 namespace specter {
 
-class Lambertian : public Material {
+class Lambertian : public IMaterial {
 
 public:
 
@@ -17,7 +17,7 @@ public:
 		: albedo(std::make_shared<TextureImage>(filename))
 	{}
 
-	Lambertian(std::shared_ptr<Texture>& pAlbedo) 
+	Lambertian(std::shared_ptr<ITexture>& pAlbedo) 
 		: albedo(pAlbedo) 
 	{}
 
@@ -29,7 +29,7 @@ public:
 
 protected:
 
-	std::shared_ptr<Texture> albedo;
+	std::shared_ptr<ITexture> albedo;
 };
 
 }

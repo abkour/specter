@@ -50,7 +50,7 @@ void RTX_Renderer::run() {
 	//
 	//
 	// Run the integrator in a seperate thread
-	//renderThread = std::thread(&RTX_Renderer::runDynamic, this);
+	// renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 	renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
 
 	static float quadvertices[] =
@@ -197,89 +197,8 @@ void RTX_Renderer::run() {
 	glDeleteBuffers(1, &vbo);
 }
 
-void RTX_Renderer::runDynamic() {
-	std::cout << "Rendering mesh (parallel)...\n";
-	specter::Timer rtxtime;
-
-	const int nShadowRays = scene->reflection_rays;
-	unsigned nSamplesPerDirection = std::sqrt(scene->camera.spp());
-
-	// This buffer holds the cumulative color of the AO integrator.
-	std::vector<vec3f> cumulativeColor;
-	cumulativeColor.resize(frame.size());
-
-	std::vector<Intersection> intersections;
-	intersections.resize(frame.size() * scene->camera.spp());
-
-	std::vector<Ray> rays;
-	rays.resize(frame.size() * scene->camera.spp());
-
-	// Optimization
-	// Intersections and associated rays need only be computed once, as the camera/scene don't change
-	tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
-		[&](const tbb::blocked_range2d<int>& r) {
-			for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-				for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-					for (int subi = 0; subi < scene->camera.spp(); subi++) {
-						std::size_t index = y * scene->camera.resx() * scene->camera.spp();
-						index += x * scene->camera.spp() + subi;
-						const unsigned spx = x * nSamplesPerDirection + 1;
-						const unsigned spy = y * nSamplesPerDirection + 1;
-						const unsigned sxoff = subi % nSamplesPerDirection;
-						const unsigned syoff = subi / nSamplesPerDirection;
-
-						specter::Ray ray = scene->camera.getRay(specter::vec2f(spx + sxoff, spy + syoff));
-						specter::Intersection its;
-						intersections[index] = scene->accel.traceRay(ray, its) ? its : Intersection();
-						rays[index] = ray;
-					}
-				}
-			}
-		}
-	);
-
-	// Update the frame every time the integrator converges.
-	// To accomplish that, we iterate over the entire frame for each shadow ray.
-	// At the end of each iteration we communicate to the main thread to update the image texture.
-	for (int shadowsCast = 1; shadowsCast < nShadowRays; ++shadowsCast) {
-		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
-			[&](const tbb::blocked_range2d<int>& r) {
-				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
-					// If window closes rendering should stop as well.
-					if (terminateRendering.load()) {
-						return;
-					}
-					for (int x = r.cols().begin(); x < r.cols().end(); ++x) {
-						specter::vec3f color(0.f);
-						// Compute light per subpixel and average out the results
-						for (int subi = 0; subi < scene->camera.spp(); subi++) {
-							std::size_t index = y * scene->camera.resx() * scene->camera.spp();
-							index += x * scene->camera.spp() + subi;
-
-							auto its = intersections[index];
-							if (its.isValid()) {
-								unsigned normalIndex = scene->model->GetFace(its.f * 3).n;
-								specter::vec3f normal = scene->model->GetNormal(normalIndex);
-
-								auto& ray = rays[index];
-								const specter::vec3f intersectionPoint = ray.o + its.t * ray.d;
-								//color += scene->light->sample_light(scene->accel, intersectionPoint, normal);
-							}
-						}
-						const std::size_t index = y * scene->camera.resx() + x;
-						cumulativeColor[index] += color / scene->camera.spp();
-						frame[index] = cumulativeColor[index] / shadowsCast;
-					}
-				}
-			});
-
-		// Notify the rendering thread, that the contents of the frame buffer need updating.
-		std::unique_lock<std::mutex> lck(updateMtx);
-		updateFrame = true;
-		lck.unlock();
-	}
-}
-
+// This function is responsible for recursively tracing a path. If the recursionDepth
+// has been exceeded before a light source is hit, the pixel will be rendered black.
 vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
 	if (reflectionDepth <= 0) {
 		return vec3f(0.f);
@@ -310,10 +229,17 @@ void RTX_Renderer::dev_runDynamic() {
 	Timer timer;
 	unsigned reflectionDepth = 16;
 	int k = 0;
-	for (; k < scene->camera.spp(); ++k) {
+
+	// This process is creating k frames. These frames are stored as an amalgamation in the 
+	// cumulativeColor vector. Before processing the next frame, we average out the currently
+	// available frames and signal to the main thread that the frame vector is ready for updating.
+	// After all k frames have been rendered, we terminate this thread, after providing some 
+	// performance metrics.
+	for (; k < scene->spp; ++k) {
 		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),
 			[&](tbb::blocked_range2d<int> r) {
 				for (int y = r.rows().begin(); y < r.rows().end(); ++y) {
+					// We received a signal from the main thread to terminate the rendering process.
 					if (terminateRendering.load()) {
 						MAIN_FORCED_EXIT = true;
 						break;
@@ -351,7 +277,7 @@ void RTX_Renderer::dev_runDynamic() {
 	
 	auto elapsed_time = timer.elapsedTime();
 	std::cout << "[DEV] Finshed rendering!\n";
-	std::cout << "[DEV] Spp computed " << k << "/" << scene->camera.spp() << "\n";
+	std::cout << "[DEV] Spp computed " << k << "/" << scene->spp << "\n";
 	std::cout << "[DEV] Elapsed time: " << elapsed_time << '\n';
 	std::cout << "[Dev] Average frame time: " << elapsed_time / k << "\n";
 }

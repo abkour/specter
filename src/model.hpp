@@ -49,7 +49,9 @@ public:
 	~Model();
 
 	void parse(const char* filename);
-
+	
+	//
+	// Get base of attributes.
 	specter::vec3f* GetVertices() {
 		return vertices.data();
 	}
@@ -66,10 +68,12 @@ public:
 		return faces.data();
 	}
 
-	std::shared_ptr<specter::Material>* GetMaterials() {
+	std::shared_ptr<specter::IMaterial>* GetMaterials() {
 		return materials.data();
 	}
 
+	//
+	// Get indiviudal attribute
 	specter::vec3f GetVertex(const uint32_t vertex_index) const {
 		return vertices[vertex_index];
 	}
@@ -86,12 +90,12 @@ public:
 		return faces[face_index];
 	}
 
-	std::shared_ptr<Material> GetMaterial(const uint32_t mesh_index) const {
+	std::shared_ptr<IMaterial> GetMaterial(const uint32_t mesh_index) const {
 		uint32_t mat_index = mesh_indices[mesh_index].m;
 		return materials[mat_index];
 	}
 
-	std::shared_ptr<specter::Material>& GetMaterial(const uint32_t i) {
+	std::shared_ptr<specter::IMaterial>& GetMaterial(const uint32_t i) {
 		return materials[i];
 	}
 
@@ -110,10 +114,8 @@ public:
 		return meshNames[mesh_index];
 	}
 
-	FaceElement& GetFaces(const uint32_t mesh_index) {
-		return faces[mesh_indices[mesh_index].f];
-	}
-
+	//
+	// Get number of attributes
 	std::size_t GetVertexCount() const {
 		return vertices.size();
 	}
@@ -126,12 +128,12 @@ public:
 		return faces.size();
 	}
 
-	std::size_t GetFaceCountOfMesh(const uint32_t mesh_index) const {
-		return mesh_attribute_sizes[mesh_index].fsize;
+	std::size_t GetTriangleCount() const {
+		return faces.size() / 3;
 	}
 
-	specter::AxisAlignedBoundingBox GetBoundingBox() {
-		return bbox;
+	std::size_t GetFaceCountOfMesh(const uint32_t mesh_index) const {
+		return mesh_attribute_sizes[mesh_index].fsize;
 	}
 
 	specter::AxisAlignedBoundingBox computeBoundingBox()
@@ -169,27 +171,31 @@ public:
 	// Implements the möller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 	bool rayIntersection(const specter::Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
-		const float epsilon = 0.0000001;
-		const unsigned i0 = faces[index * 3 + 0].p, i1 = faces[index * 3 + 1].p, i2 = faces[index * 3 + 2].p;
-		const specter::vec3f v0 = vertices[i0], v1 = vertices[i1], v2 = vertices[i2];
+		const float epsilon = 1e-7;
+		const unsigned i0 = faces[index * 3 + 0].p;
+		const unsigned i1 = faces[index * 3 + 1].p;
+		const unsigned i2 = faces[index * 3 + 2].p;
+		const specter::vec3f v0 = vertices[i0];
+		const specter::vec3f v1 = vertices[i1];
+		const specter::vec3f v2 = vertices[i2];
 
-		specter::vec3f e0 = v1 - v0;
-		specter::vec3f e1 = v2 - v0;
+		const specter::vec3f e0 = v1 - v0;
+		const specter::vec3f e1 = v2 - v0;
 
-		specter::vec3f q = cross(ray.d, e1);
-		float a = specter::dot(e0, q);
+		const specter::vec3f q = cross(ray.d, e1);
+		const float a = specter::dot(e0, q);
 
 		if (a > -epsilon && a < epsilon) {
 			return false;
 		}
 
-		float f = 1.f / a;
-		specter::vec3f s = ray.o - v0;
+		const float f = 1.f / a;
+		const specter::vec3f s = ray.o - v0;
 		u = f * specter::dot(s, q);
 
 		if (u < 0.f) return false;
 
-		specter::vec3f r = cross(s, e0);
+		const specter::vec3f r = cross(s, e0);
 		v = f * specter::dot(ray.d, r);
 
 		if (v < 0.f || u + v > 1.f) return false;
@@ -219,7 +225,7 @@ protected:
 	std::vector<unsigned char*> texture_data;
 
 	std::vector<FaceElement> faces;
-	std::vector<std::shared_ptr<specter::Material>> materials;
+	std::vector<std::shared_ptr<specter::IMaterial>> materials;
 
 	specter::AxisAlignedBoundingBox bbox;
 };

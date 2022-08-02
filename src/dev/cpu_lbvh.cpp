@@ -13,7 +13,7 @@ static void assignObjectID(const int idx, InternalNode* internalNodes, LeafNode*
 }
 
 static int clz(int i, int j, std::size_t nTriangles, PrimitiveIdentifier* pIds) {
-	if (i < 0 || j > nTriangles - 1) return -1;
+	if (j < 0 || j > nTriangles - 1) return -1;
 	const unsigned k0 = pIds[i].mortonCode;
 	const unsigned k1 = pIds[j].mortonCode;
 	if (k0 == k1) {
@@ -33,7 +33,7 @@ CPU_LBVH::~CPU_LBVH() {
 }
 
 void CPU_LBVH::prepass(Model& model) {
-	const std::size_t nTriangles = model.GetFaceCount() * 3;
+	const std::size_t nTriangles = model.GetFaceCount() / 3;
 	PrimitiveIdentifier* pIds = new PrimitiveIdentifier[nTriangles];
 	int* atomic_counters = new int[nTriangles - 1]();
 	internalNodes = new InternalNode[nTriangles - 1];
@@ -45,9 +45,9 @@ void CPU_LBVH::prepass(Model& model) {
 
 	for (int i = 0; i < nTriangles; ++i) {
 		aabbs[i] = constructAABBFromPaddedTriangle(
-			model.GetVertex(i * 3),
-			model.GetVertex(i * 3 + 1),
-			model.GetVertex(i * 3 + 2));
+			model.GetVertex(model.GetFace(i).p),
+			model.GetVertex(model.GetFace(i * 3 + 1).p),
+			model.GetVertex(model.GetFace(i * 3 + 2).p));
 	}
 
 	for (int i = 0; i < nTriangles; ++i) {
@@ -66,7 +66,8 @@ void CPU_LBVH::prepass(Model& model) {
 		generateHierarchy(i, nTriangles, pIds);
 	}
 
-	delete[] atomic_counters;
+	generateBV(nTriangles);
+
 	delete[] pIds;
 	delete[] aabbs;
 }
@@ -119,6 +120,67 @@ void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveId
 	} else {
 		internalNodes[i].rightIdx = internalNodes[split + 1].nodeIdx;
 		internalNodes[split + 1].parentIdx = internalNodes[i].nodeIdx;
+	}
+}
+
+void CPU_LBVH::generateBV(const int nTriangles) {
+	// Bottom up reduction to create bounding volumes.
+	const int nAtomicCounters = nTriangles;
+	const int nLeafNodes = nTriangles;
+	bool* atomic_counters = new bool[nAtomicCounters](false);
+
+	int* parent_indices = new int[nTriangles / 2];
+	int nUniqueParentIndices = 0;
+
+	auto resetAtomicCounters = [atomic_counters, nAtomicCounters]() {
+		for (int i = 0; i < nAtomicCounters; ++i) {
+			atomic_counters[i] = false;
+		}
+	};
+
+	for (int i = 0; i < nLeafNodes; ++i) {
+		const unsigned idx = leafNodes[i].leafIdx;
+		const unsigned parentIdx = leafNodes[i].parentIdx;
+		if (atomic_counters[parentIdx] == false) {
+			atomic_counters[parentIdx] = true;
+			output_aabbs[parentIdx] = aabbs[idx];
+			parent_indices[nUniqueParentIndices] = parentIdx;
+			nUniqueParentIndices++;
+		} else {
+			output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[idx]);
+		}
+	}
+
+	resetAtomicCounters();
+
+	for (int k = nTriangles / 2; k > 1; k /= 2) {
+		nUniqueParentIndices = 0;
+		for (int i = 0; i < k; ++i) {
+			const int p = parent_indices[i];
+			const unsigned idx = internalNodes[p].nodeIdx;
+			const unsigned parentIdx = internalNodes[p].parentIdx;
+			if (atomic_counters[parentIdx] == false) {
+				atomic_counters[parentIdx] = true;
+				output_aabbs[parentIdx] = aabbs[idx];
+				parent_indices[nUniqueParentIndices] = parentIdx;
+				nUniqueParentIndices++;
+			} else {
+				output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[idx]);
+			}
+		}
+		// Reset atomic counters
+		resetAtomicCounters();
+	}
+
+	delete[] parent_indices;
+	delete[] atomic_counters;
+}
+
+void CPU_LBVH::generateBVBottomUpRecursively(const int nodeIdx, const int parentIdx) {
+	if (output_aabbs[parentIdx].isCollapsed()) {
+		output_aabbs[parentIdx] = aabbs[nodeIdx];
+	} else {
+		output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[nodeIdx]);
 	}
 }
 

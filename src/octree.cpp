@@ -15,6 +15,7 @@ specter::vec2f normalizeTiling(const specter::vec2f& uv) {
 
 namespace specter {
 
+// Returns a vector which is the minimum of the three input vectors.
 static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	vec3f minResult;
 	minResult[0] = std::min(std::min(p0[0], p1[0]), std::min(p0[0], p2[0]));
@@ -23,6 +24,7 @@ static vec3f minComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	return minResult;
 }
 
+// Returns a vector which is the maximum of the three input vectors.
 static vec3f maxComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	vec3f minResult;
 	minResult[0] = std::max(std::max(p0[0], p1[0]), std::max(p0[0], p2[0]));
@@ -31,6 +33,8 @@ static vec3f maxComponents(const vec3f& p0, const vec3f& p1, const vec3f& p2) {
 	return minResult;
 }
 
+// Constructs the i-th subregion of "superRegion" and stores the result in the
+// appropriate "minorRegion"
 static void constructSubRegion(const AxisAlignedBoundingBox& superRegion, sAABB* minorRegion, int i) {
 	
 	auto bmin = superRegion.min;
@@ -85,6 +89,8 @@ static void constructSubRegion(const AxisAlignedBoundingBox& superRegion, sAABB*
 	minorRegion->maxz[i] = subregion.max.z;
 }
 
+// Constructs the k-th subregion of the i-th "superRegion" and stores the result in
+// the appropriate "minorRegion"
 static void constructSubRegion(const sAABB* superRegion, int i, sAABB* minorRegion, int k) {
 
 	auto bmin = vec3f(superRegion->minx[i], superRegion->miny[i], superRegion->minz[i]);
@@ -160,12 +166,14 @@ void Octree::build(std::shared_ptr<Model>& model) {
 
 	AxisAlignedBoundingBox modelbox = model->computeBoundingBox();
 	
-	root->nTriangles = model->GetFaceCount() / 3;
+	root->nTriangles = model->GetTriangleCount();
 	root->subboxes = new sAABB;
 	for (int i = 0; i < nSubRegions; ++i) {
 		constructSubRegion(modelbox, root->subboxes, i);
 	}
 
+	// The triangle indices list is initialized with [0, 1, ..., nTriangles - 1];
+	// This corresponds to the position of faces in the faces array of the model.
 	std::vector<uint32_t> initialIndexList(root->nTriangles);
 	std::iota(initialIndexList.begin(), initialIndexList.end(), 0);
 
@@ -216,6 +224,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 			node->m_children[i].CreateValidNode(node->subboxes, i, subRegionTriangleCounts[i].size());
 			buildRec(&node->m_children[i], vertices, faces, subRegionTriangleCounts[i].data(), depth + 1);
 		} else {
+			// Sub regions that are empty are invalidated. They are neither internal nor leaf nodes.
 			node->m_children[i].CreateInvalidNode();
 		}
 	}

@@ -25,16 +25,11 @@ struct Camera {
 	unsigned resx() const;
 	unsigned resy() const;
 
-	void setSpp(const unsigned samplesPerPixel);
-	unsigned spp() const;
-
 protected:
 
 	vec2u resolution;
 	vec3f eyepos;
 	vec3f shiftx, shifty, topLeftPixel;
-
-	unsigned samplesPerPixel;	// This value has to be a square number
 };
 
 }

@@ -3,6 +3,9 @@
 
 namespace specter {
 
+// This class represents a coordinate system with orthonormal bases.
+// Functionally, this class allows rebasing a vector from an implicit 
+// coordinate system to the one specified by this one, and back again.
 struct CoordinateSystem {
 
 	CoordinateSystem() = default;

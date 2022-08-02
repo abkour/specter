@@ -3,7 +3,7 @@
 
 namespace specter {
 
-class PointLight : public Light {
+class PointLight : public ILight {
 
 public:
 

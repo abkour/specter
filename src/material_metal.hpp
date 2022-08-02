@@ -3,7 +3,7 @@
 
 namespace specter {
 
-class Metal : public Material {
+class Metal : public IMaterial {
 
 public:
 

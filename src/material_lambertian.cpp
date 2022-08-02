@@ -7,11 +7,6 @@
 namespace specter {
 
 bool Lambertian::scatter(const Ray& r_in, const Intersection& its, Ray& r_out, vec3f& attenuation) const {
-	//CoordinateSystem hemisphereFrame(its.n);
-
-	//vec3f scatter_direction = normalize(uniformlySampleCosineWeightedHemisphere());
-
-
 	vec3f scatter_direction = its.n + RandomEngine::get_random_unit_vector();
 	
 	// Catch the case where the random unit vector is going in the opposite direction

@@ -6,6 +6,7 @@
 #pragma once
 #include <cstdint>
 
+// Note: These values are not used anywhere in the programming.
 // These hash values were computed via the hash function in common_math.hpp
 constexpr uint64_t SPECTER_AMBIENT_LIGHT = 872128645;
 constexpr uint64_t SPECTER_AREA_LIGHT = 2090087070;

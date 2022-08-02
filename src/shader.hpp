@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+
 namespace specter {
 
 // An abstraction of the OpenGL shader

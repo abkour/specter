@@ -3,7 +3,7 @@
 
 namespace specter {
 
-class SingleColor : public Texture {
+class SingleColor : public ITexture {
 
 public:
 

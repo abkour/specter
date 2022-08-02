@@ -22,6 +22,7 @@ struct Scene {
 
 	bool dynamicFrame;
 	int reflection_rays;
+	int spp;
 };
 
 }

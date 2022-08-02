@@ -5,7 +5,7 @@
 
 namespace specter {
 
-class EmissiveMaterial : public Material {
+class EmissiveMaterial : public IMaterial {
 
 public:
 
@@ -27,7 +27,7 @@ public:
 
 protected:
 
-	std::shared_ptr<Texture> albedo;
+	std::shared_ptr<ITexture> albedo;
 
 };
 

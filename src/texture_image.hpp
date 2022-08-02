@@ -4,7 +4,7 @@
 
 namespace specter {
 
-class TextureImage : public Texture {
+class TextureImage : public ITexture {
 
 public:
 
@@ -13,7 +13,6 @@ public:
 		if (!data) {
 			std::cerr << "Error loading file: " << filename << '\n';
 		}
-		std::cout << "channels: " << channels << '\n';
 	}
 
 	~TextureImage() {
@@ -21,6 +20,7 @@ public:
 	}
 
 	virtual vec3f value(const float u, const float v, const vec3f& p) const override {
+		// Subtracting 1e-6 is a hack. I will improve this later.
 		int i = static_cast<int>(width * (u - 1e-6f)) % width;
 		int j = static_cast<int>(height * (v - 1e-6f)) % height;
 		if (i < 0) {

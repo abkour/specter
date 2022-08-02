@@ -1,3 +1,6 @@
+/*
+	Not used at the moment.
+*/
 #pragma once
 #include <glad/glad.h>
 

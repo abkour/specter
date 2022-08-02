@@ -3,7 +3,7 @@
 
 namespace specter {
 
-class Texture {
+class ITexture {
 
 public:
 

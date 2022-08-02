@@ -15,7 +15,10 @@ namespace specter {
 // arrives at a given point. This light source should not be seen as a 
 // traditional light source and doesn't follow the standard template of 
 // a "Light" object.
-class AmbientLight : public Light {
+
+// The ambient light source is currently deprecated, due to the way lights are incorporated
+// into the scene.
+class AmbientLight : public ILight {
 
 public:
 

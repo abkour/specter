@@ -10,15 +10,17 @@ struct AxisAlignedBoundingBox {
 
 	// Constructs a collapsed AABB
 	AxisAlignedBoundingBox();
+	
 	// Constructs a bounding box spanning [bmin, bmax]
 	AxisAlignedBoundingBox(const vec3f& bmin, const vec3f& bmax);
-	// Constructs a copy of bounding box \other
+
 	AxisAlignedBoundingBox(const AxisAlignedBoundingBox& other);
-	// Copy assign \other to *this
+	
 	AxisAlignedBoundingBox& operator=(const AxisAlignedBoundingBox& other);
 
 	// Compares if two bounding boxes occupy the same space
 	bool operator==(const AxisAlignedBoundingBox& other) const;
+
 	// Compares if two bounding boxes occupy different spaces
 	bool operator!=(const AxisAlignedBoundingBox& other) const;
 
@@ -95,7 +97,7 @@ AxisAlignedBoundingBox combine(const AxisAlignedBoundingBox& box0, const AxisAli
 void manyAABBRayIntersect(const AxisAlignedBoundingBox* bboxes, const Ray& ray, float* near, const int count);
 
 
-// Experimental SoA 
+// Experimental SoA implementation of AABB. Currently used in the Octree data structure.
 struct sAABB {
 
 	// Additionally, returns true if two edges/faces overlap
@@ -121,6 +123,11 @@ struct sAABB {
 		return nearT <= farT;
 	}
 
+	// Performs ray-aabb intersection against 8 AABBs. AVX2 is necessary.
+	// Currently specter is compiled with AVX2 enabled. If the target 
+	// architecture does not feature AVX2, the program will crash.
+	// In the future, I will add a switch in the accel structure, to default
+	// to SSE3.
 	void rayIntersect(const Ray& r, float* nearT, float* farT) const {
 		// X component
 		
@@ -132,7 +139,6 @@ struct sAABB {
 		__m256 RIDZ = _mm256_broadcast_ss(&r.invd.z);
 		__m256 NEART = _mm256_load_ps(nearT);
 		__m256 FART = _mm256_load_ps(farT);
-
 
 		__m256 YMM8 = _mm256_load_ps(minx);
 		__m256 YMM9 = _mm256_load_ps(maxx);

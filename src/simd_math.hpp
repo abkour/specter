@@ -2,6 +2,9 @@
 #include "vec3.hpp"
 #include "vec4.hpp"
 
+// Deprecated. Initially, I wanted to extend the vector class with 
+// SIMD capability. However, the vector class is not SoA, which is 
+// necessary for significant performance gains.
 namespace specter {
 
 vec4f simd_cross(const vec3f& v0, const vec3f& v1);

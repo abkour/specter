@@ -11,10 +11,12 @@
 #include "filters.hpp"
 
 void testFilters();
+void test_cpu_lbvh_implementation();
 void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
 #include "dev/cpu_lbvh_helpers.hpp"
+#include "dev/cpu_lbvh.hpp"
 
 int main(int argc, const char** argv) {
 	try {
@@ -28,6 +30,14 @@ int main(int argc, const char** argv) {
 	catch (...) {
 		std::cout << "Unexpected error somewhere...";
 	}
+}
+
+void test_cpu_lbvh_Implementation(const char* filename) {
+	specter::SceneDescriptor scene_descriptor(filename);
+	specter::Scene scene(scene_descriptor);
+	specter::CPU_LBVH lbvh;
+	lbvh.prepass(*scene.model.get());
+	auto bvhs = lbvh.GetBoundingVolumes();
 }
 
 void renderRTX(const char* scene_descriptor_file) {

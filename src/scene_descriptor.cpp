@@ -36,56 +36,7 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	}
 	
 	//
-	// 2. Light field
-	if (jsonParser.contains("light")) {
-		auto lightParser = jsonParser.find("light");
-
-		if (lightParser->contains("type")) {
-			auto lightType_str = jsonParser["light"]["type"].get<std::string>();
-			lightType = specter::djb2_hash(reinterpret_cast<unsigned char*>(&lightType_str[0]));
-		}
-
-		if (lightType == SPECTER_AMBIENT_LIGHT) {
-			if (lightParser->contains("srgb")) {
-				uint8_t u8x3[3];
-				jsonParser["light"]["srgb"].get_to(u8x3);
-				std::memcpy(&lightSRGB, u8x3, sizeof(uint8_t) * 3);
-				std::cout << u8x3[0] << ", " << u8x3[1] <<  ", " << u8x3[2] << '\n';
-			}
-		} else if(lightType == SPECTER_POINT_LIGHT) {
-			if (lightParser->contains("energy")) {
-				jsonParser["light"]["energy"].get_to(vec3tmp);
-				std::memcpy(&lightEnergy, vec3tmp, sizeof(float) * 3);
-			}
-			if (lightParser->contains("position")) {
-				jsonParser["light"]["position"].get_to(vec3tmp);
-				std::memcpy(&lightPosition, vec3tmp, sizeof(float) * 3);
-			}
-		} else if (lightType == SPECTER_AREA_LIGHT) {
-			if (lightParser->contains("pos0")) {
-				jsonParser["light"]["pos0"].get_to(vec3tmp);
-				std::memcpy(&area_p0, vec3tmp, sizeof(float) * 3);
-			}
-			if (lightParser->contains("pos1")) {
-				jsonParser["light"]["pos1"].get_to(vec3tmp);
-				std::memcpy(&area_p1, vec3tmp, sizeof(float) * 3);
-			}
-			if (lightParser->contains("pos2")) {
-				jsonParser["light"]["pos2"].get_to(vec3tmp);
-				std::memcpy(&area_p2, vec3tmp, sizeof(float) * 3);
-			}
-			if (lightParser->contains("pos3")) {
-				jsonParser["light"]["pos3"].get_to(vec3tmp);
-				std::memcpy(&area_p3, vec3tmp, sizeof(float) * 3);
-			}
-		}
-		if (lightParser->contains("reflection_rays")) {
-			reflection_rays = jsonParser["light"]["reflection_rays"].get<int>();
-		}
-	}
-
-	//
-	// 3. Camera field
+	// Camera field
 	if (jsonParser.contains("camera")) {
 		auto cameraParser = jsonParser.find("camera");
 
@@ -114,14 +65,14 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	}
 
 	//
-	// 4. Mesh field
+	// Mesh field
 	if (jsonParser.contains("path")) {
 		auto meshParser = jsonParser.find("path");
 		meshPath = jsonParser["path"].get<std::string>();
 	}
 
 	//
-	// 5. Misc. field
+	// Misc. field
 	if (jsonParser.contains("dynamicFrame")) {
 		// Just a place holder for now
 		auto plhPraser = jsonParser.find("dynamicFrame");
@@ -129,33 +80,8 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	}
 }
 
-static std::string lightTypeToString(const uint64_t lightType) {
-	std::string lightName;
-	switch (lightType) {
-	case SPECTER_AMBIENT_LIGHT:
-		lightName = "Ambient";
-		break;
-	case SPECTER_AREA_LIGHT:
-		lightName = "Area";
-		break;
-	case SPECTER_DIRECTIONAL_LIGHT:
-		lightName = "Directional";
-		break;
-	case SPECTER_POINT_LIGHT:
-		lightName = "Point";
-		break;
-	default:
-		lightName = "Invalid";
-		break;
-	}
-	return lightName;
-}
-
 std::ostream& operator<<(std::ostream& os, const SceneDescriptor& scene) {
 	os << "Printing file descriptor: " << scene.filename << '\n';
-	os << "lightType: " << lightTypeToString(scene.lightType) << '\n';
-	os << "lightEnergy: " << scene.lightEnergy << '\n';
-	os << "lightPosition: " << scene.lightPosition << '\n';
 	os << "cameraPosition: " << scene.cameraPosition << '\n';
 	os << "cameraTarget: " << scene.cameraTarget << '\n';
 	os << "cameraFov: " << scene.cameraFov << '\n';

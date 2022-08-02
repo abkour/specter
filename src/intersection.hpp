@@ -5,7 +5,7 @@
 
 namespace specter {
 
-struct Material;
+struct IMaterial;
 
 // Represents an intersection and its corresponding triangle index.
 // Also contains coefficient t for ray r(t) := o + t * d
@@ -26,7 +26,7 @@ struct Intersection {
 	unsigned f;
 	float t;
 
-	std::shared_ptr<Material> mat_ptr;
+	std::shared_ptr<IMaterial> mat_ptr;
 
 	bool isValid() const {
 		return t != std::numeric_limits<float>::max();

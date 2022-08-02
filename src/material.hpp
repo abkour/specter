@@ -6,11 +6,11 @@
 
 namespace specter {
 
-class Material {
+class IMaterial {
 
 public:
 
-	Material() = default;
+	IMaterial() = default;
 
 	virtual vec3f GetAlbedo() const {
 		return vec3f(0.f);
