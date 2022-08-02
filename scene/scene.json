@@ -12,8 +12,8 @@
       "target": [ -0.420, 2.631, 7.22 ],
       "resolution": [ 1920, 1080 ],
       "fov": 90,
-      "samples": 1
+      "samples": 8
     },
-    "path": "C://Users//flora//rsc//assets//cornell//cornell.obj",
+    "path": "C://Users//flora//rsc//assets//fireplace_room//fireplace_room.obj",
     "dynamicFrame": true
 }
