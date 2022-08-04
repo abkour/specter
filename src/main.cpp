@@ -11,7 +11,7 @@
 #include "filters.hpp"
 
 void testFilters();
-void test_cpu_lbvh_implementation();
+void test_cpu_lbvh_implementation(const char* filename);
 void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
@@ -21,8 +21,9 @@ void renderRTX(const char* scene_descriptor_file);
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "specter 3D rendering engine\n\n";
-		renderRTX(argv[1]);
+		//renderRTX(argv[1]);
 		//renderRasterized(argv[1]);
+		test_cpu_lbvh_implementation(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
 		std::cout << e.what();
@@ -32,12 +33,18 @@ int main(int argc, const char** argv) {
 	}
 }
 
-void test_cpu_lbvh_Implementation(const char* filename) {
+void test_cpu_lbvh_implementation(const char* filename) {
 	specter::SceneDescriptor scene_descriptor(filename);
 	specter::Scene scene(scene_descriptor);
 	specter::CPU_LBVH lbvh;
 	lbvh.prepass(*scene.model.get());
 	auto bvhs = lbvh.GetBoundingVolumes();
+	auto nBoxes = lbvh.GetNumberOfInternalNodes();
+	std::cout << "Testing BVH validity...\n";
+	
+	bool bvh_valid = lbvh.isValid();
+	std::cout << "\nBVH: " << (bvh_valid ? "Valid" : "Invalid") << '\n';
+
 }
 
 void renderRTX(const char* scene_descriptor_file) {

@@ -27,13 +27,19 @@ static int sign(float v) {
 }
 
 CPU_LBVH::~CPU_LBVH() {
-	delete[] output_aabbs;
-	delete[] internalNodes;
-	delete[] leafNodes;
+	if (output_aabbs != nullptr) {
+		delete[] output_aabbs;
+	}
+	if (internalNodes != nullptr) {
+		delete[] internalNodes;
+	}
+	if (leafNodes != nullptr) {
+		delete[] leafNodes;
+	}
 }
 
 void CPU_LBVH::prepass(Model& model) {
-	const std::size_t nTriangles = model.GetFaceCount() / 3;
+	nTriangles = model.GetFaceCount() / 3;
 	PrimitiveIdentifier* pIds = new PrimitiveIdentifier[nTriangles];
 	int* atomic_counters = new int[nTriangles - 1]();
 	internalNodes = new InternalNode[nTriangles - 1];
@@ -129,50 +135,27 @@ void CPU_LBVH::generateBV(const int nTriangles) {
 	const int nLeafNodes = nTriangles;
 	bool* atomic_counters = new bool[nAtomicCounters](false);
 
-	int* parent_indices = new int[nTriangles / 2];
-	int nUniqueParentIndices = 0;
-
-	auto resetAtomicCounters = [atomic_counters, nAtomicCounters]() {
-		for (int i = 0; i < nAtomicCounters; ++i) {
-			atomic_counters[i] = false;
-		}
-	};
+	int* tmp_parentIdx = new int[nLeafNodes];
+	for (int i = 0; i < nLeafNodes; ++i) {
+		tmp_parentIdx[i] = leafNodes[i].parentIdx;
+	}
 
 	for (int i = 0; i < nLeafNodes; ++i) {
-		const unsigned idx = leafNodes[i].leafIdx;
-		const unsigned parentIdx = leafNodes[i].parentIdx;
-		if (atomic_counters[parentIdx] == false) {
-			atomic_counters[parentIdx] = true;
-			output_aabbs[parentIdx] = aabbs[idx];
-			parent_indices[nUniqueParentIndices] = parentIdx;
-			nUniqueParentIndices++;
-		} else {
-			output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[idx]);
-		}
-	}
-
-	resetAtomicCounters();
-
-	for (int k = nTriangles / 2; k > 1; k /= 2) {
-		nUniqueParentIndices = 0;
-		for (int i = 0; i < k; ++i) {
-			const int p = parent_indices[i];
-			const unsigned idx = internalNodes[p].nodeIdx;
-			const unsigned parentIdx = internalNodes[p].parentIdx;
+		AxisAlignedBoundingBox aabb = aabbs[leafNodes[i].leafIdx];
+		int parentIdx = tmp_parentIdx[i];
+		while (parentIdx != -1) {
 			if (atomic_counters[parentIdx] == false) {
 				atomic_counters[parentIdx] = true;
-				output_aabbs[parentIdx] = aabbs[idx];
-				parent_indices[nUniqueParentIndices] = parentIdx;
-				nUniqueParentIndices++;
-			} else {
-				output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[idx]);
+				output_aabbs[parentIdx] = aabb;
+				break;
 			}
+			output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabb);
+			aabb = output_aabbs[parentIdx];
+			parentIdx = internalNodes[parentIdx].parentIdx;
 		}
-		// Reset atomic counters
-		resetAtomicCounters();
 	}
 
-	delete[] parent_indices;
+	delete[] tmp_parentIdx;
 	delete[] atomic_counters;
 }
 
@@ -181,6 +164,40 @@ void CPU_LBVH::generateBVBottomUpRecursively(const int nodeIdx, const int parent
 		output_aabbs[parentIdx] = aabbs[nodeIdx];
 	} else {
 		output_aabbs[parentIdx] = combine(output_aabbs[parentIdx], aabbs[nodeIdx]);
+	}
+}
+
+int CPU_LBVH::GetRootIndex() {
+	int nodeIdx = leafNodes[0].parentIdx;
+	while (internalNodes[nodeIdx].parentIdx != -1) {
+		std::cout << "nodeIdx: " << nodeIdx << '\n';
+		nodeIdx = internalNodes[nodeIdx].parentIdx;
+	}
+	return nodeIdx;
+}
+
+bool CPU_LBVH::isValid() {
+	bool result = true;
+	int rootIdx = GetRootIndex();
+	isValid_Rec(rootIdx, internalNodes[rootIdx].leftIdx, result);
+	isValid_Rec(rootIdx, internalNodes[rootIdx].rightIdx, result);
+	return result;
+}
+
+void CPU_LBVH::isValid_Rec(int nodeIdx, int childIdx, bool& result) {
+	if (internalNodes[nodeIdx].childLeaf != 0) {
+		return;
+	}
+	
+	if (output_aabbs[nodeIdx].containsEdgeInclusive(output_aabbs[childIdx])) {
+		isValid_Rec(childIdx, internalNodes[childIdx].leftIdx, result);
+		isValid_Rec(childIdx, internalNodes[childIdx].rightIdx, result);
+	} else {
+		result = false;
+#ifdef _DEBUG
+		std::cout << "Parent(" << nodeIdx << "): " << output_aabbs[nodeIdx];
+		std::cout << "Child(" << childIdx << "): " << output_aabbs[childIdx] << '\n';
+#endif
 	}
 }
 

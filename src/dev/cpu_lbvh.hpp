@@ -27,13 +27,26 @@ struct LeafNode {
 // Paper: Maximizing Parallelism in the Construction of BVHs, Octrees, and k-d Trees
 struct CPU_LBVH {
 
-	CPU_LBVH() = default;
+	CPU_LBVH()
+		: internalNodes(nullptr)
+		, leafNodes(nullptr)
+		, aabbs(nullptr)
+		, output_aabbs(nullptr)
+	{}
 	
 	void prepass(Model& model);
 
 	AxisAlignedBoundingBox* GetBoundingVolumes() {
 		return output_aabbs;
 	}
+
+	std::size_t GetNumberOfInternalNodes() const {
+		return nTriangles - 1;
+	}
+
+	int GetRootIndex();
+
+	bool isValid();
 
 	~CPU_LBVH();
 
@@ -49,8 +62,11 @@ protected:
 	// I will treat the layers of a tree as if they were in contigious memory,
 	void generateBVBottomUpRecursively(const int nodeIdx, const int parentIdx);
 
+	void isValid_Rec(int parentIdx, int nodeIdx, bool& result);
+
 protected:
 
+	std::size_t nTriangles;
 	InternalNode* internalNodes;
 	LeafNode* leafNodes;
 	AxisAlignedBoundingBox* aabbs;
