@@ -2,9 +2,22 @@
 
 specter is a raytracer that serves as a learning tool for graphics and engine development
 
-## Usage
+## Development Status
 
-Project is broken and under development
+The project is currently not usable by anyone but me. There is no GUI/CLI/manuals. The project
+is still under feature development. Once these features are fletched out, I will implement a 
+GUI. 
+As of this writing I'm working on the GPU implementation of the LBVH data structure. The 
+CPU reference implementation is working, however, that one uses recursion in the traversal
+routine. The construction routine works without recursion. Once I've implemented the non-recursive traversal routine, I will work on the compute shader implementation. 
+At that point, I will work on a custom scene file format, because working with OBJ is 
+a nightmare. 
+
+There are sitll some fundamental features missing, such as refraction and subsurface scattering.
+Also, the sampling techniques are primitive to say the least. 
+
+Finally, building this project is still not possible for anyone but myself. Once, I think the 
+project is presentable I will provide a cmakefile.
 
 ## Dependenancies
 
