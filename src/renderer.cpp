@@ -41,11 +41,11 @@ void RTX_Renderer::run() {
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
 
-	auto* octree = scene->accel.GetOctree();
+	//auto* octree = scene->accel.GetOctree();
 
-	std::cout << "Octree statistics\n";
-	std::cout << "Max depth: " << octree->GetMaxDepth() << '\n';
-	octree->printNodesPerLayer();
+	//std::cout << "Octree statistics\n";
+	//std::cout << "Max depth: " << octree->GetMaxDepth() << '\n';
+	//octree->printNodesPerLayer();
 
 	//
 	//

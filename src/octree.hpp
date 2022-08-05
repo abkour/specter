@@ -9,9 +9,11 @@
 
 #include <vector>
 
+#include "space_partition.hpp"
+
 namespace specter {
 
-struct Octree {
+struct Octree : public ISpacePartitioner {
 	
 	using layerIndex = int;
 	
@@ -20,11 +22,11 @@ struct Octree {
 	// RAII -> delete octree
 	~Octree();
 
-	void build(std::shared_ptr<Model>& model);
+	void build(std::shared_ptr<Model>& model) override;
 
 	// traverse the octree. Returns true if the ray intersects geometry in the mesh. 
 	// Additionally, it is guaranteed that the intersection point is the closest intersection point to the ray origin
-	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const;
+	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const override;
 	
 	// Traverse the octree. Returns true if the ray intersects any geometry in the mesh.
 	bool traverseAny(const Model* model, const Ray& ray) const;

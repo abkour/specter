@@ -288,17 +288,18 @@ void Octree::computeTriangleIntersections(const Model* model, Node* node, const 
 		}
 	}
 	if (best_i != -1) {
-		vec2f uv0 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3).t);
-		vec2f uv1 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 1).t);
-		vec2f uv2 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 2).t);
-
-		const float w = 1.f - best_u - best_v;
-		const vec2f uv = w * uv0 + best_u * uv1 + best_v * uv2;
+		if (model->HasTextureCoordinates()) {
+			vec2f uv0 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3).t);
+			vec2f uv1 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 1).t);
+			vec2f uv2 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3 + 2).t);
+			const float w = 1.f - best_u - best_v;
+			const vec2f uv = w * uv0 + best_u * uv1 + best_v * uv2;
+			its.u = uv[0];
+			its.v = uv[1];
+		}
 		auto meshIndex = model->GetMeshIndexFromFace(node->tri_indices[best_i]);
 		its.mat_ptr = model->GetMaterial(meshIndex);
 		its.n = model->GetNormal(model->GetFace(node->tri_indices[best_i] * 3).n);
-		its.u = uv[0];
-		its.v = uv[1];
 		its.f = node->tri_indices[best_i];
 		its.p = ray.o + its.t * ray.d;
 		vec3f np = normalize(its.p);

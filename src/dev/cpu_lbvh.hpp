@@ -1,6 +1,7 @@
 #pragma once
 #include "cpu_lbvh_helpers.hpp"
 #include "../model.hpp"
+#include "../space_partition.hpp"
 
 namespace specter {
 
@@ -25,43 +26,38 @@ struct LeafNode {
 // Reference implementation of the lbvh construction algorithm 
 // developed by Tero Karras. 
 // Paper: Maximizing Parallelism in the Construction of BVHs, Octrees, and k-d Trees
-struct CPU_LBVH {
+struct CPU_LBVH : public ISpacePartitioner {
 
 	CPU_LBVH()
 		: internalNodes(nullptr)
 		, leafNodes(nullptr)
 		, aabbs(nullptr)
 		, output_aabbs(nullptr)
+		, nTriangles(0)
 	{}
 	
-	void prepass(Model& model);
+	//
+	// ISpacePartitioner Interface
+	void build(std::shared_ptr<Model>& model) override;
 
-	AxisAlignedBoundingBox* GetBoundingVolumes() {
-		return output_aabbs;
-	}
-
-	std::size_t GetNumberOfInternalNodes() const {
-		return nTriangles - 1;
-	}
-
-	int GetRootIndex();
-
+	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const override;
+	
 	bool isValid();
 
 	~CPU_LBVH();
 
 protected:
 
+	//
+	// Implementation
+	void traverse_Rec(const Model* model, const int nodeIdx, const Ray& ray, Intersection& its) const;
+
+	int GetRootIndex() const;
+
 	void generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pids);
 
 	void generateBV(const int nTriangles);
 	
-	// On the GPU, this action is relatively easy to implement using atomic counters as outlined
-	// by Tero Karras. However, on the CPU you can also consider performing a DFS for O(1) 
-	// memory complexity. In the CPU implementation, I will not be using atomic counters. Instead,
-	// I will treat the layers of a tree as if they were in contigious memory,
-	void generateBVBottomUpRecursively(const int nodeIdx, const int parentIdx);
-
 	void isValid_Rec(int parentIdx, int nodeIdx, bool& result);
 
 protected:

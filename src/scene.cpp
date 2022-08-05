@@ -25,6 +25,4 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	spp = sceneDescriptor.samplesPerPixel;
 }
 
-Scene::~Scene() {}
-
 }

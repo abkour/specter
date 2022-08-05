@@ -1,6 +1,7 @@
 #pragma once
 #include "octree.hpp"
 #include "ray.hpp"
+#include "space_partition.hpp"
 
 namespace specter {
 
@@ -29,23 +30,10 @@ public:
 	// Trace ray using the accelerating structure. Returns true if the ray collides with mesh geometry.
 	bool traceRay(const Ray& ray, Intersection& intersection) const;
 
-	// Trace shadow ray. Returns true if any intersection is found. Returns false otherwise.
-	// The shadow ray functionality is currently deprecated, because I have switched the renderer.
-	// In the past, I used to seperate the scene from the lights, which allows direct shadow queries.
-	// Now, lights are simply treated as emitting surfaces, which are incorporated in the scene.
-	// The motivatin for this change was in the difficulty of handling transperent objects.
-	bool traceShadowRay(const Ray& ray) const;
-	bool traceShadowRayTmax(const Ray& ray, const float t_max) const;
-
-	// This should not really be used outside of debugging.
-	decltype(auto) GetOctree() {
-		return &octree;
-	}
-
 private:
 
 	std::shared_ptr<Model> model;
-	Octree octree;
+	std::unique_ptr<ISpacePartitioner> accel_struct;
 };
 
 }

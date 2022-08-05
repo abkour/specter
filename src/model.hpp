@@ -168,6 +168,10 @@ public:
 		return std::numeric_limits<uint32_t>::infinity();
 	}
 
+	bool HasTextureCoordinates() const {
+		return uvs.size() != 0;
+	}
+
 	// Implements the möller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
 	bool rayIntersection(const specter::Ray& ray, const std::size_t index, float& u, float& v, float& t) const {

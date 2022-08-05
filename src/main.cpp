@@ -20,10 +20,10 @@ void renderRTX(const char* scene_descriptor_file);
 
 int main(int argc, const char** argv) {
 	try {
-		std::cout << "specter 3D rendering engine\n\n";
-		//renderRTX(argv[1]);
+		std::cout << "SPECTER 3D RENDERING ENGINE\n\n";
+		renderRTX(argv[1]);
 		//renderRasterized(argv[1]);
-		test_cpu_lbvh_implementation(argv[1]);
+		//test_cpu_lbvh_implementation(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
 		std::cout << e.what();
@@ -37,14 +37,11 @@ void test_cpu_lbvh_implementation(const char* filename) {
 	specter::SceneDescriptor scene_descriptor(filename);
 	specter::Scene scene(scene_descriptor);
 	specter::CPU_LBVH lbvh;
-	lbvh.prepass(*scene.model.get());
-	auto bvhs = lbvh.GetBoundingVolumes();
-	auto nBoxes = lbvh.GetNumberOfInternalNodes();
+	lbvh.build(scene.model);
 	std::cout << "Testing BVH validity...\n";
-	
 	bool bvh_valid = lbvh.isValid();
 	std::cout << "\nBVH: " << (bvh_valid ? "Valid" : "Invalid") << '\n';
-
+	// 52 seconds
 }
 
 void renderRTX(const char* scene_descriptor_file) {
@@ -61,7 +58,7 @@ void renderRasterized(const char* scene_descriptor_file) {
 	specter::Scene scene(scene_descriptor);
 	
 	const specter::vec2u screen_resolution(1920, 1080);
-	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "Specter Rasterizer");
+	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "specter (raster mode)");
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	window.enableCursorCallback();
 	glfwSwapInterval(0);
@@ -80,36 +77,19 @@ void renderRasterized(const char* scene_descriptor_file) {
 		vertexIndices[i] = indices[i].p;
 	}
 
-	std::vector<specter::vec3f> vertex_colors;
-	vertex_colors.resize(nVertices);
-	for (int i = 0; i < nVertices; ++i) {
-		if (i >= 16527 && i <= 16530) {
-			vertex_colors[i] = specter::vec3f(1.f, 0.f, 0.f);
-			std::cout << "p: " << scene.model->GetVertex(i) << '\t';
-			std::cout << "t: " << scene.model->GetUV(i) << '\n';
-		} else {
-			vertex_colors[i] = specter::vec3f(1.f, 1.f, 1.f);
-		}
-	}
-
-	std::cout << "Normal: " << scene.model->GetNormal(16527) << '\n';
-
 	GLuint vao, vbo, ebo;
 	glGenVertexArrays(1, &vao);
 	glGenBuffers(1, &vbo);
 	glGenBuffers(1, &ebo);
 	glBindVertexArray(vao);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glNamedBufferData(vbo, (vertex_colors.size() + nVertices) * sizeof(specter::vec3f), NULL, GL_STATIC_DRAW);
+	glNamedBufferData(vbo, nVertices * sizeof(specter::vec3f), NULL, GL_STATIC_DRAW);
 	glNamedBufferSubData(vbo, 0, nVertices * sizeof(specter::vec3f), vertices);
-	glNamedBufferSubData(vbo, nVertices * sizeof(specter::vec3f), vertex_colors.size() * sizeof(specter::vec3f), vertex_colors.data());
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(unsigned), vertexIndices.data(), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(specter::vec3f), 0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(specter::vec3f), reinterpret_cast<void*>(nVertices * sizeof(specter::vec3f)));
 
 	specter::Shader shader
 	{

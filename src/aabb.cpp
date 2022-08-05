@@ -41,11 +41,15 @@ bool AxisAlignedBoundingBox::isCollapsed() const {
 
 
 bool AxisAlignedBoundingBox::contains(const vec3f& point) const {
-	return point < max&& point > min;
+	return point < max && point > min;
 }
 
 bool AxisAlignedBoundingBox::containsEdgeInclusive(const vec3f& point) const {
 	return point <= max && point >= min;
+}
+
+bool AxisAlignedBoundingBox::containsEdgeInclusive(const AxisAlignedBoundingBox& other) const {
+	return min <= other.min && max >= other.max;
 }
 
 bool AxisAlignedBoundingBox::overlaps(const AxisAlignedBoundingBox& other) const {

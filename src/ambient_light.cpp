@@ -8,7 +8,9 @@ vec3f AmbientLight::sample_light(const Accel& accel, const vec3f& point, const v
 	vec3f sdir = normalize(uniformlySampleCosineWeightedHemisphere());
 
 	Ray shadowRay(point + normal * 1e-4, hemisphereFrame.toLocal(sdir));	// Displace origin to avoid self-shadowing
-	return accel.traceShadowRay(shadowRay) ? vec3f(0.f) : dot(shadowRay.d, normal) * ambient_color;
+	
+	return vec3f(0.f);
+	//return accel.traceShadowRay(shadowRay) ? vec3f(0.f) : dot(shadowRay.d, normal) * ambient_color;
 }
 
 }

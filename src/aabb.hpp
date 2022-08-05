@@ -32,6 +32,7 @@ struct AxisAlignedBoundingBox {
 	bool contains(const vec3f& point) const;
 	// Returns true if point is confined within [min, max]
 	bool containsEdgeInclusive(const vec3f& point) const;
+	bool containsEdgeInclusive(const AxisAlignedBoundingBox& point) const;
 	// Returns true if two aabbs overlap in space.
 	bool overlaps(const AxisAlignedBoundingBox& other) const;
 	// Additionally, returns true if two edges/faces overlap

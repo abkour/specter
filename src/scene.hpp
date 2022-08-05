@@ -13,8 +13,6 @@ struct Scene {
 	Scene() = default;
 	Scene(SceneDescriptor& sceneDescriptor);
 
-	~Scene();
-
 	std::shared_ptr<Model> model;
 
 	Accel accel;
