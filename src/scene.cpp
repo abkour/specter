@@ -2,6 +2,7 @@
 #include "area_light.hpp"
 #include "material_lambertian.hpp"
 #include "scene.hpp"
+#include "dev/cpu_lbvh.hpp"
 
 namespace specter {
 
@@ -16,8 +17,9 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	model->parse(sceneDescriptor.meshPath.c_str());
 
 	// Initialize acceleration structure
-	accel.addModel(model);
-	accel.build();
+	accel = std::make_shared<Accel>();
+	accel->addModel(model);
+	accel->build();
 
 	// Integrator
 	switch (sceneDescriptor.integrator_type) {

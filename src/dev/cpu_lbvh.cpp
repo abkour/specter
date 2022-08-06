@@ -4,24 +4,31 @@ namespace specter {
 
 
 // Implementation
-static void assignObjectID(const int idx, InternalNode* internalNodes, LeafNode* leafNodes, PrimitiveIdentifier* sortedObjects) {
+static void assignInternalNode(const int idx, InternalNode* internalNodes) {
 	internalNodes[idx].nodeIdx = idx;
 	internalNodes[idx].leftIdx = -1;
 	internalNodes[idx].rightIdx = -1;
 	internalNodes[idx].parentIdx = -1;
 	internalNodes[idx].childLeaf = 0;
+}
+
+static void assignLeafNode(const int idx, LeafNode* leafNodes, PrimitiveIdentifier* pIds) {
 	leafNodes[idx].parentIdx = -1;
-	leafNodes[idx].leafIdx = sortedObjects[idx].objectId;
+	leafNodes[idx].leafIdx = pIds[idx].objectId;
 }
 
 void CPU_LBVH::build(std::shared_ptr<Model>& model) {
-	nTriangles = model->GetFaceCount() / 3;
-	PrimitiveIdentifier* pIds = new PrimitiveIdentifier[nTriangles];
-	internalNodes = new InternalNode[nTriangles - 1];
-	leafNodes = new LeafNode[nTriangles];
-	aabbs = new AxisAlignedBoundingBox[nTriangles];
-	output_aabbs = new AxisAlignedBoundingBox[nTriangles - 1];
+	nTriangles = model->GetTriangleCount();
+	internalNodes.resize(nTriangles - 1);
+	leafNodes.resize(nTriangles);
+	output_aabbs.resize(nTriangles - 1);
+	
+	std::vector<PrimitiveIdentifier> pIds;
+	pIds.resize(nTriangles);
 
+	std::vector<AxisAlignedBoundingBox> aabbs;
+	aabbs.resize(nTriangles);
+	
 	const AxisAlignedBoundingBox scene_box = model->computeBoundingBox();
 
 	for (int i = 0; i < nTriangles; ++i) {
@@ -30,26 +37,25 @@ void CPU_LBVH::build(std::shared_ptr<Model>& model) {
 			model->GetVertex(model->GetFace(i * 3 + 1).p),
 			model->GetVertex(model->GetFace(i * 3 + 2).p));
 	}
-
+	
 	for (int i = 0; i < nTriangles; ++i) {
-		computeMortonCode(pIds, aabbs, i, scene_box.min, scene_box.max);
+		computeMortonCode(pIds.data(), aabbs.data(), i, scene_box.min, scene_box.max);
 	}
 
 	// Sort primitives according to their morton codes
-	radixsort(pIds, nTriangles);
-
-	for (int i = 0; i < nTriangles; ++i) {
-		assignObjectID(i, internalNodes, leafNodes, pIds);
-	}
-
+	radixsort(pIds.data(), nTriangles);
+	
 	for (int i = 0; i < nTriangles - 1; ++i) {
-		generateHierarchy(i, nTriangles, pIds);
+		assignInternalNode(i, internalNodes.data());
+		assignLeafNode(i, leafNodes.data(), pIds.data());
+	}
+	assignLeafNode(nTriangles - 1, leafNodes.data(), pIds.data());
+	
+	for (int i = 0; i < nTriangles - 1; ++i) {
+		generateHierarchy(i, nTriangles, pIds.data());
 	}
 
-	generateBV(nTriangles);
-
-	delete[] pIds;
-	delete[] aabbs;
+	generateBV(aabbs.data(), nTriangles);
 }
 
 bool CPU_LBVH::traverse(const Model* model, const Ray& ray, Intersection& intersection) const {
@@ -123,24 +129,6 @@ static int sign(float v) {
 	return ((v < 0.f) ? -1.f : ((v > 0.f) ? 1.f : 0.f));
 }
 
-CPU_LBVH::~CPU_LBVH() {
-#ifdef _DEBUG
-	std::cout << "Deleting Octree!\n";
-#endif
-	if (output_aabbs != nullptr) {
-		delete[] output_aabbs;
-		output_aabbs = nullptr;
-	}
-	if (internalNodes != nullptr) {
-		delete[] internalNodes;
-		internalNodes = nullptr;
-	}
-	if (leafNodes != nullptr) {
-		delete[] leafNodes;
-		leafNodes = nullptr;
-	}
-}
-
 void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pIds) {
 	int d = sign(clz(i, i + 1, nPrimitives, pIds) - clz(i, i - 1, nPrimitives, pIds));
 	const int minPrefix = clz(i, i - d, nPrimitives, pIds);
@@ -192,11 +180,14 @@ void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveId
 	}
 }
 
-void CPU_LBVH::generateBV(const int nTriangles) {
+void CPU_LBVH::generateBV(AxisAlignedBoundingBox* aabbs, const int nTriangles) {
 	// Bottom up reduction to create bounding volumes.
 	const int nAtomicCounters = nTriangles;
 	const int nLeafNodes = nTriangles;
-	bool* atomic_counters = new bool[nAtomicCounters](false);
+	int* atomic_counters = new int[nAtomicCounters];
+	for (int i = 0; i < nAtomicCounters; ++i) {
+		atomic_counters[i] = false;
+	}
 
 	int* tmp_parentIdx = new int[nLeafNodes];
 	for (int i = 0; i < nLeafNodes; ++i) {

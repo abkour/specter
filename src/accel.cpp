@@ -12,7 +12,7 @@ void Accel::addModel(std::shared_ptr<Model>& model) {
 void Accel::build() {
 	std::cout << "Building octree...";
 	specter::Timer octreeTimer;
-	accel_struct = std::make_unique<CPU_LBVH>();
+	accel_struct = std::make_shared<CPU_LBVH>();
 	accel_struct->build(model);	
 	std::cout << " Finished in : " << octreeTimer.elapsedTime() << " seconds.\n\n";
 }

@@ -18,7 +18,7 @@ struct Scene {
 	std::shared_ptr<Model> model;
 	std::shared_ptr<IIntegrator> integrator;
 
-	Accel accel;
+	std::shared_ptr<Accel> accel;
 	Camera camera;
 
 	bool dynamicFrame;

@@ -33,7 +33,7 @@ public:
 private:
 
 	std::shared_ptr<Model> model;
-	std::unique_ptr<ISpacePartitioner> accel_struct;
+	std::shared_ptr<ISpacePartitioner> accel_struct;
 };
 
 }

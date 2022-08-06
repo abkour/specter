@@ -80,7 +80,7 @@ void Window::openWindow(const WindowMode windowMode, const vec2u& resolution, co
 
 	vidMode = const_cast<GLFWvidmode*>(glfwGetVideoMode(primaryMonitor));
 	if (!vidMode) {
-		throw std::runtime_error("Error. GLFW coudln't retrieve video mode of current monitor!");
+		throw std::runtime_error("Error. GLFW coudln't retrieve video mode of primary monitor!");
 	}
 
 	switch (windowMode) {

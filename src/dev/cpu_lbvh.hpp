@@ -6,10 +6,6 @@
 namespace specter {
 
 struct InternalNode {
-	InternalNode() 
-		: nodeIdx(0), leftIdx(0), rightIdx(0), parentIdx(0), childLeaf(0)
-	{}
-
 	int nodeIdx;
 	int leftIdx;
 	int rightIdx;
@@ -22,6 +18,7 @@ struct LeafNode {
 	int leafIdx;
 };
 
+//tbb12.lib
 
 // Reference implementation of the lbvh construction algorithm 
 // developed by Tero Karras. 
@@ -29,13 +26,9 @@ struct LeafNode {
 struct CPU_LBVH : public ISpacePartitioner {
 
 	CPU_LBVH()
-		: internalNodes(nullptr)
-		, leafNodes(nullptr)
-		, aabbs(nullptr)
-		, output_aabbs(nullptr)
-		, nTriangles(0)
+		: nTriangles(0)
 	{}
-	
+
 	//
 	// ISpacePartitioner Interface
 	void build(std::shared_ptr<Model>& model) override;
@@ -43,8 +36,6 @@ struct CPU_LBVH : public ISpacePartitioner {
 	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const override;
 	
 	bool isValid();
-
-	~CPU_LBVH();
 
 protected:
 
@@ -56,17 +47,17 @@ protected:
 
 	void generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pids);
 
-	void generateBV(const int nTriangles);
+
+	void generateBV(AxisAlignedBoundingBox* aabbs, const int nTriangles);
 	
 	void isValid_Rec(int parentIdx, int nodeIdx, bool& result);
 
 protected:
 
 	std::size_t nTriangles;
-	InternalNode* internalNodes;
-	LeafNode* leafNodes;
-	AxisAlignedBoundingBox* aabbs;
-	AxisAlignedBoundingBox* output_aabbs;
+	std::vector<LeafNode> leafNodes;
+	std::vector<InternalNode> internalNodes;
+	std::vector<AxisAlignedBoundingBox> output_aabbs;
 };
 
 }

@@ -41,13 +41,12 @@ void test_cpu_lbvh_implementation(const char* filename) {
 	std::cout << "Testing BVH validity...\n";
 	bool bvh_valid = lbvh.isValid();
 	std::cout << "\nBVH: " << (bvh_valid ? "Valid" : "Invalid") << '\n';
-	// 52 seconds
 }
 
 void renderRTX(const char* scene_descriptor_file) {
 	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
 	specter::Scene scene(scene_descriptor);
-	specter::RTX_Renderer renderer(&scene);
+	specter::RTX_Renderer renderer(scene);
 	renderer.run();
 }
 

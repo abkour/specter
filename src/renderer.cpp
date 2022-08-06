@@ -2,8 +2,8 @@
 
 namespace specter {
 
-RTX_Renderer::RTX_Renderer(Scene* scene) {
-	this->scene = scene;
+RTX_Renderer::RTX_Renderer(Scene& pScene) {
+	this->scene = std::make_shared<Scene>(pScene);
 	frame.resize(scene->camera.resx() * scene->camera.resy());
 	
 	if (!scene->dynamicFrame) {
@@ -25,7 +25,7 @@ RTX_Renderer::~RTX_Renderer() {
 
 void RTX_Renderer::run() {
 	// Open the window using GLFW, initialize GLAD and allow user input via mouse and keyboard.
-	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "Specter Raytracer");
+	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "specter (pathtracer)");
 	window.enableCursorZoom();
 	//window.enableKeyStateCallback();
 	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -47,8 +47,7 @@ void RTX_Renderer::run() {
 	//
 	//
 	// Run the integrator in a seperate thread
-	// renderThread = std::thread(&RTX_Renderer::runDynamic, this);
-	renderThread = std::thread(&RTX_Renderer::dev_runDynamic, this);
+	renderThread = std::thread(&RTX_Renderer::runDynamic, this);
 
 	static float quadvertices[] =
 	{
@@ -194,7 +193,7 @@ void RTX_Renderer::run() {
 	glDeleteBuffers(1, &vbo);
 }
 
-void RTX_Renderer::dev_runDynamic() {
+void RTX_Renderer::runDynamic() {
 	std::cout << "[DEV] Rendering mesh (parallel)...\n";
 
 	std::vector<vec3f> cumulativeColor;
@@ -223,7 +222,7 @@ void RTX_Renderer::dev_runDynamic() {
 						specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
 						
 						const std::size_t index = y * scene->camera.resx() + x;
-						cumulativeColor[index] += integrator->render(scene->accel, ray);
+						cumulativeColor[index] += integrator->render(*scene->accel.get(), ray);
 						
 						frame[index].x = std::sqrt(cumulativeColor[index].x / ((float)k + 1.f));
 						frame[index].y = std::sqrt(cumulativeColor[index].y / ((float)k + 1.f));
@@ -242,7 +241,7 @@ void RTX_Renderer::dev_runDynamic() {
 	// Before terminating, tell the user how many pixels have been rendered in this frame.
 	if (MAIN_FORCED_EXIT) {
 		int nPixelsRendered = 0;
-		for (auto c : cumulativeColor) {
+		for (auto& c : cumulativeColor) {
 			if (c != vec3f(0.f)) {
 				nPixelsRendered++;
 			}

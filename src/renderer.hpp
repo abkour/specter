@@ -22,7 +22,7 @@ class RTX_Renderer {
 
 public:
 
-	RTX_Renderer(Scene* scene);
+	RTX_Renderer(Scene& pScene);
 	
 	~RTX_Renderer();
 
@@ -34,10 +34,6 @@ private:
 
 	std::shared_ptr<IIntegrator> integrator;
 
-	// This is function in development.
-	void dev_runDynamic();
-	vec3f dev_pixel_color(const Ray& ray, int reflectionDepth);
-
 	std::mutex updateMtx;
 	bool updateFrame;
 
@@ -47,7 +43,7 @@ private:
 
 private:
 
-	Scene* scene;
+	std::shared_ptr<Scene> scene;
 
 	std::vector<specter::vec3f> frame;
 
