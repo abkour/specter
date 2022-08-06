@@ -11,6 +11,10 @@
 
 namespace specter {
 
+enum class IntegratorType {
+	None, Normal, PT_Integrator
+};
+
 // Created by parsing a json file containing the scene descriptions.
 struct SceneDescriptor {
 
@@ -29,6 +33,9 @@ struct SceneDescriptor {
 	vec3f cameraTarget;
 	float cameraFov;
 	int samplesPerPixel;
+
+	// Integrator
+	IntegratorType integrator_type;
 
 	// Screen
 	vec2u screenResolution;

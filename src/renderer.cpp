@@ -10,6 +10,9 @@ RTX_Renderer::RTX_Renderer(Scene* scene) {
 		throw std::runtime_error("static frame rendering is not implemented!");
 	}
 
+	// Integrator
+	integrator = scene->integrator;
+
 	terminateRendering.store(false);
 }
 
@@ -40,12 +43,6 @@ void RTX_Renderer::run() {
 
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTextureUnit(0, image);
-
-	//auto* octree = scene->accel.GetOctree();
-
-	//std::cout << "Octree statistics\n";
-	//std::cout << "Max depth: " << octree->GetMaxDepth() << '\n';
-	//octree->printNodesPerLayer();
 
 	//
 	//
@@ -197,28 +194,6 @@ void RTX_Renderer::run() {
 	glDeleteBuffers(1, &vbo);
 }
 
-// This function is responsible for recursively tracing a path. If the recursionDepth
-// has been exceeded before a light source is hit, the pixel will be rendered black.
-vec3f RTX_Renderer::dev_pixel_color(const Ray& ray, int reflectionDepth) {
-	if (reflectionDepth <= 0) {
-		return vec3f(0.f);
-	}
-
-	Intersection its;
-	if (!scene->accel.traceRay(ray, its)) {
-		return vec3f(0.f);
-	} 
-
-	Ray scattered;
-	vec3f attenuation;
-	vec3f emitted = its.mat_ptr->emitted(its.u, its.v, its.p);
-	if (!its.mat_ptr->scatter(ray, its, scattered, attenuation)) {
-		return emitted;
-	}
-
-	return emitted + attenuation * dev_pixel_color(scattered, reflectionDepth - 1);
-}
-
 void RTX_Renderer::dev_runDynamic() {
 	std::cout << "[DEV] Rendering mesh (parallel)...\n";
 
@@ -227,7 +202,6 @@ void RTX_Renderer::dev_runDynamic() {
 	
 	bool MAIN_FORCED_EXIT = false;
 	Timer timer;
-	unsigned reflectionDepth = 16;
 	int k = 0;
 
 	// This process is creating k frames. These frames are stored as an amalgamation in the 
@@ -249,7 +223,7 @@ void RTX_Renderer::dev_runDynamic() {
 						specter::Ray ray = scene->camera.getRay(specter::vec2f(x + off.x, y + off.y));
 						
 						const std::size_t index = y * scene->camera.resx() + x;
-						cumulativeColor[index] += dev_pixel_color(ray, reflectionDepth);
+						cumulativeColor[index] += integrator->render(scene->accel, ray);
 						
 						frame[index].x = std::sqrt(cumulativeColor[index].x / ((float)k + 1.f));
 						frame[index].y = std::sqrt(cumulativeColor[index].y / ((float)k + 1.f));

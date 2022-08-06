@@ -124,6 +124,9 @@ static int sign(float v) {
 }
 
 CPU_LBVH::~CPU_LBVH() {
+#ifdef _DEBUG
+	std::cout << "Deleting Octree!\n";
+#endif
 	if (output_aabbs != nullptr) {
 		delete[] output_aabbs;
 		output_aabbs = nullptr;

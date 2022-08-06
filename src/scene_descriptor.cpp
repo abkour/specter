@@ -65,6 +65,28 @@ SceneDescriptor::SceneDescriptor(const char* filename) : filename(filename) {
 	}
 
 	//
+	// Integrator field
+	if (jsonParser.contains("integrator")) {
+		auto integratorParser = jsonParser.find("integrator");
+
+		if (integratorParser->contains("type")) {
+			std::string integrator_name = jsonParser["integrator"]["type"].get<std::string>();
+			std::cout << "name: " << integrator_name << '\n';
+			if (integrator_name == "PT") {
+				integrator_type = IntegratorType::PT_Integrator;
+			} else if(integrator_name == "Normal") {
+				integrator_type = IntegratorType::Normal;
+			} else {
+				integrator_type = IntegratorType::None;
+			}
+		}
+
+		if (integratorParser->contains("traversal_depth")) {
+			reflection_rays = jsonParser["integrator"]["traversal_depth"].get<int>();
+		}
+	}
+
+	//
 	// Mesh field
 	if (jsonParser.contains("path")) {
 		auto meshParser = jsonParser.find("path");

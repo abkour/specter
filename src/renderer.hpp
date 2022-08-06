@@ -1,4 +1,5 @@
 #pragma once
+#include "integrator.hpp"
 #include "intersection.hpp"
 #include "scene.hpp"
 #include "shader.hpp"
@@ -30,6 +31,8 @@ public:
 private:
 
 	void runDynamic();
+
+	std::shared_ptr<IIntegrator> integrator;
 
 	// This is function in development.
 	void dev_runDynamic();

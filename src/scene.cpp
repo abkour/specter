@@ -19,9 +19,20 @@ Scene::Scene(SceneDescriptor& sceneDescriptor) {
 	accel.addModel(model);
 	accel.build();
 
+	// Integrator
+	switch (sceneDescriptor.integrator_type) {
+	case IntegratorType::Normal:
+		integrator = std::make_shared<NormalIntegrator>();
+		break;
+	case IntegratorType::PT_Integrator:
+		integrator = std::make_shared<PTIntegrator>(sceneDescriptor.reflection_rays);
+		break;
+	default:
+		throw std::runtime_error("Integrator specified in scene descriptor file does not match a known integrator!");
+	}
+
 	// Set rendering information
 	dynamicFrame = sceneDescriptor.dynamicFrame;
-	reflection_rays = sceneDescriptor.reflection_rays;
 	spp = sceneDescriptor.samplesPerPixel;
 }
 
