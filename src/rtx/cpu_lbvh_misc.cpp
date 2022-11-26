@@ -44,8 +44,10 @@ unsigned expandBits(unsigned v) {
 
 void computeMortonCode(PrimitiveIdentifier* pIds, AxisAlignedBoundingBox* aabbs, unsigned int idx, const vec3f& nStart, const vec3f& nEnd) {
 	vec3f mappedInput = aabbs[idx].center();
+	// map the bounding box centroid to the range [0, 1]
 	mappedInput = (1.f / (nEnd - nStart)) * (mappedInput - nStart);
 
+	// Furthermore, map from [0, 1] to [0, 1023]
 	mappedInput.x = std::min(std::max(mappedInput.x * 1024.f, 0.f), 1023.f);
 	mappedInput.y = std::min(std::max(mappedInput.y * 1024.f, 0.f), 1023.f);
 	mappedInput.z = std::min(std::max(mappedInput.z * 1024.f, 0.f), 1023.f);

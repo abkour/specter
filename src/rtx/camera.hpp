@@ -1,7 +1,7 @@
 #pragma once
 #include "ray.hpp"
-#include "vec2.hpp"
-#include "vec3.hpp"
+#include "../math/vec2.hpp"
+#include "../math/vec3.hpp"
 
 namespace specter {
 

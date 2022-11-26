@@ -1,5 +1,5 @@
 #pragma once
-#include "vec2.hpp"
+#include "math/vec2.hpp"
 
 #include <glad/glad.h>
 #include <glfw3.h>

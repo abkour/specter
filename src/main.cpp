@@ -8,15 +8,15 @@
 
 #include "misc.hpp"
 
-#include "filters.hpp"
+#include "rtx/filters.hpp"
 
 void testFilters();
 void test_cpu_lbvh_implementation(const char* filename);
 void renderRasterized(const char* filename);
 void renderRTX(const char* scene_descriptor_file);
 
-#include "dev/cpu_lbvh_helpers.hpp"
-#include "dev/cpu_lbvh.hpp"
+#include "rtx/cpu_lbvh_helpers.hpp"
+#include "rtx/cpu_lbvh.hpp"
 
 int main(int argc, const char** argv) {
 	try {

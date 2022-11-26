@@ -1,11 +1,11 @@
 #pragma once
-#include "accel.hpp"
-#include "ambient_light.hpp"
-#include "camera.hpp"
-#include "integrator_normal.hpp"
-#include "integrator_pt.hpp"
+#include "rtx/accel.hpp"
+#include "rtx/ambient_light.hpp"
+#include "rtx/camera.hpp"
+#include "rtx/integrator_normal.hpp"
+#include "rtx/integrator_pt.hpp"
 #include "model.hpp"
-#include "point_light.hpp"
+#include "rtx/point_light.hpp"
 #include "scene_descriptor.hpp"
 
 namespace specter {

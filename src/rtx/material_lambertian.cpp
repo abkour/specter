@@ -1,5 +1,5 @@
 #include "material_lambertian.hpp"
-#include "random_engine.hpp"
+#include "../random_engine.hpp"
 
 #include "coordinate_system.hpp"
 #include "sampler.hpp"

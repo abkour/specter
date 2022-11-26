@@ -1,7 +1,8 @@
 #pragma once
-#include "cpu_lbvh_helpers.hpp"
 #include "../model.hpp"
-#include "../space_partition.hpp"
+
+#include "cpu_lbvh_helpers.hpp"
+#include "space_partition.hpp"
 
 namespace specter {
 
@@ -35,7 +36,7 @@ struct CPU_LBVH : public ISpacePartitioner {
 
 	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const override;
 	
-	bool isValid();
+	bool isValid() override;
 
 protected:
 
@@ -47,10 +48,11 @@ protected:
 
 	void generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pids);
 
-
 	void generateBV(AxisAlignedBoundingBox* aabbs, const int nTriangles);
 	
 	void isValid_Rec(int parentIdx, int nodeIdx, bool& result);
+
+	void isHierarchyValid_Rec(int parentIdx, int nodeIdx, bool& result);
 
 protected:
 
@@ -58,6 +60,7 @@ protected:
 	std::vector<LeafNode> leafNodes;
 	std::vector<InternalNode> internalNodes;
 	std::vector<AxisAlignedBoundingBox> output_aabbs;
+	std::vector<AxisAlignedBoundingBox> aabbs;
 };
 
 }

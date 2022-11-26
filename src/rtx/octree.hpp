@@ -1,7 +1,7 @@
 #pragma once
 #include "aabb.hpp"
-#include "common_math.hpp"
-#include "model.hpp"
+#include "../math/common_math.hpp"
+#include "../model.hpp"
 #include "vec3.hpp"
 
 #include <tbb/blocked_range.h>
@@ -24,6 +24,9 @@ struct Octree : public ISpacePartitioner {
 
 	void build(std::shared_ptr<Model>& model) override;
 
+	bool isValid() override {
+		return true;
+	}
 	// traverse the octree. Returns true if the ray intersects geometry in the mesh. 
 	// Additionally, it is guaranteed that the intersection point is the closest intersection point to the ray origin
 	bool traverse(const Model* model, const Ray& ray, Intersection& intersection) const override;
@@ -108,6 +111,7 @@ private:
 
 	Node* root;	// Represents the root of the octree
 	std::size_t maxDepth;	// Specifies the maximum depth the octree can have. This parameter is used to avoid infinite depth octrees in pathological cases.
+	std::size_t maxTrianglesPerLeaf;
 
 };
 

@@ -1,6 +1,7 @@
 #pragma once
+#include "../math/common_math.hpp"
+
 #include "accel.hpp"
-#include "common_math.hpp"
 #include "coordinate_system.hpp"
 #include "light.hpp"
 #include "sampler.hpp"

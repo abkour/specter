@@ -1,5 +1,5 @@
 #include "view.hpp"
-#include "common_math.hpp"
+#include "math/common_math.hpp"
 
 namespace specter {
 

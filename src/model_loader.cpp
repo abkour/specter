@@ -1,6 +1,6 @@
 #include "model.hpp"
-#include "area_light.hpp"
-#include "vec2.hpp"
+#include "rtx/area_light.hpp"
+#include "math/vec2.hpp"
 #include <fstream>
 
 #define STB_IMAGE_IMPLEMENTATION

@@ -1,7 +1,7 @@
 #pragma once
-#include "vec2.hpp"
-#include "vec3.hpp"
-#include "random_engine.hpp"
+#include "../math/vec2.hpp"
+#include "../math/vec3.hpp"
+#include "../random_engine.hpp"
 
 namespace specter {
 

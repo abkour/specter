@@ -27,6 +27,8 @@ public:
 	// Construct the underlying accelerating structure object.
 	void build();
 
+	bool isValid();
+
 	// Trace ray using the accelerating structure. Returns true if the ray collides with mesh geometry.
 	bool traceRay(const Ray& ray, Intersection& intersection) const;
 

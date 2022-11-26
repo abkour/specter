@@ -4,8 +4,8 @@
 	understandable primitive rasterization
 */
 #pragma once
-#include "vec3.hpp"
-#include "mat4.hpp"
+#include "math/vec3.hpp"
+#include "math/mat4.hpp"
 
 namespace specter {
 

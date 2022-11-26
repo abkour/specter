@@ -4,10 +4,10 @@
 #pragma once
 #include <glad/glad.h>
 
-#include "shader.hpp"
-#include "vec2.hpp"
-#include "vec3.hpp"
-#include "vec4.hpp"
+#include "../shader.hpp"
+#include "../math/vec2.hpp"
+#include "../math/vec3.hpp"
+#include "../math/vec4.hpp"
 
 namespace specter {
 

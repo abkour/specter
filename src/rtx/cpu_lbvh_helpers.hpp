@@ -1,7 +1,9 @@
 #pragma once 
+#include "../math/vec4.hpp"
+
+#include "aabb.hpp"
+
 #include <utility>
-#include "../aabb.hpp"
-#include "../vec4.hpp"
 
 namespace specter {
 

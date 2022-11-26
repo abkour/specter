@@ -1,6 +1,6 @@
 #pragma once 
 #include "accel.hpp"
-#include "vec3.hpp"
+#include "../math/vec3.hpp"
 
 namespace specter {
 

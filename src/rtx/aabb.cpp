@@ -39,6 +39,9 @@ bool AxisAlignedBoundingBox::isCollapsed() const {
 	return min == max;
 }
 
+bool AxisAlignedBoundingBox::isEmpty() const {
+	return min == max == vec3f(0.f);
+}
 
 bool AxisAlignedBoundingBox::contains(const vec3f& point) const {
 	return point < max && point > min;

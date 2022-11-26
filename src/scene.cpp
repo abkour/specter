@@ -1,8 +1,8 @@
 #pragma once
-#include "area_light.hpp"
-#include "material_lambertian.hpp"
+#include "rtx/area_light.hpp"
+#include "rtx/material_lambertian.hpp"
 #include "scene.hpp"
-#include "dev/cpu_lbvh.hpp"
+#include "rtx/cpu_lbvh.hpp"
 
 namespace specter {
 

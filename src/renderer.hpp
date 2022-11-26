@@ -1,6 +1,6 @@
 #pragma once
-#include "integrator.hpp"
-#include "intersection.hpp"
+#include "rtx/integrator.hpp"
+#include "rtx/intersection.hpp"
 #include "scene.hpp"
 #include "shader.hpp"
 #include "window.hpp"

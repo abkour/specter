@@ -1,6 +1,7 @@
 #pragma once
+#include "../math/vec3.hpp"
+
 #include "ray.hpp"
-#include "vec3.hpp"
 
 namespace specter {
 
@@ -28,6 +29,8 @@ struct AxisAlignedBoundingBox {
 	bool isValid() const;
 	// Returns true if the bbox has volume 0
 	bool isCollapsed() const;
+	// Returns true, if the bbox is empty
+	bool isEmpty() const;
 	// Returns true if point is confined within (min, max)
 	bool contains(const vec3f& point) const;
 	// Returns true if point is confined within [min, max]

@@ -98,7 +98,10 @@ void RTX_Renderer::run() {
 	specter::vec2 texCoordTopRight(1.f, 1.f);
 
 	float currentCameraZoom = window.getCursorZoom();
-	auto zoomFunction = [](float zoomFactor) { return zoomFactor >= 50 ? 0.5f : (zoomFactor < 0.f ) ? 0.f : zoomFactor / 100.f; };
+	auto zoomFunction = [](float zoomFactor) 
+	{ 
+		return zoomFactor >= 50 ? 0.5f : (zoomFactor < 0.f ) ? 0.f : zoomFactor / 100.f; 
+	};
 
 	specter::vec2f pictureMovementDirection(0.f, 0.f);
 
@@ -132,7 +135,6 @@ void RTX_Renderer::run() {
 		if (glfwGetKey(window.getWindow(), GLFW_KEY_A) == GLFW_RELEASE && glfwGetKey(window.getWindow(), GLFW_KEY_D) == GLFW_RELEASE) {
 			pictureMovementDirection.x = 0.f;
 		}
-
 
 		if (currentCameraZoom != window.getCursorZoom() || pictureMovementDirection != specter::vec2f(0.f, 0.f)) {
 			currentCameraZoom = window.getCursorZoom();
@@ -206,7 +208,7 @@ void RTX_Renderer::runDynamic() {
 	// This process is creating k frames. These frames are stored as an amalgamation in the 
 	// cumulativeColor vector. Before processing the next frame, we average out the currently
 	// available frames and signal to the main thread that the frame vector is ready for updating.
-	// After all k frames have been rendered, we terminate this thread, after providing some 
+	// After all k frames have been rendered, we terminate this thread, after outputting some 
 	// performance metrics.
 	for (; k < scene->spp; ++k) {
 		tbb::parallel_for(tbb::blocked_range2d<int>(0, scene->camera.resy(), 0, scene->camera.resx()),

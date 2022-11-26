@@ -1,11 +1,11 @@
 #pragma once
 
-#include "aabb.hpp"
-#include "material.hpp"
-#include "material_emissive.hpp"
-#include "material_lambertian.hpp"
-#include "material_metal.hpp"
-#include "ray.hpp"
+#include "rtx/aabb.hpp"
+#include "rtx/material.hpp"
+#include "rtx/material_emissive.hpp"
+#include "rtx/material_lambertian.hpp"
+#include "rtx/material_metal.hpp"
+#include "rtx/ray.hpp"
 #include "timer.hpp"
 
 namespace specter {

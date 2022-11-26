@@ -1,6 +1,7 @@
 #pragma once
+#include "../math/common_math.hpp"
+
 #include "camera.hpp"
-#include "common_math.hpp"
 
 namespace specter {
 

@@ -1,17 +1,10 @@
 #include "octree.hpp"
 
+#include <array>
 #include <numeric>	// For std::iota
 
 #define nMaxRayAABBIntersections (4)
 #define nSubRegions (8)
-
-namespace helper {
-
-specter::vec2f normalizeTiling(const specter::vec2f& uv) {
-	return specter::vec2f(fmod(1000.f + uv.x - 1e-5, 1.f), fmod(1000.f + uv.y - 1e-5, 1.f));
-}
-
-}
 
 namespace specter {
 
@@ -155,6 +148,7 @@ void Octree::Node::CreateValidNode(const sAABB* superRegion, int superRegionIdx,
 
 Octree::Octree() {
 	root = nullptr;
+	maxTrianglesPerLeaf = 10;
 }
 
 Octree::~Octree() {
@@ -189,7 +183,7 @@ void Octree::buildRec(Node* node, const vec3f* vertices, const FaceElement* face
 	// This is the termination condition for the recursive building function.
 	// The node->tri_indices array is now no longer nullptr. This fact, is used
 	// to identify that a node is a leaf node.
-	if (node->nTriangles <= 10 || depth > maxDepth) {
+	if (node->nTriangles <= maxTrianglesPerLeaf || depth > maxDepth) {
 		node->tri_indices = new uint32_t[node->nTriangles];
 		std::memcpy(node->tri_indices, trianglePositions, sizeof(uint32_t) * node->nTriangles);
 		return;
@@ -248,35 +242,11 @@ struct IndexDistancePair {
 	}
 };
 
-// Implements insertion sort to sort the array
-static void sortIDP(IndexDistancePair* ptr, const uint32_t num)
-{
-	for (int i = 1; i < num; ++i) {
-		float d = ptr[i].distance;
-		int j = i - 1;
-		for (; j >= 0 && ptr[j].distance > d; --j) {
-			ptr[j + 1].distance = ptr[j].distance;
-			ptr[j + 1].index = ptr[j].index;
-		}
-		ptr[j + 1].distance = d;
-		ptr[j + 1].index = ptr[i].index;
-	}
-}
-
-static void sortIDP_swap(IndexDistancePair* ptr, const uint32_t num)
-{
-	for (int i = 1; i < num; ++i) {
-		int j = i;
-		for (; j > 0 && ptr[j - 1].distance > ptr[j].distance; --j) {
-			std::swap(ptr[j], ptr[j - 1]);
-		}
-	}
-}
-
 void Octree::computeTriangleIntersections(const Model* model, Node* node, const Ray& ray, Intersection& its) const {
 	float u, v, t = std::numeric_limits<float>::max();
-	float best_u = t, best_v = t;
+	float best_u, best_v = t;
 	int best_i = -1;
+	
 	for (int i = 0; i < node->nTriangles; ++i) {
 		if (model->rayIntersection(ray, node->tri_indices[i], u, v, t)) {
 			if (its.t > t && t > 0.f) {
@@ -287,6 +257,7 @@ void Octree::computeTriangleIntersections(const Model* model, Node* node, const 
 			}
 		}
 	}
+
 	if (best_i != -1) {
 		if (model->HasTextureCoordinates()) {
 			vec2f uv0 = model->GetUV(model->GetFace(node->tri_indices[best_i] * 3).t);
@@ -300,9 +271,7 @@ void Octree::computeTriangleIntersections(const Model* model, Node* node, const 
 		auto meshIndex = model->GetMeshIndexFromFace(node->tri_indices[best_i]);
 		its.mat_ptr = model->GetMaterial(meshIndex);
 		its.n = model->GetNormal(model->GetFace(node->tri_indices[best_i] * 3).n);
-		its.f = node->tri_indices[best_i];
 		its.p = ray.o + its.t * ray.d;
-		vec3f np = normalize(its.p);
 	}
 }
 
@@ -312,21 +281,22 @@ void Octree::traverseRec(const Model* model, Node* node, const Ray& ray, Interse
 		return;
 	}
 	
-	IndexDistancePair distanceToBoxes[nSubRegions];
-	alignas(32) float nearT[nSubRegions];
-	alignas(32) float farT[nSubRegions];
+	alignas(32) std::array<float, nSubRegions> nearT;
+	alignas(32) std::array<float, nSubRegions> farT;
 	for (int i = 0; i < nSubRegions; ++i) {
 		nearT[i] = std::numeric_limits<float>::min();
 		farT[i] = std::numeric_limits<float>::max();
 	}
 
-	node->subboxes->rayIntersect(ray, nearT, farT);
+	node->subboxes->rayIntersect(ray, nearT.data(), farT.data());
 
-	for (int i = 0; i < nSubRegions; ++i) {
+	std::array<IndexDistancePair, nSubRegions> distanceToBoxes;
+	for (int i = 0; auto& distance_pair : distanceToBoxes) {
 		if (nearT[i] <= farT[i]) {
-			distanceToBoxes[i].distance = nearT[i];
-			distanceToBoxes[i].index = i;
+			distance_pair.distance = nearT[i];
+			distance_pair.index = i;
 		}
+		++i;
 	}
 
 	// Sort sub-regions according to the intersection distance, in order 

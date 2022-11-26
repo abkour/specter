@@ -1,8 +1,8 @@
 #pragma once
 #include "common.hpp"
-#include "common_math.hpp"
-#include "vec2.hpp"
-#include "vec3.hpp"
+#include "math/common_math.hpp"
+#include "math/vec2.hpp"
+#include "math/vec3.hpp"
 
 #include <json.hpp>	
 

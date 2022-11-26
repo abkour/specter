@@ -1,5 +1,5 @@
 #include "material_metal.hpp"
-#include "random_engine.hpp"
+#include "../random_engine.hpp"
 
 namespace specter {
 
