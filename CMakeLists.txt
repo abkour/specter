@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 add_executable( specter
+                # core
                 src/main.cpp
                 src/misc.cpp
                 src/model_loader.cpp
@@ -16,8 +17,10 @@ add_executable( specter
                 src/timer.cpp
                 src/view.cpp
                 src/window.cpp
+                # math
                 src/math/common_math.cpp
                 src/math/simd_math.cpp
+                # rtx
                 src/rtx/aabb.cpp
                 src/rtx/accel.cpp
                 src/rtx/ambient_light.cpp

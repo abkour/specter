@@ -80,16 +80,9 @@ std::ostream& operator<<(std::ostream& os, const AxisAlignedBoundingBox& aabb) {
 	return os << "bmin: (" << aabb.min << ")\tbmax: (" << aabb.max << ")\n";
 }
 
-
 AxisAlignedBoundingBox combine(const AxisAlignedBoundingBox& box0, const AxisAlignedBoundingBox& box1) {
 	return AxisAlignedBoundingBox(minComponent(box0.min, box1.min),
 		maxComponent(box0.max, box1.max));
-}
-
-#include <immintrin.h>
-
-void manyAABBRayIntersect(const AxisAlignedBoundingBox* bboxes, Ray& ray, float* nearT, const int count) {
-
 }
 
 }

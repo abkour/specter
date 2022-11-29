@@ -46,3 +46,5 @@ ext/
 packages/
 specter/
 x64/
+
+src/.vscode/

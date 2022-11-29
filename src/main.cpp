@@ -21,6 +21,7 @@ void renderRTX(const char* scene_descriptor_file);
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "SPECTER 3D RENDERING ENGINE\n\n";
+		std::cout << argv[1] << '\n';
 		//renderRTX(argv[1]);
 		renderRasterized(argv[1]);
 		//test_cpu_lbvh_implementation(argv[1]);
@@ -93,8 +94,8 @@ void renderRasterized(const char* scene_descriptor_file) {
 
 	specter::Shader shader
 	{
-		{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\shaders\\raster\\simple.glsl.vs" },
-		{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\shaders\\raster\\simple.glsl.fs" }
+		{ GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\simple.glsl.vs") },
+		{ GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\simple.glsl.fs") }
 	};
 	shader.create();
 	shader.bind();

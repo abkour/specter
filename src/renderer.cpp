@@ -88,8 +88,8 @@ void RTX_Renderer::run() {
 	// Simple pass-through vertex shader that renders a texture onto a quad
 	specter::Shader quadShader =
 	{
-		{ GL_VERTEX_SHADER, "C:\\Users\\flora\\source\\repos\\specter\\shaders\\quad.glsl.vs" },
-		{ GL_FRAGMENT_SHADER, "C:\\Users\\flora\\source\\repos\\specter\\shaders\\quad.glsl.fs" }
+		{ GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.vs") },
+		{ GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.fs") }
 	};
 	quadShader.create();
 	quadShader.bind();

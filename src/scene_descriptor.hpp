@@ -4,7 +4,9 @@
 #include "math/vec2.hpp"
 #include "math/vec3.hpp"
 
-#include <nlohmann/json.hpp>	
+#include <nlohmann/json.hpp>
+
+//#include <nlohmann/json.hpp>
 
 #include <fstream>
 #include <ostream>
