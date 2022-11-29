@@ -41,6 +41,8 @@ specter-test/pch.cpp
 
 specter.sln
 
+build/
+ext/
 packages/
 specter/
 x64/
