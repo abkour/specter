@@ -21,8 +21,8 @@ void renderRTX(const char* scene_descriptor_file);
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "SPECTER 3D RENDERING ENGINE\n\n";
-		renderRTX(argv[1]);
-		//renderRasterized(argv[1]);
+		//renderRTX(argv[1]);
+		renderRasterized(argv[1]);
 		//test_cpu_lbvh_implementation(argv[1]);
 	}
 	catch (const std::runtime_error& e) {
@@ -34,6 +34,7 @@ int main(int argc, const char** argv) {
 }
 
 void test_cpu_lbvh_implementation(const char* filename) {
+	std::cout << "Testing CPU_LBVH implementation!\n";
 	specter::SceneDescriptor scene_descriptor(filename);
 	specter::Scene scene(scene_descriptor);
 	specter::CPU_LBVH lbvh;

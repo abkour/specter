@@ -48,11 +48,18 @@ protected:
 
 	void generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pids);
 
+	void generateHierarchy_Int(const int i, const int nPrimitives, PrimitiveIdentifier* pids);
+
 	void generateBV(AxisAlignedBoundingBox* aabbs, const int nTriangles);
 	
 	void isValid_Rec(int parentIdx, int nodeIdx, bool& result);
 
 	void isHierarchyValid_Rec(int parentIdx, int nodeIdx, bool& result);
+
+	// Debug
+	void printAllChildren();
+
+	void printDegenerateInternalNodes();
 
 protected:
 

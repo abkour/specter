@@ -1,4 +1,5 @@
 #include "scene_descriptor.hpp"
+#include <sstream>
 
 namespace specter {
 

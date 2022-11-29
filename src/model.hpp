@@ -8,6 +8,10 @@
 #include "rtx/ray.hpp"
 #include "timer.hpp"
 
+#include <sstream>
+#include <string>
+#include <vector>
+
 namespace specter {
 
 enum class MaterialType : uint8_t {

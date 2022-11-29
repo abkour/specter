@@ -1,0 +1,20 @@
+{
+  "debug": {
+    "value": false,
+    "method": "normals"
+  },
+  "camera": {
+    "position": [ 4.65695, 2.27471, -1.79116 ],
+    "target": [ 3.77753, 1.79878, -1.80191 ],
+    "resolution": [ 1024, 720 ],
+    "fov": 90,
+    "samples": 16
+  },
+  "integrator": {
+    "type": "Normal",
+    "traversal_depth": 16
+  },
+
+  "path": "C://Users//flora//rsc//assets//fireplace_room//fireplace_room_2.obj",
+  "dynamicFrame": true
+}

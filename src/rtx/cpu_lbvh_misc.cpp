@@ -14,6 +14,19 @@ AxisAlignedBoundingBox constructAABBFromPaddedTriangle(const vec3f& v0, const ve
 	return AxisAlignedBoundingBox(tmin, tmax);
 }
 
+AxisAlignedBoundingBox constructAABBFromPaddedTrianglePlus(const vec3f& v0, const vec3f& v1, const vec3f& v2) {
+	constexpr float eps = 1e-5;
+	vec3f tmin(v0);
+	vec3f tmax(v0);
+	tmax.x = (v1.x > v0.x) ? ((v1.x > v2.x) ? v1.x : v2.x) : ((v2.x > v0.x) ? v2.x : v0.x);
+	tmax.y = (v1.y > v0.y) ? ((v1.y > v2.y) ? v1.y : v2.y) : ((v2.y > v0.y) ? v2.y : v0.y);
+	tmax.z = (v1.z > v0.z) ? ((v1.z > v2.z) ? v1.z : v2.z) : ((v2.z > v0.z) ? v2.z : v0.z);
+	tmin.x = (v1.x < v0.x) ? ((v1.x < v2.x) ? v1.x : v2.x) : ((v2.x < v0.x) ? v2.x : v0.x);
+	tmin.y = (v1.y < v0.y) ? ((v1.y < v2.y) ? v1.y : v2.y) : ((v2.y < v0.y) ? v2.y : v0.y);
+	tmin.z = (v1.z < v0.z) ? ((v1.z < v2.z) ? v1.z : v2.z) : ((v2.z < v0.z) ? v2.z : v0.z);
+	return AxisAlignedBoundingBox(tmin - vec3(eps), tmax + vec3(eps));
+}
+
 void radixsort(PrimitiveIdentifier* ids, std::size_t n, uint32_t mask) {
 	if (n <= 1) return;
 

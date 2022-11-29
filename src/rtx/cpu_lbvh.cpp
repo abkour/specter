@@ -46,7 +46,7 @@ void CPU_LBVH::build(std::shared_ptr<Model>& model) {
 	const AxisAlignedBoundingBox scene_box = model->computeBoundingBox();
 
 	for (int i = 0; i < nTriangles; ++i) {
-		aabbs[i] = constructAABBFromPaddedTriangle(
+		aabbs[i] = constructAABBFromPaddedTrianglePlus(
 			model->GetVertex(model->GetFace(i * 3).p),
 			model->GetVertex(model->GetFace(i * 3 + 1).p),
 			model->GetVertex(model->GetFace(i * 3 + 2).p));
@@ -66,8 +66,11 @@ void CPU_LBVH::build(std::shared_ptr<Model>& model) {
 	
 	// Generate the hierarchy sequentially. however, on the GPU this will be done in parallel.
 	for (int i = 0; i < nTriangles - 1; ++i) {
-		generateHierarchy(i, nTriangles, pIds.data());
+		generateHierarchy_Int(i, nTriangles, pIds.data());
 	}
+
+	printAllChildren();
+	printDegenerateInternalNodes();
 
 	generateBV(aabbs.data(), nTriangles);
 }
@@ -138,6 +141,7 @@ static int clz2(int i, int j, std::size_t nTriangles, PrimitiveIdentifier* pIds)
 	const unsigned k1 = pIds[j].mortonCode;
 	// If the keys are identical, use the key identifiers i,j as a fallback. See s.4, p.2.
 	if (k0 == k1) {
+		//return (i + j) >> 1;
 		return 31 - int(std::log2(i ^ j));
 	}
 	return 31 - int(std::log2(k0 ^ k1));
@@ -171,57 +175,12 @@ static int clz(int i, int j, std::size_t nTriangles, PrimitiveIdentifier* pIds) 
 	return debruijn32[x * 0x076be629 >> 27];
 }
 
-static unsigned int clz23(unsigned int k0, unsigned int k1) {
-	unsigned int x = k0 ^ k1;
-	static const char debruijn32[32] = {
-		0, 31, 9, 30, 3, 8, 13, 29, 2, 5, 7, 21, 12, 24, 28, 19,
-		1, 10, 4, 14, 6, 22, 25, 20, 11, 15, 23, 26, 16, 27, 17, 18
-	};
-	x |= x >> 1;
-	x |= x >> 2;
-	x |= x >> 4;
-	x |= x >> 8;
-	x |= x >> 16;
-	x++;
-	return debruijn32[x * 0x076be629 >> 27];
-}
-
 static int sign(int v) {
 	return v < 0 ? -1 : ((v == 0) ? 0 : 1);
 }
 
-static int sign2(int v) {
-	return v < 0 ? -1 : 1;
-}
-
-int findSplit(PrimitiveIdentifier* ids, int first, int last) {
-	unsigned int key0 = ids[first].mortonCode;
-	unsigned int key1 = ids[last].mortonCode;
-	if (key0 == key1) {
-		return (first + last) >> 1;
-	}
-	int commonPrefix = clz23(key0, key1);
-	
-	int split = first;
-	int step = last - first;
-
-	do {
-		step = (step + 1) >> 1;
-		int newSplit = split + step;
-		if (newSplit < last) {
-			unsigned int splitCode = ids[newSplit].mortonCode;
-			int splitPrefix = clz23(key0, splitCode);
-			if (splitPrefix > commonPrefix) {
-				split = newSplit;
-			}
-		}
-	} while (step > 1);
-	
-	return split;
-}
-
 void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveIdentifier* pIds) {
-	int d = sign(clz(i, i + 1, nPrimitives, pIds) - clz(i, i - 1, nPrimitives, pIds));
+	const int d = sign(clz(i, i + 1, nPrimitives, pIds) - clz(i, i - 1, nPrimitives, pIds));
 	const int minPrefix = clz(i, i - d, nPrimitives, pIds);
 
 	float lmax = 2;
@@ -238,8 +197,8 @@ void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveId
 		yy *= 2.f;
 	}
 	
-	int j = i + l * d;
-	int dNode = clz(i, j, nPrimitives, pIds);
+	const int j = i + l * d;
+	const int dNode = clz(i, j, nPrimitives, pIds);
 
 	float s = 0;
 	float kk = 2.f;
@@ -253,11 +212,8 @@ void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveId
 			s += 1.f;
 	}
 
-	int split = i + s * d + std::min(d, 0);
+	const int split = i + s * d + std::min(d, 0);
 
-	if (i == 0) {
-		std::cout << "i: " << i << "\tj: " << j << "\td: " << d << "\tdNode: " << dNode << "\tl: " << l << "\ts: " << s << "\tsplit: " << split << '\n';
-	}
 
 	if (std::min(i, j) == split) {
 		internalNodes[i].leftIdx = leafNodes[split].leafIdx;
@@ -269,6 +225,74 @@ void CPU_LBVH::generateHierarchy(const int i, const int nPrimitives, PrimitiveId
 		internalNodes[split].parentIdx = internalNodes[i].nodeIdx;
 	}
 
+	if (std::max(i, j) == split + 1) {
+		internalNodes[i].rightIdx = leafNodes[split + 1].leafIdx;
+		leafNodes[split + 1].parentIdx = internalNodes[i].nodeIdx;
+		// We mark this as a right leaf child
+		internalNodes[i].childLeaf += 2;
+	} else {
+		internalNodes[i].rightIdx = internalNodes[split + 1].nodeIdx;
+		internalNodes[split + 1].parentIdx = internalNodes[i].nodeIdx;
+	}
+}
+
+void CPU_LBVH::generateHierarchy_Int(const int i, const int nPrimitives, PrimitiveIdentifier* pIds) {
+	// -> correct
+	const int d = sign(clz(i, i + 1, nPrimitives, pIds) - clz(i, i - 1, nPrimitives, pIds));
+	// -> correct
+	const int minPrefix = clz(i, i - d, nPrimitives, pIds);
+
+	// -> correct
+	int lmax = 2;
+	while (clz(i, i + lmax * d, nPrimitives, pIds) > minPrefix) {
+		lmax *= 2;
+	}
+
+	// -> correct
+	int yy = 2;
+	int l = 0;
+	for (int t = lmax / yy; t >= 1; t = lmax / yy) {
+		if (clz(i, i + (l + t) * d, nPrimitives, pIds) > minPrefix) {
+			l += t;
+		}
+		yy *= 2;
+	}
+
+	// -> correct
+	const int j = i + l * d;
+	// -> correct
+	const int dNode = clz(i, j, nPrimitives, pIds);
+
+	// -> correct
+	int s = 0;
+
+	// -> correct
+	int kk = 2;
+	for (int t = (l + kk - 1) / kk; t > 1; t = (l + kk - 1) / kk) {
+		if (clz(i, i + (s + t) * d, nPrimitives, pIds) > dNode) {
+			s += t;
+		}
+		kk *= 2;
+	}
+	if (clz(i, i + (s + 1) * d, nPrimitives, pIds) > dNode) {
+		s += 1;
+	}
+
+	// -> correct
+	const int split = i + s * d + std::min(d, 0);
+
+	// -> correct
+	if (std::min(i, j) == split) {
+		internalNodes[i].leftIdx = leafNodes[split].leafIdx;
+		leafNodes[split].parentIdx = internalNodes[i].nodeIdx;
+		// We mark this as a left leaf child
+		internalNodes[i].childLeaf += 1;
+	} else {
+		internalNodes[i].leftIdx = internalNodes[split].nodeIdx;
+		internalNodes[split].parentIdx = internalNodes[i].nodeIdx;
+	}
+
+	// -> correct
 	if (std::max(i, j) == split + 1) {
 		internalNodes[i].rightIdx = leafNodes[split + 1].leafIdx;
 		leafNodes[split + 1].parentIdx = internalNodes[i].nodeIdx;
@@ -334,14 +358,14 @@ void CPU_LBVH::isValid_Rec(int nodeIdx, int childIdx, bool& result) {
 		std::cout << "Hierarchy path: " << childIdx << " ";
 		int parentIdx = nodeIdx;
 		while (parentIdx != -1) {
-			std::cout << nodeIdx << " ";
+			std::cout << parentIdx << " ";
 			parentIdx = internalNodes[parentIdx].parentIdx;
 		}
 		std::cout << parentIdx << " ";
 	};
 
 	if (output_aabbs[nodeIdx].isCollapsed()) {
-		std::cout << "Bounding volume is collapsed\n";
+		std::cout << "Bounding volume " << nodeIdx << " is collapsed\n";
 		while (true) {
 			int leftIdx = internalNodes[nodeIdx].leftIdx;
 			bool isLeftInternal = !(internalNodes[nodeIdx].childLeaf & 1);
@@ -384,6 +408,53 @@ void CPU_LBVH::isValid_Rec(int nodeIdx, int childIdx, bool& result) {
 void CPU_LBVH::isHierarchyValid_Rec(int parentIdx, int nodeIdx, bool& result) {
 	if (parentIdx == -1) {
 		return;
+	}
+}
+
+// Debug
+void CPU_LBVH::printAllChildren() {
+	/*for (int i = 0; i < internalNodes.size(); ++i) {
+		std::cout << "[InternalNode, " << i << "]\n\t";
+		auto leftIdx = internalNodes[i].leftIdx;
+		auto rightIdx = internalNodes[i].rightIdx;
+		if (leftIdx == -1) {
+			std::cout << "[EmptyNode]\t\t";
+		} else if (leftIdx != -1 && internalNodes[i].childLeaf >= 1) {
+			std::cout << "[LeafNode, " << internalNodes[i].leftIdx << "]\t\t";
+		} else if (leftIdx != -1 && (internalNodes[i].childLeaf & 1) == 0) {
+			std::cout << "[InternalNode, " << internalNodes[i].leftIdx << "]\t\t";
+		}
+
+		if (rightIdx == -1) {
+			std::cout << "[EmptyNode]\n";
+		} else if (rightIdx != -1 && internalNodes[i].childLeaf >= 2) {
+			std::cout << "[LeafNode, " << internalNodes[i].rightIdx << "]\n\n";
+		} else if (rightIdx != -1 && internalNodes[i].childLeaf < 2) {
+			std::cout << "[InternalNode, " << internalNodes[i].rightIdx << "]\n\n";
+		}
+	}*/
+
+	bool allLeavesHaveParents = true;
+	for (int i = 0; i < leafNodes.size(); ++i) {
+		if (leafNodes[i].parentIdx == -1) {
+			allLeavesHaveParents = false;
+			std::cout << "Leaf missing parent @" << i << '\t' << "LeafIdx: " << leafNodes[i].leafIdx << '\n';
+		}
+	}
+
+	if (allLeavesHaveParents) {
+		std::cout << "\nAll leaf nodes have parents! SUCCESS!\n";
+	} else {
+		std::cout << "\nleaf nodes missing parents! FAILURE!\n";
+	}
+}
+
+void CPU_LBVH::printDegenerateInternalNodes() {
+	std::cout << "Printing degenerate internal nodes...\n";
+	for (int i = 0; i < internalNodes.size(); ++i) {
+		if (internalNodes[i].leftIdx == -1 && internalNodes[i].rightIdx == -1) {
+			std::cout << "@" << i << " -> degenerate internal node\n";
+		}
 	}
 }
 

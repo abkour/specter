@@ -3,17 +3,16 @@
         "value": false,
         "method": "normals"
     },
-    "light": {
-      "type": "ambient",
-      "srgb": [ 255, 255, 0 ]
-    },
     "camera": {
-      "position": [ -0.466595, 2.68807, 8.2255 ],
-      "target": [ -0.420, 2.631, 7.22 ],
+      "position": [ 5.51377, 4.12887, -8.90401 ],
+      "target": [ 4.90555, 3.70973, -7.22992 ],
       "resolution": [ 1920, 1080 ],
       "fov": 90,
-      "samples": 8
+      "samples": 4
     },
-    "path": "C://Users//flora//rsc//assets//fireplace_room//fireplace_room.obj",
+    "integrator": {
+      "type":  "Normal"
+    },
+    "path": "C://Users//flora//rsc//assets//cube//cube_sanitized.obj",
     "dynamicFrame": true
 }

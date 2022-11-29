@@ -1,0 +1,19 @@
+{
+  "debug": {
+    "value": false,
+    "method": "normals"
+  },
+  "camera": {
+    "position": [ -11.9622, 8.11236, 3.47697 ],
+    "target": [ -11.1527, 7.55085, 2.70578 ],
+    "resolution": [ 1920, 1080 ],
+    "fov": 90,
+    "samples": 16
+  },
+  "integrator": {
+    "type": "Normal",
+    "traversal_depth": 16
+  },
+  "path": "C://Users//flora//rsc//assets//tests//2hundred.obj",
+  "dynamicFrame": true
+}

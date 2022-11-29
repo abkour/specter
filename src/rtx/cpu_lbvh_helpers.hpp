@@ -19,6 +19,8 @@ struct PrimitiveIdentifier {
 
 AxisAlignedBoundingBox constructAABBFromPaddedTriangle(const vec3f& v0, const vec3f& v1, const vec3f& v2);
 
+AxisAlignedBoundingBox constructAABBFromPaddedTrianglePlus(const vec3f& v0, const vec3f& v1, const vec3f& v2);
+
 unsigned expandBits(unsigned u);
 
 void computeMortonCode(PrimitiveIdentifier* pIds, AxisAlignedBoundingBox* aabbs, unsigned int idx, const vec3f& nStart, const vec3f& nEnd);
