@@ -1,0 +1,84 @@
+The SFF (Specter File Format) Specification.
+
+1. Introcuction
+SFF is a binary file format for loading 3D assets into the specter engine.
+As such it is only curated for specter.
+Current version is 0.1.
+
+2. Supported features
+    - 3D geometry data (vertices, normals, texture coordinates, vertex indices)
+    - Switch for interleaved and packed mode
+    - Texture packing
+
+3. Unsupported features
+    - Scene files
+    - Bones/Joints (and other animation objects)
+    - Custom sRGB formats
+    - Transparency
+    - ...
+
+4. Format description
+    4.1 Header
+    4.2 Body
+
+    Numbers inside paranthesis seperated by colons describe the byte range that a particular element occupies
+    (i.e (35:39) indicates 4 bytes starting from the 36th byte).
+    UNLESS OTHERWISE STATED THE BYTES ARE MEANT TO BE READ AS UNSIGNED 32-BIT INTEGERS.
+
+4.1 Header
+    (0:3)       number of meshes in the file
+    (4:7)       size of the geometry data
+    (8:9)       geometry format 
+    (10:11)     interleaved/packed mode
+    (12:13)     size of the texture data
+4.2 Body
+    GN = Size of geometry data
+    TN = Size of texture data
+    (14:GN)     geometry data
+    (GN+1:TN)   texture data
+
+About "Geometry format":
+    The geometry format is a 8-bit unsigned integer representing what attributes are available 
+    for a given model. For example, a model might have positions, normals and uv coordinates,
+    but be missing indices. This information is described by this byte.
+
+About "Interleaved/Packed mode":
+    Attributes (Positions/Normals etc.) might be in interleaved or packed mode.
+    Interleaved meaning that the geometry is stored as an AoS, i.e:
+        struct AttributeData {
+            float3 position;
+            float3 normal;
+            float2 uv;
+        };
+    In packed mode geometry is stored as a SoA, i.e:
+        struct AttributeData {
+            float3 positions[];
+            float3 normals[];
+            float2 uv[];
+        };
+
+About "Geometry data":
+    Geometry data is stored as a AoS of meshes, with each mesh having the following form:
+        struct Mesh {
+            int32   Total size of this object;
+            int32   Number of vertices;
+            int32   Number of indices;
+            int16   Number of textures;
+            int16   Array of Texture indices[];
+            AttributeData attribute data; -> For this see the above ("About Interleaved/Packed mode")
+        };
+
+About "texture data":
+    Texture data is described as a AoS where each struct has the following form:
+        TP = Length of texture path
+        LMIA = Length of the Mesh index array (An array of indices to associated meshes)
+        (0:3)           Length of texture path
+        (4:TP)          Texture Path
+        (TP+1:TP+3)     Number of associated meshes
+        (TP+4:LMIA)     Mesh index array (2-byte unsigned integer per index)
+
+About Floating-Points:
+    Floats are following the IEEE-754 standard.
+
+About wchar and char:
+    Chars are all in 8-bit ASCII. No support for wchar.
