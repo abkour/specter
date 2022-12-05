@@ -34,6 +34,10 @@ public:
 		return alpha * (vec3f(data[idx], data[idx + 1], data[idx + 2]) / 255.f);
 	}
 
+	virtual unsigned char* get_data() const override {
+		return data;
+	}
+
 protected:
 
 	unsigned char* data;

@@ -6,12 +6,12 @@
   "camera": {
     "position": [ -289.406, 543.514, -91.6833 ],
     "target": [ -288.455, 543.208, -91.6352 ],
-    "resolution": [ 1000, 1000 ],
+    "resolution": [ 512, 512 ],
     "fov": 90,
     "samples": 512
   },
   "integrator": {
-    "type":  "Normal"
+    "type":  "PT"
   },
   "path": "C://Users//flora//rsc//assets//conference//conference-adj.obj",
   "dynamicFrame": true

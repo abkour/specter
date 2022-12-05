@@ -18,7 +18,7 @@
 
 namespace specter {
 
-class RTX_Renderer {
+class RTX_Renderer final {
 
 public:
 

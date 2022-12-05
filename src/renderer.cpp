@@ -1,5 +1,7 @@
 #include "renderer.hpp"
 
+#include "imgui_wrapper.hpp"
+
 namespace specter {
 
 RTX_Renderer::RTX_Renderer(Scene& pScene) {
@@ -28,7 +30,7 @@ void RTX_Renderer::run() {
 	window.openWindow(specter::WindowMode::WINDOWED, specter::vec2u(scene->camera.resx(), scene->camera.resy()), "specter (pathtracer)");
 	window.enableCursorZoom();
 	//window.enableKeyStateCallback();
-	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	// Set up the RTX texture
 	glGenTextures(1, &image);
@@ -59,7 +61,6 @@ void RTX_Renderer::run() {
 		-1.f, 1.f
 	};
 
-	
 	static float quadTextureCoordinates[] =
 	{
 		0.f, 0.f,
@@ -104,6 +105,8 @@ void RTX_Renderer::run() {
 	};
 
 	specter::vec2f pictureMovementDirection(0.f, 0.f);
+
+	ImguiWrapper imgui_wrapper(window.getWindow());
 
 	float deltatime = 0.f;
 	float lasttime = 0.f;
@@ -173,6 +176,12 @@ void RTX_Renderer::run() {
 		lck.unlock();
 
 		glDrawArrays(GL_TRIANGLES, 0, 6);
+
+		//
+		//
+		// update & render GUI
+		imgui_wrapper.update();
+		imgui_wrapper.render(window.getWindow());
 
 		glfwSwapBuffers(window.getWindow());
 		glfwPollEvents();

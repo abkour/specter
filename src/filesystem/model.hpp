@@ -1,24 +1,21 @@
 #pragma once
 
-#include "rtx/aabb.hpp"
-#include "rtx/material.hpp"
-#include "rtx/material_emissive.hpp"
-#include "rtx/material_lambertian.hpp"
-#include "rtx/material_metal.hpp"
-#include "rtx/ray.hpp"
-#include "timer.hpp"
+#include "material_processor.hpp"
+#include "../rtx/aabb.hpp"
+#include "../rtx/material.hpp"
+#include "../rtx/material_emissive.hpp"
+#include "../rtx/material_lambertian.hpp"
+#include "../rtx/material_metal.hpp"
+#include "../rtx/ray.hpp"
+#include "../timer.hpp"
 
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace specter {
-
-enum class MaterialType : uint8_t {
-	Metal,
-	Dielectric,
-	Semiconductor	// Not supported yet
-};
 
 // Auxillary structure for code readability
 struct FaceElement {
@@ -42,7 +39,7 @@ struct MeshAttributeSizes {
 };
 
 // A model is a class that combines multiple meshes.
-class Model {
+class Model final {
 
 public:
 
@@ -52,19 +49,19 @@ public:
 
 	~Model();
 
-	void parse(const char* filename);
+	void parse(const std::string& filename);
 	
 	//
 	// Get base of attributes.
-	specter::vec3f* GetVertices() {
+	vec3f* GetVertices() {
 		return vertices.data();
 	}
 
-	specter::vec3f* GetNormals() {
+	vec3f* GetNormals() {
 		return normals.data();
 	}
 
-	specter::vec2f* GetUVs() {
+	vec2f* GetUVs() {
 		return uvs.data();
 	}
 
@@ -72,21 +69,21 @@ public:
 		return faces.data();
 	}
 
-	std::shared_ptr<specter::IMaterial>* GetMaterials() {
+	std::shared_ptr<IMaterial>* GetMaterials() {
 		return materials.data();
 	}
 
 	//
 	// Get indiviudal attribute
-	specter::vec3f GetVertex(const uint32_t vertex_index) const {
+	vec3f GetVertex(const uint32_t vertex_index) const {
 		return vertices[vertex_index];
 	}
 
-	specter::vec3f GetNormal(const uint32_t normal_index) const {
+	vec3f GetNormal(const uint32_t normal_index) const {
 		return normals[normal_index];
 	}
 
-	specter::vec2f GetUV(const uint32_t uv_index) const {
+	vec2f GetUV(const uint32_t uv_index) const {
 		return uvs[uv_index];
 	}
 
@@ -99,7 +96,7 @@ public:
 		return materials[mat_index];
 	}
 
-	std::shared_ptr<specter::IMaterial>& GetMaterial(const uint32_t i) {
+	std::shared_ptr<IMaterial>& GetMaterial(const uint32_t i) {
 		return materials[i];
 	}
 
@@ -176,50 +173,27 @@ public:
 		return uvs.size() != 0;
 	}
 
-	// Implements the möller&trumbore algorithm.
+	// Implements the mï¿½ller&trumbore algorithm.
 	// For implementation reference: Real-time rendering 4th ed, 22.8 Ray/Triangle Intersection
-	bool rayIntersection(const specter::Ray& ray, const std::size_t index, float& u, float& v, float& t) const {
-		const float epsilon = 1e-7;
-		const unsigned i0 = faces[index * 3 + 0].p;
-		const unsigned i1 = faces[index * 3 + 1].p;
-		const unsigned i2 = faces[index * 3 + 2].p;
-		const specter::vec3f v0 = vertices[i0];
-		const specter::vec3f v1 = vertices[i1];
-		const specter::vec3f v2 = vertices[i2];
+	bool rayIntersection(const specter::Ray& ray, const std::size_t index, float& u, float& v, float& t) const;
 
-		const specter::vec3f e0 = v1 - v0;
-		const specter::vec3f e1 = v2 - v0;
+	std::vector<float> get_interleaved_data();
 
-		const specter::vec3f q = cross(ray.d, e1);
-		const float a = specter::dot(e0, q);
-
-		if (a > -epsilon && a < epsilon) {
-			return false;
-		}
-
-		const float f = 1.f / a;
-		const specter::vec3f s = ray.o - v0;
-		u = f * specter::dot(s, q);
-
-		if (u < 0.f) return false;
-
-		const specter::vec3f r = cross(s, e0);
-		v = f * specter::dot(ray.d, r);
-
-		if (v < 0.f || u + v > 1.f) return false;
-
-		t = f * specter::dot(e1, r);
-		return true;
+	// Misc.
+	auto get_material_components() {
+		return material_components;
 	}
 
-protected:
+private:
 
 	// Private implementation functions
 	using MaterialMap = std::vector<std::pair<std::string, uint32_t>>;
-	
-	void parseMaterialLibrary(const char* filename, MaterialMap& mtl_map);
 
-protected:
+	void parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_map);
+	void parse_obj_file(const std::string& filename);
+	void parse_sff_file(const std::string& filename);
+
+private:
 
 	std::size_t nMeshes;
 	std::vector<MeshAttributeSizes> mesh_attribute_sizes;
@@ -234,6 +208,10 @@ protected:
 
 	std::vector<FaceElement> faces;
 	std::vector<std::shared_ptr<specter::IMaterial>> materials;
+
+	filesystem::ObjMtlComponents material_components;
+
+	std::vector<std::string> texture_names;
 
 	specter::AxisAlignedBoundingBox bbox;
 };

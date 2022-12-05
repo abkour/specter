@@ -1,6 +1,9 @@
+#include "helpers.hpp"
 #include "model.hpp"
-#include "rtx/area_light.hpp"
-#include "math/vec2.hpp"
+#include "../rtx/area_light.hpp"
+#include "../math/vec2.hpp"
+
+
 #include <fstream>
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -8,7 +11,7 @@
 
 namespace helper {
 
-bool isEqual(const std::string& s0, const std::string& s1) {
+bool isEqual(std::string_view& s0, std::string_view& s1) {
 	return std::equal(	s0.begin(), s0.end(),
 						s1.begin(), s1.end(),
 						[](char a, char b)
@@ -34,7 +37,7 @@ std::string GetMtllibPath(const std::string& path, const std::string& libname) {
 	return GetPathWithoutFile(path) + libname;
 }
 
-static std::string ParseMtllibSuffix(std::istringstream& isstr, const char* filename) {
+static std::string ParseMtllibSuffix(std::istringstream& isstr, const std::string& filename) {
 	std::string libname;
 	isstr >> libname;
 	return GetMtllibPath(filename, libname);
@@ -130,8 +133,21 @@ protected:
 
 };
 
-void Model::parse(const char* filename) {
-	std::ifstream objfile(filename, std::ios::binary);
+void Model::parse(const std::string& filename) {
+	auto file_extension = filesystem::get_file_extension(filename);
+	if(file_extension == "scene" || file_extension == "obj") {
+		parse_obj_file(filename);
+	} else if(file_extension == "sff") {
+		std::cout << "SFF files not supported yet.\n";
+	} else {
+		std::cout << "Unknown file format.\n";
+	}
+}
+
+void Model::parse_obj_file(const std::string& filename) {
+	Model model;
+	
+	std::ifstream objfile(filename.data(), std::ios::binary);
 	if (objfile.fail()) {
 		throw std::runtime_error("Couldn't load file");
 	}
@@ -161,7 +177,7 @@ void Model::parse(const char* filename) {
 		lineStream >> prefix;
 		if (prefix == "mtllib") {
 			auto libpath = helper::ParseMtllibSuffix(lineStream, filename);
-			parseMaterialLibrary(libpath.c_str(), mtl_map);
+			parseMaterialLibrary(libpath, mtl_map);
 		} else if (prefix == "usemtl") {
 			std::string mtl_name;
 			lineStream >> mtl_name;
@@ -170,7 +186,7 @@ void Model::parse(const char* filename) {
 			// Add the size of the mesh to the MeshAttributeSizes object
 			if (!mesh_attribute_sizes.empty()) {
 				helper::addMeshAttrSize(mesh_attribute_sizes[mesh_attribute_sizes.size() - 1], sMeshSize);
-				// Update the aggregate size of the model
+				// Update the aggregate size of the IModel
 				helper::addMeshAttrSize(sAggregateSize, sMeshSize);
 			}
 
@@ -337,51 +353,70 @@ void Model::parse(const char* filename) {
 	}
 }
 
-void Model::parseMaterialLibrary(const char* filename, MaterialMap& mtl_map) {
+void Model::parse_sff_file(const std::string& filename) {
+
+}
+
+
+void Model::parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_map) {
 	std::ifstream libfile(filename, std::ios::binary);
 	if (libfile.fail()) {
 		std::cout << "Error!\n";
 	}
 
 	std::string line;
-	std::string mtlname;
 	MaterialType mtltype;
-
+	
 	while (std::getline(libfile, line)) {
+		filesystem::ObjMtlComponent material_component;
+
 		std::istringstream lineStream(line);
 		std::string prefix;
 		lineStream >> prefix;
 		if (prefix == "newmtl") {
-			lineStream >> mtlname;
-			if (mtlname.find("Metal") != std::string::npos) {
-				mtltype = MaterialType::Metal;
-			} else {
-				mtltype = MaterialType::Dielectric;
-			}
+			lineStream >> material_component.name ;
+		} else if(prefix == "Ns") {
+			lineStream >> material_component.ns;
+		} else if(prefix == "Ni") {
+			lineStream >> material_component.ni;
+		} else if(prefix == "d") {
+			lineStream >> material_component.d;
+		} else if(prefix == "Tr") {
+			lineStream >> material_component.tr;
+		} else if(prefix == "Tf") {
+			material_component.tf = helper::ParseVec3(lineStream);
+		} else if (prefix == "Ka") {
+			material_component.ka = helper::ParseVec3(lineStream);
 		} else if (prefix == "Ke") {
-			if (mtlname.find("Light") != std::string::npos) {
-				materials.emplace_back(std::make_shared<AreaLight>(helper::ParseVec3(lineStream)));
-				mtl_map.emplace_back(mtlname, mtl_map.size());
+			material_component.ke = helper::ParseVec3(lineStream);
+		} else if (prefix == "Kd") {
+			material_component.kd = helper::ParseVec3(lineStream);
+		} else if (prefix == "Ks") {
+			material_component.ks = helper::ParseVec3(lineStream);
+		} else if (prefix.find("map_") != std::string::npos) {
+			std::string texname;
+			lineStream >> texname;
+			std::string texpath = helper::GetPathWithoutFile(filename) + texname;
+			std::string_view map_ext(prefix);
+			if (map_ext.ends_with("Kd")) {
+				material_component.texture_types.emplace_back(TextureType::Diffuse);
+			} else if (map_ext.ends_with("Ke")) {
+				material_component.texture_types.emplace_back(TextureType::Emissive);
+			} else if (map_ext.ends_with("Ks")) {
+				material_component.texture_types.emplace_back(TextureType::Specular);
+			} else if (map_ext.ends_with("bump")) {
+				material_component.texture_types.emplace_back(TextureType::Bump);
+			} else {
+				// Skip insertion of texpath into the texture_paths vector
+				continue;
 			}
-		} else if (prefix == "Kd" && mtltype == MaterialType::Dielectric) {
-			materials.emplace_back(std::make_shared<Lambertian>(helper::ParseVec3(lineStream)));
-			mtl_map.emplace_back(mtlname, mtl_map.size());
-		} else if (prefix == "Ks" && mtltype == MaterialType::Metal) {
-			materials.emplace_back(std::make_shared<Metal>(helper::ParseVec3(lineStream)));
-			mtl_map.emplace_back(mtlname, mtl_map.size());
-		} else if (prefix == "map_Kd") {
-			std::string texname;
-			lineStream >> texname;
-			std::string texpath = helper::GetPathWithoutFile(filename) + texname;
-			materials.emplace_back(std::make_shared<Lambertian>(texpath.c_str()));
-			mtl_map.emplace_back(mtlname, mtl_map.size());
-		} else if (prefix == "map_Ke") {
-			std::string texname;
-			lineStream >> texname;
-			std::string texpath = helper::GetPathWithoutFile(filename) + texname;
-			materials.emplace_back(std::make_shared<EmissiveMaterial>(texpath.c_str()));
-			mtl_map.emplace_back(mtlname, mtl_map.size());
+			material_component.texture_paths.emplace_back(texpath);
 		}
+		// We are converting filepaths to integers and store the result in the tp_hashes vector.
+		for (auto& tp : material_component.texture_paths) {
+			material_component.tp_hashes.emplace_back(std::hash<std::string>{}(tp));
+		}
+		material_components.emplace_back(material_component);
 	}
 }
 

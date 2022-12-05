@@ -1,10 +1,10 @@
 #pragma once
+#include "filesystem/model.hpp"
 #include "rtx/accel.hpp"
 #include "rtx/ambient_light.hpp"
 #include "rtx/camera.hpp"
 #include "rtx/integrator_normal.hpp"
 #include "rtx/integrator_pt.hpp"
-#include "model.hpp"
 #include "rtx/point_light.hpp"
 #include "scene_descriptor.hpp"
 

@@ -10,7 +10,7 @@ Window::Window(const WindowMode windowMode, const vec2u& resolution, const char*
 		throw std::runtime_error("Error. GLFW could not be initialized!");
 	}
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_CENTER_CURSOR, GLFW_TRUE);
 

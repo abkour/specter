@@ -13,7 +13,7 @@ void Accel::addModel(std::shared_ptr<Model>& model) {
 void Accel::build() {
 	std::cout << "Building accelerating structure...\n";
 	specter::Timer octreeTimer;
-	accel_struct = std::make_shared<CPU_LBVH>();
+	accel_struct = std::make_shared<Octree>();
 	accel_struct->build(model);
 	if (!accel_struct->isValid()) {
 		std::cerr << "SpacePartitioner wrong!\n";

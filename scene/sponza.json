@@ -1,0 +1,22 @@
+{
+    "debug": {
+      "value": false,
+      "method": "normals"
+    },
+    
+    "camera": {
+      "position": [ -0.4, 2.5, 3 ],
+      "target": [ -0.4, 2.5, 0 ],
+      "resolution": [ 1000, 1000 ],
+      "fov": 90,
+      "samples": 64
+    },
+    
+    "integrator": {
+      "type": "PT",
+      "traversal_depth": 16
+    },
+  
+    "path": "C://Users//flora//rsc//assets//sponza//sponza.obj",
+    "dynamicFrame": true
+  }

@@ -3,25 +3,29 @@
 #include "stb_image_write.h"
 #include "stb_image.h"
 
-#include "view.hpp"
-#include "renderer.hpp"
+#include "imgui.h"
+#include "backends\imgui_impl_glfw.h"
+#include "backends\imgui_impl_opengl3.h"
+#define GL_SILENCE_DEPRECATION
 
 #include "misc.hpp"
-
-#include "rtx/filters.hpp"
-
-void testFilters();
-void test_cpu_lbvh_implementation(const char* filename);
-void renderRasterized(const char* filename);
-void renderRTX(const char* scene_descriptor_file);
-
+#include "view.hpp"
+#include "renderer.hpp"
+#include "raster/raster_engine.hpp"
 #include "rtx/cpu_lbvh_helpers.hpp"
 #include "rtx/cpu_lbvh.hpp"
+#include "rtx/filters.hpp"
+
+void renderRasterized(const char* filename);
+void renderRTX(const char* scene_descriptor_file);
+void testFilters();
+void test_cpu_lbvh_implementation(const char* filename);
+void test_imgui(const char* scene_descriptor_file);
 
 int main(int argc, const char** argv) {
 	try {
 		std::cout << "SPECTER 3D RENDERING ENGINE\n\n";
-		std::cout << argv[1] << '\n';
+		//test_imgui(argv[1]);
 		//renderRTX(argv[1]);
 		renderRasterized(argv[1]);
 		//test_cpu_lbvh_implementation(argv[1]);
@@ -34,38 +38,21 @@ int main(int argc, const char** argv) {
 	}
 }
 
-void test_cpu_lbvh_implementation(const char* filename) {
-	std::cout << "Testing CPU_LBVH implementation!\n";
-	specter::SceneDescriptor scene_descriptor(filename);
-	specter::Scene scene(scene_descriptor);
-	specter::CPU_LBVH lbvh;
-	lbvh.build(scene.model);
-	std::cout << "Testing BVH validity...\n";
-	bool bvh_valid = lbvh.isValid();
-	std::cout << "\nBVH: " << (bvh_valid ? "Valid" : "Invalid") << '\n';
-}
+void test_imgui(const char* scene_descriptor_file) {
+	std::cout << "Hello, IMGUI\n";
+	const char* glsl_version = "#version 450";
 
-void renderRTX(const char* scene_descriptor_file) {
-	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
-	specter::Scene scene(scene_descriptor);
-	specter::RTX_Renderer renderer(scene);
-	renderer.run();
-}
-
-static specter::MovementDirection getMovementDirection(GLFWwindow* window);
-
-void renderRasterized(const char* scene_descriptor_file) {
 	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
 	specter::Scene scene(scene_descriptor);
 	
 	const specter::vec2u screen_resolution(1920, 1080);
-	specter::Window window(specter::WindowMode::WINDOWED, screen_resolution, "specter (raster mode)");
-	glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	window.enableCursorCallback();
+	specter::Window window_manager(specter::WindowMode::WINDOWED, screen_resolution, "specter (raster mode)");
+	glfwSetInputMode(window_manager.getWindow(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	window_manager.enableCursorCallback();
 	glfwSwapInterval(0);
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
-	//	glCullFace(GL_BACK);
+	//glCullFace(GL_BACK);
 
 	auto indices = scene.model->GetFaces();
 	auto vertices = scene.model->GetVertices();
@@ -113,67 +100,113 @@ void renderRasterized(const char* scene_descriptor_file) {
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-	while (!glfwWindowShouldClose(window.getWindow())) {
-		glClearColor(0.f, 0.f, 0.f, 0.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
-		deltatime = glfwGetTime() - lasttime;
-		lasttime += deltatime;
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsLight();
 
-		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_PRESS) {
-			key_c_hit = true;
-		}
+	auto window = window_manager.getWindow();
 
-		if (glfwGetKey(window.getWindow(), GLFW_KEY_C) == GLFW_RELEASE && key_c_hit) {
-			std::cout << "pos: " << view.getPosition() << '\n';
-			std::cout << "target: " << view.getPosition() + view.getDirection() << '\n';
-			key_c_hit = false;
-		}
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
 
-		float xoff = window.getXoffset();
-		float yoff = window.getYoffset();
-		if (xoff != 0.f || yoff != 0.f) {
-			view.look(xoff, yoff);
-			window.resetCursorOffset();
-		}
+	bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-		auto movementDirection = getMovementDirection(window.getWindow());
-		if (movementDirection != specter::MovementDirection::None) {
-			view.move(movementDirection, deltatime * 2.f);
-		}
+	while(!glfwWindowShouldClose(window)) {
+		        // Poll and handle events (inputs, window resize, etc.)
+        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
+        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
+        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+        glfwPollEvents();
 
-		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "proj"), 1, GL_FALSE, &proj[0][0]);
-		glUniformMatrix4fv(glGetUniformLocation(shader.id(), "view"), 1, GL_FALSE, view.getAddress());
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-		glDrawElements(GL_TRIANGLES, nIndices, GL_UNSIGNED_INT, 0);
+        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+        if (show_demo_window)
+            ImGui::ShowDemoWindow(&show_demo_window);
 
-		if (glfwGetKey(window.getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-			glfwSetWindowShouldClose(window.getWindow(), GLFW_TRUE);
-		}
+        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
+        {
+            static float f = 0.0f;
+            static int counter = 0;
 
-		glfwSwapBuffers(window.getWindow());
-		glfwPollEvents();
+            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+            ImGui::Checkbox("Another Window", &show_another_window);
+
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+
+            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+                counter++;
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        // 3. Show another simple window.
+        if (show_another_window)
+        {
+            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Text("Hello from another window!");
+            if (ImGui::Button("Close Me"))
+                show_another_window = false;
+            ImGui::End();
+        }
+
+        // Rendering
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
 	}
-
-	glDeleteVertexArrays(1, &vao);
-	glDeleteBuffers(1, &vbo);
-	glDeleteBuffers(1, &ebo);
 }
 
-static specter::MovementDirection getMovementDirection(GLFWwindow* window) {
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		return specter::MovementDirection::Forward;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		return specter::MovementDirection::Backward;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		return specter::MovementDirection::Left;
-	}
-	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		return specter::MovementDirection::Right;
-	}
-	return specter::MovementDirection::None;
+void test_cpu_lbvh_implementation(const char* filename) {
+	std::cout << "Testing CPU_LBVH implementation!\n";
+	specter::SceneDescriptor scene_descriptor(filename);
+	specter::Scene scene(scene_descriptor);
+	specter::CPU_LBVH lbvh;
+	lbvh.build(scene.model);
+	std::cout << "Testing BVH validity...\n";
+	bool bvh_valid = lbvh.isValid();
+	std::cout << "\nBVH: " << (bvh_valid ? "Valid" : "Invalid") << '\n';
+}
+
+void renderRTX(const char* scene_descriptor_file) {
+	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
+	specter::Scene scene(scene_descriptor);
+	specter::RTX_Renderer renderer(scene);
+	renderer.run();
+}
+
+void renderRasterized(const char* scene_descriptor_file) {
+	specter::SceneDescriptor scene_descriptor(scene_descriptor_file);
+	specter::Scene scene(scene_descriptor);
+	specter::RasterRenderer renderer(scene);
+	renderer.run();
 }
 
 void testFilters() {

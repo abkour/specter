@@ -3,6 +3,15 @@
 
 namespace specter {
 
+View::View() {
+	pos = vec3f(0.f, 0.f, -1.f);
+	dir = vec3f(0.f);
+	yaw = -89.f;
+	pitch = 0.f;
+	movementSpeed = 5.f;
+	view = lookAt(pos, pos + dir, vec3f(0.f, 1.f, 0.f));
+}
+
 View::View(const vec3f& pos, const vec3f& dir) {
 	this->pos = pos;
 	this->dir = dir;
@@ -69,5 +78,14 @@ vec3f View::getPosition() const {
 vec3f View::getDirection() const {
 	return dir;
 }
+
+void View::setPosition(const vec3f& newPos) {
+	pos = newPos;
+}
+
+void View::setDirection(const vec3f& newDir) {
+	dir = newDir;
+}
+
 
 }

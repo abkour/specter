@@ -1,5 +1,5 @@
 #pragma once
-#include "../model.hpp"
+#include "../filesystem/model.hpp"
 
 namespace specter {
 

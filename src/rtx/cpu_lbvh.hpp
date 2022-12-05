@@ -1,5 +1,5 @@
 #pragma once
-#include "../model.hpp"
+#include "../filesystem/model.hpp"
 
 #include "cpu_lbvh_helpers.hpp"
 #include "space_partition.hpp"
