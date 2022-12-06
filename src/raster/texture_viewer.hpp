@@ -29,7 +29,7 @@ public:
 private:
 
 	GLuint vao, vbo;
-	Shader shader;
+	ShaderWrapper shader;
 };
 
 }

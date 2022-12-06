@@ -16,12 +16,12 @@ TextureViewer::~TextureViewer() {
 void TextureViewer::init() {
 	float quad[] =
 	{
-		-0.75, -0.75,
-		0.75, -0.75,
-		0.75, 0.75,
-		-0.75, -0.75,
-		0.75, 0.75,
-		-0.75, 0.75
+		-0.75, -0.75,	0.f, 0.f,
+		0.75, -0.75,	1.f, 0.f,
+		0.75, 0.75,		1.f, 1.f,
+		-0.75, -0.75,	0.f, 0.f,
+		0.75, 0.75,		1.f, 1.f,
+		-0.75, 0.75,	0.f, 1.f
 	};
 
 	glGenVertexArrays(1, &vao);
@@ -30,12 +30,15 @@ void TextureViewer::init() {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(quad), quad, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), reinterpret_cast<void*>(2 * sizeof(float)));
 
-	Shader tmp_shader = {
-		{ GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\texture_viewer.glsl.vs") },
-		{ GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\texture_viewer.glsl.fs") }
-	};
+	ShaderWrapper tmp_shader(
+		false,
+		shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\texture_viewer.glsl.vs")),
+		shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\texture_viewer.glsl.fs"))
+	);
 
 	shader = std::move(tmp_shader);
 }
@@ -48,6 +51,7 @@ void TextureViewer::display(const int id) {
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+// SPECTER_TODO: Test this function for correctness
 void TextureViewer::display(const int id,
 	const float texture_x, const float texture_y,
 	const float screen_x, const float screen_y) 
