@@ -4,6 +4,8 @@
 
 #include <shaderdirect.hpp>
 
+#include <stb_image.h>
+
 namespace specter {
 
 class TextureViewer final {
@@ -16,7 +18,7 @@ public:
 	// Late initialization requirement, since we don't know when GLAD is loaded.
 	void init();
 
-	void display(const int id);
+	void display(const GLuint id);
 
 	// @texture_x: Number of pixels that the texture occupies in the x-direction
 	// @texture_y: Number of pixels that the texture occupies in the y-direction

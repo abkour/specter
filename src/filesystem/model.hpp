@@ -184,6 +184,10 @@ public:
 		return material_components;
 	}
 
+	std::size_t getMaterialNameHash(const int i) const {
+		return meshName_hashes[i];
+	}
+
 private:
 
 	// Private implementation functions
@@ -200,9 +204,10 @@ private:
 	std::vector<MeshIndexTable> mesh_indices;
 
 	std::vector<std::string> meshNames;
+	std::vector<std::size_t> meshName_hashes;
+
 	std::vector<specter::vec3f> vertices;
 	std::vector<specter::vec3f> normals;
-	
 	std::vector<specter::vec2f> uvs;
 	std::vector<unsigned char*> texture_data;
 

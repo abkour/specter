@@ -183,6 +183,7 @@ void Model::parse_obj_file(const std::string& filename) {
 			lineStream >> mtl_name;
 			
 			meshNames.emplace_back(mtl_name);
+			meshName_hashes.emplace_back(std::hash<std::string>{}(mtl_name));
 			// Add the size of the mesh to the MeshAttributeSizes object
 			if (!mesh_attribute_sizes.empty()) {
 				helper::addMeshAttrSize(mesh_attribute_sizes[mesh_attribute_sizes.size() - 1], sMeshSize);
@@ -367,14 +368,30 @@ void Model::parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_m
 	std::string line;
 	MaterialType mtltype;
 	
-	while (std::getline(libfile, line)) {
-		filesystem::ObjMtlComponent material_component;
+	bool first_material = true;
 
+	filesystem::ObjMtlComponent material_component;
+
+	while (std::getline(libfile, line)) {
 		std::istringstream lineStream(line);
 		std::string prefix;
 		lineStream >> prefix;
 		if (prefix == "newmtl") {
-			lineStream >> material_component.name ;
+			// We will need to iterate over all components within the material.
+			// However, we only want to add the material once all of the available components have been read.
+			// The only guaranteed component is the material name. Therefore, this is the point where we 
+			// are inserting the material into the materials vector. 
+			// We add the material to the vector only once all the components have been parsed.
+			// Past the loop we will add the last material into the vector.
+			if (!first_material) {
+				material_components.emplace_back(material_component);
+				// Reset the material to invalidate the previous values.
+				material_component = filesystem::ObjMtlComponent();
+			} else {
+				first_material = false;
+			}
+			lineStream >> material_component.name;
+			material_component.name_hash = std::hash<std::string>{}(material_component.name);
 		} else if(prefix == "Ns") {
 			lineStream >> material_component.ns;
 		} else if(prefix == "Ni") {
@@ -411,12 +428,26 @@ void Model::parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_m
 				continue;
 			}
 			material_component.texture_paths.emplace_back(texpath);
+			material_component.tp_hashes.emplace_back(std::hash<std::string>{}(texpath));
 		}
-		// We are converting filepaths to integers and store the result in the tp_hashes vector.
-		for (auto& tp : material_component.texture_paths) {
-			material_component.tp_hashes.emplace_back(std::hash<std::string>{}(tp));
+	}
+
+	// There is a final material that we have not added into the vector. Do it now.
+	material_components.emplace_back(material_component);
+
+	std::cout << "Validating material premises...\n";
+	bool validation_successful = true;
+	for (const auto& mtl_comp : material_components) {
+		if (!mtl_comp.validate_vectorsize_premise()) {
+			std::cout << "Failed validation test for material: " << mtl_comp.name << '\n';
+			validation_successful = false;
 		}
-		material_components.emplace_back(material_component);
+	}
+
+	if (validation_successful) {
+		std::cout << "Validation successful!\n";
+	} else {
+		std::cout << "Validation unsuccessful!\n";
 	}
 }
 

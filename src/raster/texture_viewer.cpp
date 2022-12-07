@@ -43,7 +43,7 @@ void TextureViewer::init() {
 	shader = std::move(tmp_shader);
 }
 
-void TextureViewer::display(const int id) {
+void TextureViewer::display(const GLuint id) {
 	shader.bind();
 	glBindTexture(GL_TEXTURE_2D, id);
 	glBindTextureUnit(0, id);

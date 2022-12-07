@@ -26,9 +26,11 @@ static TextureMap create_textures(
                     switch (nChannels) {
                     case 3:
                         format = GL_RGB;
+                        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                         break;
                     case 4:
                         format = GL_RGBA;
+                        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
                         break;
                     default:
                         format = GL_NONE;
@@ -83,7 +85,7 @@ void RasterRenderer::run() {
 
     texture_viewer.init();
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     auto window_handle = window_manager.get_window_pointer();
 
@@ -147,7 +149,7 @@ void RasterRenderer::run() {
         if (glfwGetKey(window_handle, GLFW_KEY_V) == GLFW_RELEASE && V_Pressed) {
             V_Pressed = false;
             texture_id_to_view++;
-           //On_V_Pressed(texture_map, texture_id_to_view);
+            //On_V_Pressed(texture_map, texture_id_to_view);
         }
 
         auto mouse_delta = window_manager.get_mouse_delta();
@@ -161,8 +163,8 @@ void RasterRenderer::run() {
             view.move(movementDirection, deltatime * 2.f);
         }
 
-        On_V_Pressed(texture_map, texture_id_to_view);
-        /*
+        //On_V_Pressed(texture_map, texture_id_to_view);
+        
         quadShader.bind();
         auto MVP = view.getUnderlying() * perspective_transform;
         glUniformMatrix4fv(glGetUniformLocation(quadShader.id(), "MVP"), 1, GL_FALSE, MVP.data);
@@ -171,22 +173,29 @@ void RasterRenderer::run() {
         std::size_t index_offset = 0;
         std::size_t index_count = 0;
         for (int i = 0; i < scene->model->GetNumberOfMeshes(); ++i) {
-            for (int j = 0; j < material_components[i].texture_types.size(); ++j) {
-                auto tt = material_components[i].texture_types[j];
+            auto material_name_hash = scene->model->getMaterialNameHash(i);
+            int m = 0;
+            for (auto it = material_components.begin(); it != material_components.end(); ++it) {
+                if (material_name_hash == (*it).name_hash) {
+                    break;
+                }
+                ++m;
+            }
+            for (int j = 0;j < material_components[m].texture_types.size(); ++j) {
+                auto tt = material_components[m].texture_types[j];
                 if (tt == TextureType::Diffuse) {
-                    auto map_it = texture_map.find(material_components[i].tp_hashes[j]);
+                    auto map_it = texture_map.find(material_components[m].tp_hashes[j]);
                     auto [hash, tex_id] = *map_it;
                     glBindTexture(GL_TEXTURE_2D, tex_id);
                     glBindTextureUnit(0, tex_id);
+                    break;
                 }
             }
 
             index_count = scene->model->GetFaceCountOfMesh(i);
             glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(index_offset * sizeof(unsigned)));
             index_offset += index_count;
-        }*/
-
-        //glDrawElements(GL_TRIANGLES, vertexIndices.size(), GL_UNSIGNED_INT, 0);
+        }
 
         glfwSwapBuffers(window_handle);
         glfwPollEvents();

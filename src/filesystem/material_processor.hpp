@@ -7,7 +7,14 @@
 namespace specter::filesystem {
 
 struct ObjMtlComponent {
+	
+	bool validate_vectorsize_premise() const {
+		return texture_types.size() == texture_paths.size()
+			&& texture_types.size() == tp_hashes.size();
+	}
+
 	std::string name;
+	std::size_t name_hash;
 	std::vector<TextureType> texture_types;
 	std::vector<std::string> texture_paths;
 	std::vector<std::size_t> tp_hashes;
