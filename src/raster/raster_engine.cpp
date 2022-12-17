@@ -2,6 +2,8 @@
 
 #include "../window_manager.hpp"
 
+#include <shaderdirect.hpp>
+
 namespace specter {
 
 static TextureMap create_textures(
@@ -120,12 +122,11 @@ void RasterRenderer::run() {
     auto texture_map = create_textures(material_components);
 
     // Simple pass-through vertex shader that renders a texture onto a quad
-	specter::Shader quadShader =
-	{
-		{ GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.vs") },
-		{ GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.fs") }
-	};
-	quadShader.create();
+    ShaderWrapper quadShader(
+        false,
+        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.vs")),
+        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.fs"))
+    );
 	quadShader.bind();
 
     // Perspective transform
@@ -165,10 +166,10 @@ void RasterRenderer::run() {
 
         //On_V_Pressed(texture_map, texture_id_to_view);
         
-        quadShader.bind();
         auto MVP = view.getUnderlying() * perspective_transform;
-        glUniformMatrix4fv(glGetUniformLocation(quadShader.id(), "MVP"), 1, GL_FALSE, MVP.data);
         
+        quadShader.bind();
+        quadShader.upload44fm(MVP.data, "MVP");
         glBindVertexArray(vao);
         std::size_t index_offset = 0;
         std::size_t index_count = 0;

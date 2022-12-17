@@ -49,7 +49,7 @@ public:
 
 	~Model();
 
-	void parse(const std::string& filename);
+	void parse(const std::string& filename, bool construct_tangent_vectors = false);
 	
 	//
 	// Get base of attributes.
@@ -194,7 +194,7 @@ private:
 	using MaterialMap = std::vector<std::pair<std::string, uint32_t>>;
 
 	void parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_map);
-	void parse_obj_file(const std::string& filename);
+	void parse_obj_file(const std::string& filename, bool construct_tangent_vectors);
 	void parse_sff_file(const std::string& filename);
 
 private:
@@ -210,6 +210,9 @@ private:
 	std::vector<specter::vec3f> normals;
 	std::vector<specter::vec2f> uvs;
 	std::vector<unsigned char*> texture_data;
+
+	std::vector<vec3f> tangent_vectors;
+	std::vector<vec3f> bitangent_vectors;
 
 	std::vector<FaceElement> faces;
 	std::vector<std::shared_ptr<specter::IMaterial>> materials;

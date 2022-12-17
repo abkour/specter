@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include "mk_state.hpp"
 #include "movement_direction.hpp"
 #include "math/vec2.hpp"
 
@@ -27,6 +28,10 @@ public:
 
     GLFWwindow* get_window_pointer() {
         return window;
+    }
+
+    MouseKeyboardState get_mk_state() const {
+        return mk_state;
     }
 
     bool get_lmb_pressed() const;
@@ -52,6 +57,8 @@ private:
     GLFWwindow* window = nullptr;
     std::unique_ptr<Cursor> cursor;
     vec2u screen_resolution;
+
+    MouseKeyboardState mk_state;
 };
 
 }

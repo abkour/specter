@@ -87,12 +87,11 @@ void RTX_Renderer::run() {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), reinterpret_cast<void*>(sizeof(quadvertices)));
 	
 	// Simple pass-through vertex shader that renders a texture onto a quad
-	specter::Shader quadShader =
-	{
-		{ GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.vs") },
-		{ GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.fs") }
-	};
-	quadShader.create();
+	ShaderWrapper quadShader(
+		false,
+		shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.vs")),
+		shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\quad.glsl.fs"))
+	);
 	quadShader.bind();
 	
 	specter::vec2f texCoordBottomLeft(0.f, 0.f);

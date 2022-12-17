@@ -81,6 +81,8 @@ struct FaceTokenizer {
 	unsigned t;
 	unsigned n;
 
+	FaceTokenizer() = default;
+
 	FaceTokenizer(const std::string& line, ComponentList cList) {
 		p = std::numeric_limits<uint32_t>::max();
 		t = std::numeric_limits<uint32_t>::max();
@@ -133,10 +135,16 @@ protected:
 
 };
 
-void Model::parse(const std::string& filename) {
+void tokens_to_face(FaceElement& f, const FaceTokenizer& tokenizer) {
+	f.n = tokenizer.n;
+	f.p = tokenizer.p;
+	f.t = tokenizer.t;
+}
+
+void Model::parse(const std::string& filename, bool construct_tangent_vectors) {
 	auto file_extension = filesystem::get_file_extension(filename);
 	if(file_extension == "scene" || file_extension == "obj") {
-		parse_obj_file(filename);
+		parse_obj_file(filename, construct_tangent_vectors);
 	} else if(file_extension == "sff") {
 		std::cout << "SFF files not supported yet.\n";
 	} else {
@@ -144,7 +152,7 @@ void Model::parse(const std::string& filename) {
 	}
 }
 
-void Model::parse_obj_file(const std::string& filename) {
+void Model::parse_obj_file(const std::string& filename, bool construct_tangent_vectors) {
 	Model model;
 	
 	std::ifstream objfile(filename.data(), std::ios::binary);
@@ -237,83 +245,50 @@ void Model::parse_obj_file(const std::string& filename) {
 				throw std::runtime_error("File: " + std::string(filename) + " invalid. Face doesn't specify triangle (less than three indices specified)");
 			}
 
-			std::vector<FaceElement> faceIndices;
-			faceIndices.resize(3);
+			std::vector<FaceElement> faceIndices(3);
+			for (int i = 0; i < 3; ++i) {
+				tokens_to_face(faceIndices[i], FaceTokenizer(lines[i], cList));
+			}
+			
+			// Compute tangent/bitangent vectors. Also compute normals if missing in obj file.
+			{
+				const vec3f e0 = vertices[faceIndices[1].p] - vertices[faceIndices[0].p];
+				const vec3f e1 = vertices[faceIndices[2].p] - vertices[faceIndices[0].p];
+				const vec2f dt0 = uvs[faceIndices[1].t] - uvs[faceIndices[0].t];
+				const vec2f dt1 = uvs[faceIndices[2].t] - uvs[faceIndices[0].t];
+				float f = 1.f / (dt0.x * dt1.y - dt0.y * dt1.x);
+				vec3f tv;
+				tv.x = f * (dt1.y * e0.x - dt0.y * e1.x);
+				tv.y = f * (dt1.y * e0.y - dt0.y * e1.y);
+				tv.z = f * (dt1.y * e0.z - dt0.y * e1.z);
 
-			// Convert the '/' delimited face attributes into unsigned indices.
-			FaceTokenizer t0(lines[0], cList);
-			FaceTokenizer t1(lines[1], cList);
-			FaceTokenizer t2(lines[2], cList);
+				vec3f btv;
+				btv.x = f * (-dt1.x * e0.x + dt0.x * e1.x);
+				btv.y = f * (-dt1.x * e0.y + dt0.x * e1.y);
+				btv.z = f * (-dt1.x * e0.z + dt0.x * e1.z);
 
-			faceIndices[0].p = t0.p;
-			faceIndices[1].p = t1.p;
-			faceIndices[2].p = t2.p;
+				if (!normalsPresent) {
+					normals.emplace_back(normalize(cross(e0, e1)));
+					faceIndices[0].n = faceIndices[1].n = faceIndices[2].n = normals.size() - 1;
+				}
 
-			if (cList == ComponentList::NORMALS_MISSING) {
-				const vec3f e0 = vertices[t1.p] - vertices[t0.p];
-				const vec3f e1 = vertices[t2.p] - vertices[t0.p];
-				normals.emplace_back(normalize(cross(e0, e1)));
-				faceIndices[0].n = faceIndices[1].n = faceIndices[2].n = normals.size() - 1;
+				tangent_vectors.push_back(tv);
+				bitangent_vectors.push_back(btv);
 			}
 
-			switch (cList) {
-			case ComponentList::ALL_COMPONENTS:
-				faceIndices[0].n = t0.n;
-				faceIndices[1].n = t1.n;
-				faceIndices[2].n = t2.n;
-				faceIndices[0].t = t0.t;
-				faceIndices[1].t = t1.t;
-				faceIndices[2].t = t2.t;
-				break;
-			case ComponentList::UV_MISSING:
-				faceIndices[0].n = t0.n;
-				faceIndices[1].n = t1.n;
-				faceIndices[2].n = t2.n;
-				break;
-			case ComponentList::NORMALS_MISSING:
-				faceIndices[0].t = t0.t;
-				faceIndices[1].t = t1.t;
-				faceIndices[2].t = t2.t;
-				break;
-			default:
-				break;
+			for (int i = 0; i < 3; ++i) {
+				faces.push_back(faceIndices[i]);
 			}
-
-			faces.push_back(faceIndices[0]);
-			faces.push_back(faceIndices[1]);
-			faces.push_back(faceIndices[2]);
 
 			// Triangulate the face, if necessary.
 			if (lines.size() > 3) {
 				for (int i = 2; i <= lines.size() - 2; ++i) {
-					FaceTokenizer tx(lines[i], cList);
-					FaceTokenizer ty(lines[i + 1], cList);
-
-					switch (cList) {
-					case ComponentList::ALL_COMPONENTS:
-						faceIndices[1].p = tx.p;
-						faceIndices[1].t = tx.t;
-						faceIndices[1].n = tx.n;
-						faceIndices[2].p = ty.p;
-						faceIndices[2].t = ty.t;
-						faceIndices[2].n = ty.n;
-						break;
-					case ComponentList::UV_MISSING:
-						faceIndices[1].p = tx.p;
-						faceIndices[1].n = tx.n;
-						faceIndices[2].p = ty.p;
-						faceIndices[2].n = ty.n;
-						break;
-					case ComponentList::NORMALS_MISSING:
-						faceIndices[1].p = tx.p;
-						faceIndices[1].t = tx.t;
-						faceIndices[1].n = faceIndices[0].n;
-						faceIndices[2].p = ty.p;
-						faceIndices[2].t = ty.t;
-						faceIndices[2].n = faceIndices[0].n;
-						break;
-					default:
-						break;
+					tokens_to_face(faceIndices[1], FaceTokenizer(lines[i], cList));
+					tokens_to_face(faceIndices[2], FaceTokenizer(lines[i + 1], cList));
+					
+					if (!normalsPresent) {
+						faceIndices[1].n = normals.size() - 1;
+						faceIndices[2].n = normals.size() - 1;
 					}
 
 					faces.push_back(faceIndices[0]);
@@ -341,9 +316,6 @@ void Model::parse_obj_file(const std::string& filename) {
 
 	std::cout << "Succesfully loaded file in " << timer.elapsedTime() << " seconds.\t\t(Triangles: " << faces.size() / 3 << ", Vertices: " << vertices.size() << ")\n";
 	switch (cList) {
-	case ComponentList::NORMALS_MISSING:
-		std::cout << "Note: Normals are missing!\n";
-		break;
 	case ComponentList::UV_MISSING:
 		std::cout << "Note: UV coordinates missing!\n";
 		break;
@@ -354,10 +326,7 @@ void Model::parse_obj_file(const std::string& filename) {
 	}
 }
 
-void Model::parse_sff_file(const std::string& filename) {
-
-}
-
+void Model::parse_sff_file(const std::string& filename) {}
 
 void Model::parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_map) {
 	std::ifstream libfile(filename, std::ios::binary);
@@ -424,7 +393,7 @@ void Model::parseMaterialLibrary(const std::string& filename, MaterialMap& mtl_m
 			} else if (map_ext.ends_with("bump")) {
 				material_component.texture_types.emplace_back(TextureType::Bump);
 			} else {
-				// Skip insertion of texpath into the texture_paths vector
+				// Skip insertion of texpath into the texture_paths vector (Reason: NO valid texture type)
 				continue;
 			}
 			material_component.texture_paths.emplace_back(texpath);

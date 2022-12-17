@@ -2,7 +2,7 @@
 #include "rtx/integrator.hpp"
 #include "rtx/intersection.hpp"
 #include "scene.hpp"
-#include "shader.hpp"
+#include <shaderdirect.hpp>
 #include "window.hpp"
 
 #include <glad/glad.h>
