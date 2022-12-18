@@ -6,10 +6,10 @@
 
 namespace specter {
 
-static TextureMap create_textures(
+static DiffuseTextureMap create_diffuse_textures(
     const std::vector<filesystem::ObjMtlComponent>& input) 
 {
-    TextureMap texture_map;
+    DiffuseTextureMap texture_map;
     std::set<std::size_t> unique_hashes;
 
     stbi_set_flip_vertically_on_load(true);
@@ -65,7 +65,53 @@ static TextureMap create_textures(
     return texture_map;
 }
 
-static void delete_textures(TextureMap& texture_map) {
+static NormalTextureMap create_normal_textures(
+    const std::vector<filesystem::ObjMtlComponent>& input)
+{
+    NormalTextureMap texture_map;
+    std::set<std::size_t> unique_hashes;
+
+    stbi_set_flip_vertically_on_load(true);
+    for (const auto& mtlcomp : input) {
+        for (int array_id = 0; const auto & hash : mtlcomp.tp_hashes) {
+            auto [pos, emplace_success] = unique_hashes.emplace(hash);
+            auto tex_type = mtlcomp.texture_types[array_id];
+            if (emplace_success) {
+                if (tex_type == TextureType::Bump) {
+                    // Create the texture
+                    const auto& fn = mtlcomp.texture_paths[array_id];
+                    std::cout << "Opening file: " << fn.c_str() << "\n(Texture Type: Bump)\n";
+                    int x, y, nChannels;
+                    unsigned char* data = stbi_load(fn.c_str(), &x, &y, &nChannels, 1);
+                    if (data) {
+                        // SPECTER_TODO: Fix texture loading/parsing error (see texture viewer for reference)
+                        GLuint texture_id;
+                        glGenTextures(1, &texture_id);
+                        glBindTexture(GL_TEXTURE_2D, texture_id);
+                        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, x, y, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+                        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+                        glGenerateMipmap(GL_TEXTURE_2D);
+
+                        texture_map.emplace(hash, texture_id);
+
+                        stbi_image_free(data);
+                    } else {
+                        std::cerr << "Error loading file: " << fn.c_str() << '\n';
+                    }
+                }
+                // Create the texture
+            }
+            array_id++;
+        }
+    }
+
+    return texture_map;
+}
+
+static void delete_textures(DiffuseTextureMap& texture_map) {
     for (auto& [hash, id] : texture_map) {
         glDeleteTextures(1, &id);
     }
@@ -112,14 +158,21 @@ void RasterRenderer::run() {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(unsigned), vertexIndices.data(), GL_STATIC_DRAW);
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), 0);
-    glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+	glEnableVertexAttribArray(0);   // aPos
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), 0);
+    glEnableVertexAttribArray(1);   // aNormal
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
+    glEnableVertexAttribArray(2);   // aTangent
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), reinterpret_cast<void*>(6 * sizeof(float)));
+    glEnableVertexAttribArray(3);   // aBitangent
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), reinterpret_cast<void*>(9 * sizeof(float)));
+    glEnableVertexAttribArray(4);   // aUV
+	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), reinterpret_cast<void*>(12 * sizeof(float)));
 
     // Textures
     material_components = scene->model->get_material_components();
-    auto texture_map = create_textures(material_components);
+    auto diffuse_maps = create_diffuse_textures(material_components);
+    auto normal_maps = create_normal_textures(material_components);
 
     // Simple pass-through vertex shader that renders a texture onto a quad
     ShaderWrapper quadShader(
@@ -128,6 +181,9 @@ void RasterRenderer::run() {
         shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.fs"))
     );
 	quadShader.bind();
+    GLint textureIDs[] = { 0, 1 };
+    quadShader.upload1iv(&textureIDs[0], "DiffuseTexture");
+    quadShader.upload1iv(&textureIDs[1], "NormalTexture");
 
     // Perspective transform
     mat4 perspective_transform = perspective(radians(45.f), (float)scene->camera.resx() / scene->camera.resy(), 0.1f, 100.f);
@@ -138,7 +194,7 @@ void RasterRenderer::run() {
     float deltatime = 0.f;
     float lasttime = 0.f;
     while (!glfwWindowShouldClose(window_handle)) {
-        glClearColor(0.f, 0.f, 0.2f, 0.f);
+        glClearColor(0.05f, 0.05f, 0.05f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         deltatime = glfwGetTime() - lasttime;
@@ -167,9 +223,13 @@ void RasterRenderer::run() {
         //On_V_Pressed(texture_map, texture_id_to_view);
         
         auto MVP = view.getUnderlying() * perspective_transform;
-        
+        vec3f LightPosition(0.f, 10.f, 0.f);
+        auto ViewPosition = view.getPosition();
+
         quadShader.bind();
         quadShader.upload44fm(MVP.data, "MVP");
+        quadShader.upload3fv(&LightPosition.x, "LightPosition");
+        quadShader.upload3fv(&ViewPosition.x, "ViewPosition");
         glBindVertexArray(vao);
         std::size_t index_offset = 0;
         std::size_t index_count = 0;
@@ -185,11 +245,19 @@ void RasterRenderer::run() {
             for (int j = 0;j < material_components[m].texture_types.size(); ++j) {
                 auto tt = material_components[m].texture_types[j];
                 if (tt == TextureType::Diffuse) {
-                    auto map_it = texture_map.find(material_components[m].tp_hashes[j]);
+                    // All meshes are guaranteed to have diffuse textures, as long as the 
+                    // model loading and asset pipeline are working correctly.
+                    auto map_it = diffuse_maps.find(material_components[m].tp_hashes[j]);
                     auto [hash, tex_id] = *map_it;
+                    glActiveTexture(GL_TEXTURE0);
                     glBindTexture(GL_TEXTURE_2D, tex_id);
-                    glBindTextureUnit(0, tex_id);
-                    break;
+                } else if (tt == TextureType::Bump) {
+                    auto map_it = normal_maps.find(material_components[m].tp_hashes[j]);
+                    // Handle meshes that don't have normal maps by breaking the loop execution.
+                    if (map_it == normal_maps.end()) break;
+                    auto [hash, tex_id] = *map_it;
+                    glActiveTexture(GL_TEXTURE1);
+                    glBindTexture(GL_TEXTURE_2D, tex_id);
                 }
             }
 
@@ -206,10 +274,11 @@ void RasterRenderer::run() {
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
 
-    delete_textures(texture_map);
+    delete_textures(diffuse_maps);
+    delete_textures(normal_maps);
 }
 
-void RasterRenderer::On_V_Pressed(const TextureMap& texture_map, int val) {
+void RasterRenderer::On_V_Pressed(const DiffuseTextureMap& texture_map, int val) {
     if (val >= texture_map.size()) {
         val = val % texture_map.size();
     }

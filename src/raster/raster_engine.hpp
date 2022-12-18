@@ -8,7 +8,8 @@
 
 namespace specter {
 
-using TextureMap = std::map<std::size_t, GLuint>;
+using DiffuseTextureMap = std::map<std::size_t, GLuint>;
+using NormalTextureMap = std::map<std::size_t, GLuint>;
 
 class RasterRenderer final {
 
@@ -30,7 +31,7 @@ private:
 
     filesystem::ObjMtlComponents material_components;
     // Implementation details
-    void On_V_Pressed(const TextureMap& texture_map, int val);
+    void On_V_Pressed(const DiffuseTextureMap& texture_map, int val);
 };
 
 }

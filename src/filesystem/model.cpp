@@ -41,18 +41,25 @@ bool Model::rayIntersection(const specter::Ray& ray, const std::size_t index, fl
 std::vector<float> Model::get_interleaved_data() {
     std::vector<float> interleaved_data;
     std::set<unsigned> unique_vertex_indices;
-    interleaved_data.resize(vertices.size() * 5);
+    const int a = 14;
+    interleaved_data.resize(vertices.size() * a);
     for(auto& f : faces) {
-        auto accept = unique_vertex_indices.emplace(f.p);
-        if(accept.second) {
-            interleaved_data[f.p * 5] = vertices[f.p].x;
-            interleaved_data[f.p * 5 + 1] = vertices[f.p].y;
-            interleaved_data[f.p * 5 + 2] = vertices[f.p].z;
-            //interleaved_data.emplace_back(normals[f.n].x);
-            //interleaved_data.emplace_back(normals[f.n].y);
-            //interleaved_data.emplace_back(normals[f.n].z);
-            interleaved_data[f.p * 5 + 3] = uvs[f.t].x;
-            interleaved_data[f.p * 5 + 4] = uvs[f.t].y;
+        auto [pos, accept] = unique_vertex_indices.emplace(f.p);
+        if(accept) {
+            interleaved_data[f.p * a] = vertices[f.p].x;
+            interleaved_data[f.p * a + 1] = vertices[f.p].y;
+            interleaved_data[f.p * a + 2] = vertices[f.p].z;
+            interleaved_data[f.p * a + 3] = normals[f.n].x;
+            interleaved_data[f.p * a + 4] = normals[f.n].y;
+            interleaved_data[f.p * a + 5] = normals[f.n].z;
+            interleaved_data[f.p * a + 6] = tangent_vectors[f.n].x;
+            interleaved_data[f.p * a + 7] = tangent_vectors[f.n].y;
+            interleaved_data[f.p * a + 8] = tangent_vectors[f.n].z;
+            interleaved_data[f.p * a + 9] = bitangent_vectors[f.n].x;
+            interleaved_data[f.p * a + 10] = bitangent_vectors[f.n].y;
+            interleaved_data[f.p * a + 11] = bitangent_vectors[f.n].z;
+            interleaved_data[f.p * a + 12] = uvs[f.t].x;
+            interleaved_data[f.p * a + 13] = uvs[f.t].y;
         }
     }
 
