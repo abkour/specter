@@ -6,6 +6,66 @@
 
 namespace specter {
 
+using buffer_pair = std::pair<GLuint, GLuint>;
+
+buffer_pair create_cube() {
+    const float vertices[] =
+    {
+        -1.0f,  1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f, -1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f,
+        -1.0f, -1.0f,  1.0f,
+
+        -1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f, -1.0f,
+         1.0f,  1.0f,  1.0f,
+         1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f,  1.0f,
+        -1.0f,  1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f, -1.0f,
+         1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f,  1.0f,
+         1.0f, -1.0f,  1.0f
+    };
+
+    GLuint vao, vbo;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    return { vao, vbo };
+}
+
 static DiffuseTextureMap create_diffuse_textures(
     const std::vector<filesystem::ObjMtlComponent>& input) 
 {
@@ -185,6 +245,17 @@ void RasterRenderer::run() {
     quadShader.upload1iv(&textureIDs[0], "DiffuseTexture");
     quadShader.upload1iv(&textureIDs[1], "NormalTexture");
 
+    // 
+    // 
+    // Cube
+    auto [cube_vao, cube_vbo] = create_cube();
+
+    ShaderWrapper cube_shader(
+        false,
+        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\simple_solid.glsl.vs")),
+        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\simple_solid.glsl.fs"))
+    );
+
     // Perspective transform
     mat4 perspective_transform = perspective(radians(45.f), (float)scene->camera.resx() / scene->camera.resy(), 0.1f, 100.f);
 
@@ -222,10 +293,11 @@ void RasterRenderer::run() {
 
         //On_V_Pressed(texture_map, texture_id_to_view);
         
-        auto MVP = view.getUnderlying() * perspective_transform;
+        mat4f MVP = view.getUnderlying() * perspective_transform;
         vec3f LightPosition(0.f, 10.f, 0.f);
-        auto ViewPosition = view.getPosition();
+        vec3f ViewPosition = view.getPosition();
 
+        // Scene
         quadShader.bind();
         quadShader.upload44fm(MVP.data, "MVP");
         quadShader.upload3fv(&LightPosition.x, "LightPosition");
@@ -265,6 +337,16 @@ void RasterRenderer::run() {
             glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, reinterpret_cast<void*>(index_offset * sizeof(unsigned)));
             index_offset += index_count;
         }
+
+        // Cube
+        mat4f model(1.f);
+        model = scale(model, 0.2f);
+        model = translate(model, LightPosition);
+        mat4f cubeMVP = model * view.getUnderlying() * perspective_transform;
+        cube_shader.bind();
+        cube_shader.upload44fm(cubeMVP.data, "MVP");
+        glBindVertexArray(cube_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glfwSwapBuffers(window_handle);
         glfwPollEvents();

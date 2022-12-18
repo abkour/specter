@@ -33,5 +33,5 @@ void main() {
 
     vec3 specular = vec3(0.2f) * spec;
     FragmentColor = vec4(ambient + diffuse + specular, 1.f);
-    FragmentColor = vec4(color, 1.f);
+    //FragmentColor = vec4(color, 1.f);
 }

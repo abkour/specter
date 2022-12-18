@@ -42,6 +42,12 @@ struct mat4 {
 	T data[16];
 };
 
+// Name alias the common matrix types 
+using mat4i = mat4<int>;
+using mat4u = mat4<unsigned>;
+using mat4f = mat4<float>;
+using mat4d = mat4<double>;
+
 template<typename T>
 std::ostream& operator<<(std::ostream& os, const mat4<T>& m) {
 	for (int i = 0; i < 4; ++i) {
@@ -307,11 +313,11 @@ bool isIdentityCorrected(const mat4<T>& m) {
 	return true;
 }
 
-inline mat4<float> lookAt(const vec3f& pos, const vec3f& dir, const vec3f& up) {
+inline mat4f lookAt(const vec3f& pos, const vec3f& dir, const vec3f& up) {
 	const vec3f t = normalize(dir - pos);
 	const vec3f s = normalize(cross(t, vec3f(0.f, 1.f, 0.f)));
 	const vec3f u = cross(s, t);
-	mat4<float> result;
+	mat4f result;
 	result[0][0] = s.x;
 	result[1][0] = s.y;
 	result[2][0] = s.z;
@@ -328,8 +334,8 @@ inline mat4<float> lookAt(const vec3f& pos, const vec3f& dir, const vec3f& up) {
 	return result;
 }
 
-inline mat4<float> orthogonal(const float b, const float t, const float l, const float r, const float near, const float far) {
-	mat4<float> result;
+inline mat4f orthogonal(const float b, const float t, const float l, const float r, const float near, const float far) {
+	mat4f result;
 	result[0][0] = 2.f / (r - l);
 	result[1][1] = 2.f / (t - b);
 	result[2][2] = -2.f / (far - near);
@@ -340,9 +346,9 @@ inline mat4<float> orthogonal(const float b, const float t, const float l, const
 	return result;
 }
 
-inline mat4<float> perspective(const float fov, const float aspectRatio, const float near, const float far) {
+inline mat4f perspective(const float fov, const float aspectRatio, const float near, const float far) {
 	const float tanHalfFov = std::tan(fov / 2.f);
-	mat4<float> result(0.f);
+	mat4f result(0.f);
 	result[0][0] = 1.f / (aspectRatio * tanHalfFov);
 	result[1][1] = 1.f / tanHalfFov;
 	result[2][2] = -(far + near) / (far - near);
@@ -351,10 +357,20 @@ inline mat4<float> perspective(const float fov, const float aspectRatio, const f
 	return result;
 }
 
-// Name alias the common matrix types 
-using mat4i = mat4<int>;
-using mat4u = mat4<unsigned>;
-using mat4f = mat4<float>;
-using mat4d = mat4<double>;
+template<typename T>
+inline mat4<T> scale(mat4<T> m, const T s) {
+	m[0][0] *= s;
+	m[1][1] *= s;
+	m[2][2] *= s;
+	return m;
+}
+
+template<typename T>
+inline mat4<T> translate(mat4<T> m, const vec3<T>& v) {
+	m[3][0] += v.x;
+	m[3][1] += v.y;
+	m[3][2] += v.z;
+	return m;
+}
 
 }
