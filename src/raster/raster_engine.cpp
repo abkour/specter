@@ -126,7 +126,7 @@ static DiffuseTextureMap create_diffuse_textures(
 }
 
 static NormalTextureMap create_normal_textures(
-    const std::vector<filesystem::ObjMtlComponent>& input)
+    const std::vector<filesystem::ObjMtlComponent>& input, std::vector<std::pair<GLuint, vec2f>>& resolutions)
 {
     NormalTextureMap texture_map;
     std::set<std::size_t> unique_hashes;
@@ -156,6 +156,7 @@ static NormalTextureMap create_normal_textures(
                         glGenerateMipmap(GL_TEXTURE_2D);
 
                         texture_map.emplace(hash, texture_id);
+                        resolutions.emplace_back(texture_id, vec2f(x, y));
 
                         stbi_image_free(data);
                     } else {
@@ -230,20 +231,41 @@ void RasterRenderer::run() {
 	glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), reinterpret_cast<void*>(12 * sizeof(float)));
 
     // Textures
+    std::vector<std::pair<GLuint, vec2f>> normal_map_resolutions;
     material_components = scene->model->get_material_components();
     auto diffuse_maps = create_diffuse_textures(material_components);
-    auto normal_maps = create_normal_textures(material_components);
+    auto normal_maps = create_normal_textures(material_components, normal_map_resolutions);
+
+    GLint textureIDs[] = { 0, 1 };
+
+    // Flat shading for comparison
+    ShaderWrapper flatShader(
+        false,
+        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.vs")),
+        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\flat_shading.glsl.fs"))
+    );
+    flatShader.bind();
+    flatShader.upload1iv(&textureIDs[0], "DiffuseTexture");
+    flatShader.upload1iv(&textureIDs[1], "BumpTexture");
 
     // Simple pass-through vertex shader that renders a texture onto a quad
     ShaderWrapper quadShader(
         false,
-        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.vs")),
-        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\hello_shader.glsl.fs"))
+        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.vs")),
+        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.fs"))
     );
 	quadShader.bind();
-    GLint textureIDs[] = { 0, 1 };
     quadShader.upload1iv(&textureIDs[0], "DiffuseTexture");
-    quadShader.upload1iv(&textureIDs[1], "NormalTexture");
+    quadShader.upload1iv(&textureIDs[1], "BumpTexture");
+
+    ShaderWrapper activeShader(
+        false,
+        shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.vs")),
+        shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.fs"))
+    );
+    activeShader.bind();
+    activeShader.upload1iv(&textureIDs[0], "DiffuseTexture");
+    activeShader.upload1iv(&textureIDs[1], "BumpTexture");
 
     // 
     // 
@@ -259,6 +281,10 @@ void RasterRenderer::run() {
     // Perspective transform
     mat4 perspective_transform = perspective(radians(45.f), (float)scene->camera.resx() / scene->camera.resy(), 0.1f, 100.f);
 
+    bool K_Pressed = false; // true -> switch to flat shading
+    bool L_Pressed = false; // true -> switch to bump shading
+    bool M_Pressed = false; // true -> recompile shader
+
     bool V_Pressed = false;
     int texture_id_to_view = 0;
 
@@ -270,6 +296,42 @@ void RasterRenderer::run() {
 
         deltatime = glfwGetTime() - lasttime;
         lasttime += deltatime;
+
+        if (glfwGetKey(window_handle, GLFW_KEY_K) == GLFW_PRESS) {
+            K_Pressed = true;
+        }
+        if (glfwGetKey(window_handle, GLFW_KEY_K) == GLFW_RELEASE && K_Pressed) {
+            K_Pressed = false;
+            quadShader = std::move(activeShader);
+            activeShader = std::move(flatShader);
+            std::cout << "Switched to flat shading!\n";
+        }
+
+        if (glfwGetKey(window_handle, GLFW_KEY_L) == GLFW_PRESS) {
+            L_Pressed = true;
+        }
+        if (glfwGetKey(window_handle, GLFW_KEY_L) == GLFW_RELEASE && L_Pressed) {
+            L_Pressed = false;
+            flatShader = std::move(activeShader);
+            activeShader = std::move(quadShader);
+            std::cout << "Switched to bump shading!\n";
+        }
+
+        if (glfwGetKey(window_handle, GLFW_KEY_M) == GLFW_PRESS) {
+            M_Pressed = true;
+        }
+        if (glfwGetKey(window_handle, GLFW_KEY_M) == GLFW_RELEASE && M_Pressed) {
+            M_Pressed = false;
+            ShaderWrapper newShader(
+                false,
+                shader_p(GL_VERTEX_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.vs")),
+                shader_p(GL_FRAGMENT_SHADER, ROOT_DIRECTORY + std::string("\\src\\shaders\\bump_shader.glsl.fs"))
+            );
+            newShader.bind();
+            newShader.upload1iv(&textureIDs[0], "DiffuseTexture");
+            newShader.upload1iv(&textureIDs[1], "BumpTexture");
+            activeShader = std::move(newShader);
+        }
 
         if (glfwGetKey(window_handle, GLFW_KEY_V) == GLFW_PRESS) {
             V_Pressed = true;
@@ -298,10 +360,10 @@ void RasterRenderer::run() {
         vec3f ViewPosition = view.getPosition();
 
         // Scene
-        quadShader.bind();
-        quadShader.upload44fm(MVP.data, "MVP");
-        quadShader.upload3fv(&LightPosition.x, "LightPosition");
-        quadShader.upload3fv(&ViewPosition.x, "ViewPosition");
+        activeShader.bind();
+        activeShader.upload44fm(MVP.data, "MVP");
+        activeShader.upload3fv(&LightPosition.x, "LightPosition");
+        activeShader.upload3fv(&ViewPosition.x, "ViewPosition");
         glBindVertexArray(vao);
         std::size_t index_offset = 0;
         std::size_t index_count = 0;
@@ -330,6 +392,14 @@ void RasterRenderer::run() {
                     auto [hash, tex_id] = *map_it;
                     glActiveTexture(GL_TEXTURE1);
                     glBindTexture(GL_TEXTURE_2D, tex_id);
+
+
+                    // FIND THE TEXTURE RESOLUTION WITHIN THE RESOLUTIONS MAP
+                    for (auto& [textureID, resolution] : normal_map_resolutions) {
+                        if (textureID == tex_id) {
+                            activeShader.upload2fv(&resolution.x, "BumpTextureResolution");
+                        }
+                    }
                 }
             }
 
